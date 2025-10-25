@@ -1,6 +1,8 @@
 package com.momo.backend.controller;
 
 import com.momo.backend.dto.EmployeeDto;
+import com.momo.backend.entity.Employee;
+import com.momo.backend.mapper.EmployeeMapper;
 import com.momo.backend.service.EmployeeService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -37,7 +39,14 @@ public class EmployeeController {
     public ResponseEntity<List<EmployeeDto>> getAllEmployees(){
         List<EmployeeDto> employeeDtoList = employeeService.getAllEmployees();
         return new ResponseEntity<>(employeeDtoList, HttpStatus.OK);
+    }
 
+    // Build and Update Employees Rest API
+
+    @PutMapping("{id}")
+    public  ResponseEntity<EmployeeDto> updateEmployee(@PathVariable ("id") Long employId, @RequestBody EmployeeDto em){
+        EmployeeDto employeeDto = employeeService.updateEmployee(employId,em);
+        return new ResponseEntity<>(employeeDto,HttpStatus.OK );
     }
 
 }

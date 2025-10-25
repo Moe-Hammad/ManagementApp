@@ -43,4 +43,15 @@ public class EmployeeServiceImple implements EmployeeService {
                 map((employee) -> EmployeeMapper.mapToEmployee(employee)).collect(Collectors.toList());
     }
 
+    @Override
+    public EmployeeDto updateEmployee(Long employeeId, EmployeeDto updateEmployee) {
+        Employee em = employeeRepository.findById(employeeId).orElseThrow(() ->
+                new  ResourceNotFoundException("Employee with id " + employeeId + " not found."));
+        em.setFirstName(updateEmployee.getFirstName());
+        em.setLastName(updateEmployee.getLastName());
+        em.setEmail(updateEmployee.getEmail());
+        Employee update = employeeRepository.save(em);
+        return EmployeeMapper.mapToEmployee(update);
+    }
+
 }
