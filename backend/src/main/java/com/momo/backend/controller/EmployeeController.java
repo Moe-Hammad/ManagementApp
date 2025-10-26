@@ -1,8 +1,6 @@
 package com.momo.backend.controller;
 
 import com.momo.backend.dto.EmployeeDto;
-import com.momo.backend.entity.Employee;
-import com.momo.backend.mapper.EmployeeMapper;
 import com.momo.backend.service.EmployeeService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -48,5 +46,10 @@ public class EmployeeController {
         EmployeeDto employeeDto = employeeService.updateEmployee(employId,em);
         return new ResponseEntity<>(employeeDto,HttpStatus.OK );
     }
-
+    @DeleteMapping("{id}")
+    // Delete Employee Rest API
+    public ResponseEntity<EmployeeDto> deleteEmployee(@PathVariable ("id") Long employeeId){
+        employeeService.deleteEmployee(employeeId);
+        return new ResponseEntity<>(HttpStatus.OK );
+    }
 }

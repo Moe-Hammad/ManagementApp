@@ -54,4 +54,11 @@ public class EmployeeServiceImple implements EmployeeService {
         return EmployeeMapper.mapToEmployee(update);
     }
 
+    @Override
+    public void deleteEmployee(Long employeeId) {
+        Employee em = employeeRepository.findById(employeeId).orElseThrow(() ->
+                new  ResourceNotFoundException("Employee with id " + employeeId + " not found."));
+        employeeRepository.deleteById(employeeId);
+    }
+
 }
