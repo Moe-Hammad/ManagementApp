@@ -1,168 +1,149 @@
-# Enterprise Web-Development
+# Mage – Mobile Management für Projekteinsätze
 
-# Projektkonzept
+## Enterprise Web-Development – Projektkonzept
 
-## 1. Projektidee / Motivation
+### 1. Projektidee / Motivation
 
-Das Projekt **„Mage“** ist eine mobile Anwendung zur **Verwaltung von Mitarbeitern, Aufträgen und Arbeitszeiten** in Unternehmen, die projekt- oder eventbasiert arbeiten – beispielsweise in der **Setdressing-, Event- oder Filmbranche**.
+Mage ist eine mobile Anwendung zur Koordination von Mitarbeitereinsätzen in projektorientierten Branchen wie Filmsets, Eventplanung oder Setbau. Im Mittelpunkt stehen die effiziente Verwaltung und Zuteilung von Arbeitskräften durch Manager.
 
-Das Ziel der Anwendung ist es, die **Planung und Organisation von Arbeitseinsätzen** zu vereinfachen. Arbeitgeber sollen schnell neue **Jobs (Aufträge)** anlegen, die **benötigte Anzahl an Mitarbeitern** zuweisen und diese automatisch **benachrichtigen** können.
+Die App ermöglicht es Managern, mobil und standortunabhängig neue Einsätze (Jobs) zu erstellen, passende Mitarbeitende zuzuweisen und die Arbeitszeiten zentral zu erfassen. Die Einbindung externer Auftraggeber ist optional und wird derzeit nicht im Kernumfang betrachtet.
 
-Durch den Einsatz von **React Native** können Arbeitgeber und Mitarbeiter mobil – also direkt am Set oder unterwegs – auf die Anwendung zugreifen. Das **Spring Boot-Backend** stellt eine REST-API bereit, die alle Daten verwaltet, während **PostgreSQL** als stabile relationale Datenbank dient.
+Durch den Einsatz von React Native ist die Anwendung sowohl für iOS als auch Android geeignet. Das Backend basiert auf Spring Boot und kommuniziert über eine REST-API mit einer PostgreSQL-Datenbank.
 
----
+### 2. Projektziele
 
-## 2. Projektziele
+#### Muss-Ziele
 
-### **Muss-Ziele**
+- Entwicklung einer REST-API mit Spring Boot zur Verwaltung von:
+  - User (abstrakt)
+  - Managern (vererbt von User)
+  - Mitarbeitenden (Employees, vererbt von User)
+  - Jobs (Einsätze)
+  - Zuweisungen (Assignments)
+  - optional: Benachrichtigungen (Notifications)
+- Entwicklung einer mobilen App mit React Native, die per HTTP mit dem Backend kommuniziert
+- Umsetzung vollständiger CRUD-Funktionalitäten für alle zentralen Datenstrukturen
+- Möglichkeit zur Zuweisung von Mitarbeitenden durch Manager
+- Benutzerregistrierung und Authentifizierung (Manager / Mitarbeitende)
 
-- Entwicklung einer **REST-API mit Spring Boot** zur Verwaltung von:
-  - Mitarbeitern (Employee)
-  - Aufträgen / Jobs (Job)
-  - Zuweisungen von Mitarbeitern zu Aufträgen (Assignment)
-  - optional: Benachrichtigungen (Notification)
-- Entwicklung einer **mobilen App mit React Native**, die über HTTP auf die API zugreift.
-- Implementierung von **CRUD-Funktionalitäten** (Create, Read, Update, Delete) für alle Hauptentitäten.
-- Möglichkeit zur **Zuweisung von Mitarbeitern zu einem Auftrag**.
-- **Benutzerregistrierung und -anmeldung** (Arbeitgeber / Mitarbeiter).
+#### Soll-Ziele
 
-### **Soll-Ziele**
+- Visuelle Darstellung geplanter und vergangener Einsätze über Kalender- oder Listenansicht
+- Rollenverwaltung mit verschiedenen Berechtigungen für Manager und Mitarbeitende
 
-- **Übersichtliche Darstellung** der Einsätze im Kalender oder in einer Liste.
-- **Rollenmanagement** (z. B. Arbeitgeber mit Adminrechten, Mitarbeiter mit eingeschränktem Zugriff).
+#### Kann-Ziele
 
-### **Kann-Ziele**
+- Integration externer Auftraggeberinformationen
+- E-Mail-Verifizierung bei der Registrierung
+- Push- oder In-App-Benachrichtigungen für neue Einsätze oder Statusänderungen
+- Erweiterte Mitarbeiterprofile mit Qualifikationen, Bewertungen und Verfügbarkeiten
+- In-App-Chatfunktion
+- Erfassung und Darstellung der geleisteten Stunden durch Mitarbeitende
 
-- **E-Mail-Verifikation** bei Registrierung.
-- **Push- oder In-App-Benachrichtigungen** bei neuen Aufträgen oder Änderungen.
-- **Erweiterte Mitarbeiterprofile** (z. B. Qualifikationen, Bewertungen, Verfügbarkeiten).
+### 3. Funktionsbeschreibung / Anwendungsfälle
 
----
+#### Hauptfunktionen:
 
-## 3. Funktionsbeschreibung / Anwendungsfälle
+- **Einsatz anlegen** – Manager erstellt neuen Job mit Zeit, Ort, Ansprechpartner etc.
+- **Mitarbeitende zuweisen** – Auswahl und Zuweisung von Personen für einen Einsatz
+- **Benachrichtigungen versenden** – Mitarbeitende werden automatisch informiert
+- **Stundenerfassung** – Nach Einsatzende werden geleistete Stunden dokumentiert
+- **Einsatzübersicht** – Manager behalten den Überblick über alle Einsätze, Mitarbeitende sehen ihren eigenen Kalender
 
-**Hauptfunktionen der App:**
+#### Beispiel-Szenario:
 
-1. **Auftrag anlegen** – Arbeitgeber erstellt einen neuen Job mit Ort, Datum, Ansprechpartner und benötigter Arbeitskraft.
-2. **Mitarbeiter zuweisen** – Mitarbeiter werden einem Job zugeordnet.
-3. **Benachrichtigung versenden** – Mitarbeiter erhalten eine Nachricht über den neuen Auftrag.
-4. **Arbeitszeiten verwalten** – Nach Abschluss des Jobs werden die geleisteten Stunden erfasst.
-5. **Übersicht anzeigen** – Arbeitgeber sehen alle laufenden und abgeschlossenen Jobs; Mitarbeiter sehen ihre Einsätze im Kalender.
+- Ein Manager plant einen Einsatz („Filmset Potsdam, 10.12.2025, 08:00 Uhr“)
+- Fünf Mitarbeitende werden diesem Einsatz zugewiesen
+- Alle erhalten umgehend eine In-App-Benachrichtigung
+- Nach dem Einsatz tragen die Mitarbeitenden ihre Stunden ein
+- Der Manager wird über die Einträge informiert
 
-**Beispiel-Use-Cases:**
+### 4. Technisches Konzept
 
-- Ein Arbeitgeber legt einen neuen Auftrag an („Filmset Potsdam, 10.12.2025, 08:00 Uhr“).
-- Fünf Mitarbeiter werden dem Auftrag zugewiesen.
-- Jeder Mitarbeiter erhält eine Benachrichtigung in der App.
-- Nach dem Einsatz werden die tatsächlich geleisteten Stunden eingetragen.
+#### Architektur
 
----
+Die Anwendung folgt einem klassischen Client-Server-Modell mit klarer Trennung von Frontend, Backend und Datenhaltung.
 
-## 4. Technisches Konzept
+#### Technologien
 
-### **Architektur**
+| Komponente    | Technologie                 | Beschreibung                          |
+| ------------- | --------------------------- | ------------------------------------- |
+| Frontend      | React Native                | Cross-Plattform Mobile-App            |
+| Backend       | Spring Boot                 | REST-API und Geschäftslogik           |
+| Datenbank     | PostgreSQL                  | Relationale Datenbank                 |
+| ORM           | Spring Data JPA / Hibernate | Datenzugriff und -abbildung           |
+| Kommunikation | REST (JSON über HTTP)       | Schnittstelle zwischen App und Server |
 
-Die Anwendung basiert auf einer klassischen **Client-Server-Architektur**:
+### 5. Datenmodell / Entitäten
 
-### **Technologien**
+| Entität                 | Attribute                                                                              | Beziehungen / Beschreibung         |
+| ----------------------- | -------------------------------------------------------------------------------------- | ---------------------------------- |
+| User (abstract)         | id, name, phone, email, password, role                                                 | Vererbt von Manager und Employee   |
+| Manager                 | –                                                                                      | Erbt von User; erstellt Jobs       |
+| Employee                | id, hourly_rate, availability                                                          | 1→n Assignments, 1→n Notifications |
+| Job                     | id, location, date, start_time, expected_hours, contact_person, notes, manager_id (FK) | 1→n Assignments                    |
+| Assignment              | id, employee_id (FK), job_id (FK), status, actual_hours, assigned_at, completed_at     | n→1 Employee, n→1 Job              |
+| Notification (optional) | id, employee_id (FK), message, timestamp, read                                         | n→1 Employee                       |
 
-| Komponente        | Technologie                 | Beschreibung                                   |
-| ----------------- | --------------------------- | ---------------------------------------------- |
-| **Frontend**      | React Native                | Mobile App für iOS und Android                 |
-| **Backend**       | Spring Boot                 | Implementierung der REST-API und Businesslogik |
-| **Datenbank**     | PostgreSQL                  | Speicherung der relationalen Daten             |
-| **ORM**           | Spring Data JPA / Hibernate | Datenbankzugriff und Entity-Mapping            |
-| **Kommunikation** | REST (JSON über HTTP)       | Datenaustausch zwischen App und API            |
+**Beziehungen:**
 
----
+- `User` ist Oberklasse von `Manager` und `Employee`
+- Jeder `Job` wird durch einen `Manager` erstellt (`manager_id`)
+- Mitarbeitende können mehreren Jobs zugewiesen sein
+- Ein Job kann mehrere Mitarbeitende umfassen
+- Die n:m-Beziehung wird über Assignments gelöst
+- Optional: Benachrichtigungen pro Mitarbeitenden
 
-## 5. Datenmodell / Entitäten
+### 6. REST-API-Spezifikation
 
-Das Datenmodell besteht aus vier zentralen Entitäten:
+| HTTP-Methode | Endpoint                     | Beschreibung                            |
+| ------------ | ---------------------------- | --------------------------------------- |
+| GET          | /employees                   | Liste aller Mitarbeitenden              |
+| POST         | /employees                   | Neuen Mitarbeitenden hinzufügen         |
+| GET          | /jobs                        | Alle Einsätze abrufen                   |
+| POST         | /jobs                        | Neuen Einsatz erstellen                 |
+| PUT          | /jobs/{id}                   | Einsatz bearbeiten                      |
+| DELETE       | /jobs/{id}                   | Einsatz löschen                         |
+| POST         | /assignments                 | Mitarbeitenden einem Einsatz zuweisen   |
+| GET          | /assignments/{employee_id}   | Einsätze eines Mitarbeitenden abrufen   |
+| GET          | /notifications/{employee_id} | Benachrichtigungen eines Mitarbeitenden |
 
-| Entität                       | Attribute                                                                           | Beziehungen / Beschreibung         |
-| ----------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------- |
-| **Employee**                  | id, name, phone, email, role, hourly_rate, availability                             | 1→n Assignments, 1→n Notifications |
-| **Job**                       | id, company_name, location, date, start_time, expected_hours, contact_person, notes | 1→n Assignments                    |
-| **Assignment**                | id, employee_id, job_id, status, actual_hours                                       | n→1 Employee, n→1 Job              |
-| **Notification** _(optional)_ | id, employee_id, message, timestamp, read                                           | n→1 Employee                       |
+### 7. Frontend-Konzept
 
-**Beziehungsbeschreibung:**
+Die mobile App stellt verschiedene Ansichten bereit, angepasst an die jeweilige Nutzerrolle.
 
-- Ein **Employee** kann mehreren **Jobs** zugewiesen werden.
-- Ein **Job** kann mehrere **Employees** enthalten.
-- Diese n:m-Beziehung wird durch **Assignment** aufgelöst.
-- Optional: Jeder Mitarbeiter kann mehrere **Notifications** erhalten.
+#### Ansichten
 
----
+- **Login / Registrierung**: Anmeldung oder Neuanlage von Nutzerkonten
+- **Dashboard (Manager)**: Übersicht über alle Einsätze; Bearbeitungsfunktionen für Jobs
+- **Einsatzdetails**: Anzeige aller Informationen zum Einsatz, inklusive Team
+- **Mitarbeitendenübersicht**: Liste mit Rollen- und Kontaktdaten
+- **Kalender (Mitarbeitende)**: Visualisierung aller eigenen Einsätze mit Status
+- **Benachrichtigungen**: Anzeige aller Systemnachrichten und Job-Änderungen
 
-## 6. REST-API-Spezifikation
+### 8. Zeitplan / Meilensteine
 
-| HTTP-Methode | Endpoint                     | Beschreibung                                  |
-| ------------ | ---------------------------- | --------------------------------------------- |
-| **GET**      | /employees                   | Liste aller Mitarbeiter abrufen               |
-| **POST**     | /employees                   | Neuen Mitarbeiter anlegen                     |
-| **GET**      | /jobs                        | Alle Aufträge abrufen                         |
-| **POST**     | /jobs                        | Neuen Auftrag anlegen                         |
-| **PUT**      | /jobs/{id}                   | Auftrag bearbeiten                            |
-| **DELETE**   | /jobs/{id}                   | Auftrag löschen                               |
-| **POST**     | /assignments                 | Mitarbeiter einem Job zuweisen                |
-| **GET**      | /assignments/{employee_id}   | Zuweisungen eines Mitarbeiters abrufen        |
-| **GET**      | /notifications/{employee_id} | Benachrichtigungen eines Mitarbeiters abrufen |
+| Woche | Aufgabe                                                  |
+| ----- | -------------------------------------------------------- |
+| 1     | Projektkonzept finalisieren & Datenmodell entwerfen      |
+| 2     | Spring-Boot-Backend aufsetzen und REST-API entwickeln    |
+| 3     | Testing vom Backend                                      |
+| 4     | React-Native-App-Grundstruktur implementieren und Design |
+| 5     | Verbindung Frontend ↔ Backend (API-Integration)          |
+| 6     | Benachrichtigungen, Tests & Dokumentation                |
 
----
+### 9. User Story und UML
 
-## 7. Frontend-Konzept
+#### UML
 
-Die mobile App wird mit **React Native** entwickelt und bietet unterschiedliche Ansichten für Arbeitgeber und Mitarbeiter.
+![UML Diagram of Mage](Mage_UML_Corrected.png)
 
-### **Hauptansichten**
+#### User Story
 
-1. **Login / Registrierung**
+> Als Manager möchte ich flexibel neue Einsätze planen, mein Team optimal besetzen und sicherstellen, dass alle Beteiligten rechtzeitig informiert werden. So behalte ich jederzeit den Überblick und kann auf kurzfristige Änderungen effizient reagieren.
 
-   - Benutzer kann sich anmelden oder registrieren.
-   - Bei erfolgreicher Anmeldung werden individuelle Daten geladen.
+### 10. Fazit
 
-2. **Dashboard (Arbeitgeber)**
-
-   - Übersicht über alle aktuellen Jobs.
-   - Buttons zum Erstellen, Bearbeiten oder Löschen von Aufträgen.
-
-3. **Job-Detailansicht**
-
-   - Zeigt Ort, Zeit, Ansprechpartner und zugewiesene Mitarbeiter an.
-   - Möglichkeit, weitere Mitarbeiter hinzuzufügen.
-
-4. **Mitarbeiterübersicht**
-
-   - Liste aller Mitarbeiter mit Kontakt- und Rolleninformationen.
-
-5. **Kalenderansicht (Mitarbeiter)**
-
-   - Zeigt alle geplanten Einsätze an.
-   - Statusanzeige (z. B. „geplant“, „bestätigt“, „abgeschlossen“).
-
-6. **Benachrichtigungen**
-   - Anzeige neuer Aufträge oder Änderungen.
-
----
-
-## 8. Zeitplan / Meilensteine
-
-| Woche | Aufgabe                                               |
-| ----- | ----------------------------------------------------- |
-| 1     | Projektkonzept finalisieren & Datenmodell entwerfen   |
-| 2     | Spring-Boot-Backend aufsetzen und REST-API entwickeln |
-| 3     | PostgreSQL-Datenbank integrieren & testen             |
-| 4     | React-Native-App-Grundstruktur implementieren         |
-| 5     | Verbindung Frontend ↔ Backend (API-Integration)       |
-| 6     | Benachrichtigungen, Tests & Dokumentation             |
-
----
-
-## 9. Fazit
-
-**Mage** soll ein praxisnahes Tool werden, das es kleinen Unternehmen ermöglicht, ihre Arbeitskräfte effizient zu planen und zu verwalten.  
-Durch den Einsatz moderner Technologien (**React Native**, **Spring Boot**, **PostgreSQL**) wird eine **skalierbare und erweiterbare Lösung** geschaffen, die sowohl **mobil** als auch **benutzerfreundlich** ist.
+Mage bietet eine moderne Lösung zur Personal- und Einsatzplanung in dynamischen Branchen. Der Fokus liegt auf Benutzerfreundlichkeit, Mobilität und Effizienz. Die gewählten Technologien ermöglichen eine skalierbare, zukunftsfähige Architektur, die problemlos erweitert werden kann.
 
 ---
