@@ -59,6 +59,7 @@ public class EmployeeServiceImple implements EmployeeService {
         Employee em = employeeRepository.findById(employeeId).orElseThrow(() ->
                 new  ResourceNotFoundException("Employee with id " + employeeId + " not found."));
         employeeRepository.deleteById(employeeId);
+        
     }
 
 }
