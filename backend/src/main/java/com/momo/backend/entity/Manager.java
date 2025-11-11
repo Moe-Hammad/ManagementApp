@@ -24,6 +24,15 @@ public class Manager extends User {
     @OneToMany(mappedBy = "manager", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Employee> employees = new ArrayList<>();
 
+    public void addEmployee(Employee employee) {
+        employees.add(employee);
+        employee.setManager(this); // ← wichtig für die Beziehung Manager ↔ Employee
+    }
+
+    public void removeEmployee(Employee employee) {
+        employees.remove(employee);
+        employee.setManager(null); // ← Manager-Referenz beim Employee löschen
+    }
 
 
     @PrePersist
