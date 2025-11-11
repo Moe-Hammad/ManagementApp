@@ -8,7 +8,6 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface EmployeeMapper {
 
-    @Mapping(target = "role", defaultValue = "employee")
     Employee toEntity(EmployeeDto dto);
 
     EmployeeDto toDto(Employee employee);
