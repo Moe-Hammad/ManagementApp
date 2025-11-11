@@ -2,23 +2,14 @@ package com.momo.backend.mapper;
 
 import com.momo.backend.dto.EmployeeDto;
 import com.momo.backend.entity.Employee;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-public class EmployeeMapper {
+@Mapper(componentModel = "spring")
+public interface EmployeeMapper {
 
-    public static EmployeeDto mapToEmployee(Employee employee){
-        return new EmployeeDto(employee.getId(),
-                employee.getFirstName(),
-                employee.getLastName(),
-                employee.getEmail()
-        );
-    }
+    @Mapping(target = "role", defaultValue = "employee")
+    Employee toEntity(EmployeeDto dto);
 
-    public static Employee mapToEmployee(EmployeeDto employeeDto){
-        return new Employee(
-                employeeDto.getId(),
-                employeeDto.getFirstName(),
-                employeeDto.getLastName(),
-                employeeDto.getEmail()
-        );
-    }
+    EmployeeDto toDto(Employee employee);
 }

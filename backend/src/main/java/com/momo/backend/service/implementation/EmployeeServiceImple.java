@@ -18,13 +18,14 @@ import java.util.stream.Collectors;
 public class EmployeeServiceImple implements EmployeeService {
 
     private EmployeeRepository employeeRepository;
+    private final EmployeeMapper employeeMapper;
 
     @Override
     public EmployeeDto createEmployee(EmployeeDto employeeDto) {
 
-        Employee employee = EmployeeMapper.mapToEmployee(employeeDto);
+        Employee employee = employeeMapper.toEntity(employeeDto);
         Employee savedEmployee = employeeRepository.save(employee);
-        return EmployeeMapper.mapToEmployee(savedEmployee);
+        return employeeMapper.toDto(savedEmployee);
     }
 
     @Override
@@ -32,7 +33,7 @@ public class EmployeeServiceImple implements EmployeeService {
     Employee employee = employeeRepository.findById(employeeId).
             orElseThrow( () ->
                     new  ResourceNotFoundException("Employee with id " + employeeId + " not found."));
-    return EmployeeMapper.mapToEmployee(employee);
+    return employeeMapper.toDto(employee);
     }
 
     @Override
@@ -40,7 +41,8 @@ public class EmployeeServiceImple implements EmployeeService {
         List <Employee> employees = employeeRepository.findAll();
 
         return employees.stream().
-                map((employee) -> EmployeeMapper.mapToEmployee(employee)).collect(Collectors.toList());
+                map(employeeMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -50,8 +52,9 @@ public class EmployeeServiceImple implements EmployeeService {
         em.setFirstName(updateEmployee.getFirstName());
         em.setLastName(updateEmployee.getLastName());
         em.setEmail(updateEmployee.getEmail());
+        em.setHourlyRate(updateEmployee.getHourlyRate());
         Employee update = employeeRepository.save(em);
-        return EmployeeMapper.mapToEmployee(update);
+        return employeeMapper.toDto(update);
     }
 
     @Override
