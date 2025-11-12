@@ -1,5 +1,6 @@
 package com.momo.backend.dto;
 
+import com.momo.backend.entity.Manager;
 import lombok.*;
 
 @Getter
@@ -16,4 +17,5 @@ public class EmployeeDto {
     private String role = "employee";
     private Double hourlyRate;
     private Boolean availability;
+    private Manager manager;
 }

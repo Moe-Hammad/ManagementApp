@@ -86,7 +86,7 @@ class ManagerEntityLifecycleTest {
     }
 
     @Test
-    void shouldAddEmployeeToManagerAndPersistRelationship() {
+    void shouldAddEmployeeToManagerAndPersistRelationshipAndDelete() {
         momo.addEmployee(arbeiter);
 
         // speichern, um Relation in DB zu schreiben
@@ -96,5 +96,14 @@ class ManagerEntityLifecycleTest {
         Manager saved = managerRepository.findById(momo.getId()).orElseThrow();
         assertThat(saved.getEmployees()).hasSize(1);
         assertThat(saved.getEmployees().get(0).getManager()).isEqualTo(momo);
+
+        momo.removeEmployee(arbeiter);
+
+        // speichern, um Relation in DB zu schreiben
+        Manager del = managerRepository.save(momo);
+
+
+        assertThat(del.getEmployees()).isNotNull();
+
     }
 }
