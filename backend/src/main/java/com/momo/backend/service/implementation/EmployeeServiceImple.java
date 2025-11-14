@@ -1,15 +1,19 @@
 package com.momo.backend.service.implementation;
 
-import com.momo.backend.dto.EmployeeDto;
+import com.momo.backend.dto.Backend.EmployeeDto;
+import com.momo.backend.dto.Backend.ManagerDto;
 import com.momo.backend.entity.Employee;
+import com.momo.backend.entity.Manager;
 import com.momo.backend.exception.ResourceNotFoundException;
 import com.momo.backend.mapper.EmployeeMapper;
+import com.momo.backend.mapper.ManagerMapper;
 import com.momo.backend.repository.EmployeeRepository;
 import com.momo.backend.service.EmployeeService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 
@@ -19,6 +23,7 @@ public class EmployeeServiceImple implements EmployeeService {
 
     private EmployeeRepository employeeRepository;
     private final EmployeeMapper employeeMapper;
+    private final ManagerMapper managerMapper;
 
     @Override
     public EmployeeDto createEmployee(EmployeeDto employeeDto) {
@@ -29,13 +34,14 @@ public class EmployeeServiceImple implements EmployeeService {
     }
 
     @Override
-    public EmployeeDto getEmployeeById(Long employeeId) {
-    Employee employee = employeeRepository.findById(employeeId).
-            orElseThrow( () ->
-                    new  ResourceNotFoundException("Employee with id " + employeeId + " not found."));
-    return employeeMapper.toDto(employee);
-    }
+    public EmployeeDto getEmployeeById(UUID employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Employee with id " + employeeId + " not found.")
+                );
 
+        return employeeMapper.toDto(employee);
+    }
     @Override
     public List<EmployeeDto> getAllEmployees() {
         List <Employee> employees = employeeRepository.findAll();
@@ -46,7 +52,7 @@ public class EmployeeServiceImple implements EmployeeService {
     }
 
     @Override
-    public EmployeeDto updateEmployee(Long employeeId, EmployeeDto updateEmployee) {
+    public EmployeeDto updateEmployee(UUID employeeId, EmployeeDto updateEmployee) {
         Employee em = employeeRepository.findById(employeeId).orElseThrow(() ->
                 new  ResourceNotFoundException("Employee with id " + employeeId + " not found."));
         em.setFirstName(updateEmployee.getFirstName());
@@ -58,11 +64,20 @@ public class EmployeeServiceImple implements EmployeeService {
     }
 
     @Override
-    public void deleteEmployee(Long employeeId) {
+    public void deleteEmployee(UUID employeeId) {
         Employee em = employeeRepository.findById(employeeId).orElseThrow(() ->
                 new  ResourceNotFoundException("Employee with id " + employeeId + " not found."));
         employeeRepository.deleteById(employeeId);
         
+    }
+
+    @Override
+    public ManagerDto getEmployeeManager(UUID employeeId) {
+        Employee em = employeeRepository.findById(employeeId).orElseThrow(() ->
+                new  ResourceNotFoundException("Employee with id " + employeeId + " not found."));
+       Manager manager = em.getManager();
+
+       return managerMapper.toDto(manager);
     }
 
 }

@@ -1,7 +1,9 @@
-package com.momo.backend.dto;
+package com.momo.backend.dto.Backend;
 
 import com.momo.backend.entity.Manager;
 import lombok.*;
+
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -9,12 +11,11 @@ import lombok.*;
 @AllArgsConstructor
 public class EmployeeDto {
 
-    private Long id;
+    private UUID id;
     private String firstName;
     private String lastName;
     private String email;
-    private String password;
-    private String role = "employee";
+    private String role;
     private Double hourlyRate;
     private Boolean availability;
     private Manager manager;

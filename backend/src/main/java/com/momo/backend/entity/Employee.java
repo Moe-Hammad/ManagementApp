@@ -10,7 +10,7 @@ import lombok.*;
 @Entity
 @Table(name = "employees")
 
-public class Employee  extends  User{
+public class Employee  extends  User {
 
     private Double hourlyRate;
     private Boolean availability;

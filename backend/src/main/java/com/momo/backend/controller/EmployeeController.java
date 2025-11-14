@@ -1,6 +1,6 @@
 package com.momo.backend.controller;
 
-import com.momo.backend.dto.EmployeeDto;
+import com.momo.backend.dto.Backend.EmployeeDto;
 import com.momo.backend.service.EmployeeService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @AllArgsConstructor
 @RestController
@@ -26,7 +27,7 @@ public class EmployeeController {
     // Build and get Employee REST API
 
     @GetMapping("{id}")
-    public ResponseEntity<EmployeeDto> getEmployeeById(@PathVariable("id") Long employeeId){
+    public ResponseEntity<EmployeeDto> getEmployeeById(@PathVariable("id") UUID employeeId){
         EmployeeDto employeeDto = employeeService.getEmployeeById(employeeId);
         return new ResponseEntity<>(employeeDto, HttpStatus.OK);
     }
@@ -42,13 +43,13 @@ public class EmployeeController {
     // Build and Update Employees Rest API
 
     @PutMapping("{id}")
-    public  ResponseEntity<EmployeeDto> updateEmployee(@PathVariable ("id") Long employId, @RequestBody EmployeeDto em){
+    public  ResponseEntity<EmployeeDto> updateEmployee(@PathVariable ("id") UUID employId, @RequestBody EmployeeDto em){
         EmployeeDto employeeDto = employeeService.updateEmployee(employId,em);
         return new ResponseEntity<>(employeeDto,HttpStatus.OK );
     }
     @DeleteMapping("{id}")
     // Delete Employee Rest API
-    public ResponseEntity<EmployeeDto> deleteEmployee(@PathVariable ("id") Long employeeId){
+    public ResponseEntity<EmployeeDto> deleteEmployee(@PathVariable ("id") UUID employeeId){
         employeeService.deleteEmployee(employeeId);
         return new ResponseEntity<>(HttpStatus.OK );
     }
