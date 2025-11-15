@@ -1,5 +1,6 @@
 package com.momo.backend.dto.Backend;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.momo.backend.entity.Employee;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,6 +19,10 @@ public class ManagerDto {
     private String firstName;
     private String lastName;
     private String email;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String password;
+
     private String role = "manager";
     private List<Employee> employees;
 }
