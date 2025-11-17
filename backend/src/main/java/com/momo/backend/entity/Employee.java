@@ -1,23 +1,25 @@
 package com.momo.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "employees")
-
-public class Employee  extends  User {
+public class Employee extends User {
 
     private Double hourlyRate;
     private Boolean availability;
+
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manager_id")
     private Manager manager;
-
 
     @PrePersist
     public void assignRole() {

@@ -49,7 +49,6 @@ class ManagerEntityLifecycleTest {
 
         assertThat(momo.getId()).isNotNull();
         assertThat(arbeiter.getId()).isNotNull();
-        System.out.println("📦 Manager & Employee vor Test gespeichert!");
     }
 
     @AfterEach
@@ -93,6 +92,7 @@ class ManagerEntityLifecycleTest {
         managerRepository.save(momo);
 
         // reload aus DB
+        
         Manager saved = managerRepository.findById(momo.getId()).orElseThrow();
         assertThat(saved.getEmployees()).hasSize(1);
         assertThat(saved.getEmployees().get(0).getManager()).isEqualTo(momo);

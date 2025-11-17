@@ -13,9 +13,9 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 
 @Service
 @AllArgsConstructor
@@ -27,57 +27,68 @@ public class EmployeeServiceImple implements EmployeeService {
 
     @Override
     public EmployeeDto createEmployee(EmployeeDto employeeDto) {
+        Objects.requireNonNull(employeeDto, "Employee payload must not be null");
 
-        Employee employee = employeeMapper.toEntity(employeeDto);
+        Employee employee = Objects.requireNonNull(
+                employeeMapper.toEntity(employeeDto),
+                "Mapper returned null Employee instance");
         Employee savedEmployee = employeeRepository.save(employee);
         return employeeMapper.toDto(savedEmployee);
     }
 
     @Override
     public EmployeeDto getEmployeeById(UUID employeeId) {
-        Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Employee with id " + employeeId + " not found.")
-                );
+        UUID validatedId = Objects.requireNonNull(employeeId, "Employee id must not be null");
+        Employee employee = employeeRepository.findById(validatedId)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee with id " + validatedId + " not found."));
 
         return employeeMapper.toDto(employee);
     }
+
     @Override
     public List<EmployeeDto> getAllEmployees() {
-        List <Employee> employees = employeeRepository.findAll();
+        List<Employee> employees = employeeRepository.findAll();
 
-        return employees.stream().
-                map(employeeMapper::toDto)
+        return employees.stream().map(employeeMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public EmployeeDto updateEmployee(UUID employeeId, EmployeeDto updateEmployee) {
-        Employee em = employeeRepository.findById(employeeId).orElseThrow(() ->
-                new  ResourceNotFoundException("Employee with id " + employeeId + " not found."));
+        UUID validatedId = Objects.requireNonNull(employeeId, "Employee id must not be null");
+        Objects.requireNonNull(updateEmployee, "Update payload must not be null");
+
+        Employee em = employeeRepository.findById(validatedId)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee with id " + validatedId + " not found."));
         em.setFirstName(updateEmployee.getFirstName());
         em.setLastName(updateEmployee.getLastName());
         em.setEmail(updateEmployee.getEmail());
         em.setHourlyRate(updateEmployee.getHourlyRate());
+        em.setAvailability(updateEmployee.getAvailability());
         Employee update = employeeRepository.save(em);
         return employeeMapper.toDto(update);
     }
 
     @Override
     public void deleteEmployee(UUID employeeId) {
-        Employee em = employeeRepository.findById(employeeId).orElseThrow(() ->
-                new  ResourceNotFoundException("Employee with id " + employeeId + " not found."));
-        employeeRepository.deleteById(employeeId);
-        
+        UUID validatedId = Objects.requireNonNull(employeeId, "Employee id must not be null");
+        Employee em = employeeRepository.findById(validatedId)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee with id " + validatedId + " not found."));
+        employeeRepository.delete(em);
+
     }
 
     @Override
     public ManagerDto getEmployeeManager(UUID employeeId) {
-        Employee em = employeeRepository.findById(employeeId).orElseThrow(() ->
-                new  ResourceNotFoundException("Employee with id " + employeeId + " not found."));
-       Manager manager = em.getManager();
+        UUID validatedId = Objects.requireNonNull(employeeId, "Employee id must not be null");
+        Employee em = employeeRepository.findById(validatedId)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee with id " + validatedId + " not found."));
+        Manager manager = em.getManager();
+        if (manager == null) {
+            throw new ResourceNotFoundException("Employee with id " + validatedId + " has no manager assigned.");
+        }
 
-       return managerMapper.toDto(manager);
+        return managerMapper.toDto(manager);
     }
 
 }

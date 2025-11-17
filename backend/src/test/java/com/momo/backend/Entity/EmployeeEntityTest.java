@@ -1,7 +1,6 @@
 package com.momo.backend.Entity;
 
 
-import com.momo.backend.entity.Manager;
 import com.momo.backend.entity.Employee;
 import com.momo.backend.repository.EmployeeRepository;
 import org.junit.jupiter.api.Test;

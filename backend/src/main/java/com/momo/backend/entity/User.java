@@ -3,7 +3,6 @@ package com.momo.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-
 import java.util.UUID;
 
 @Getter
@@ -11,14 +10,13 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Inheritance(strategy = InheritanceType.JOINED)
 @Table(name = "users")
+@Inheritance(strategy = InheritanceType.JOINED)
 public class User {
 
     @Id
-    @GeneratedValue
     @org.hibernate.annotations.UuidGenerator
-    @Column(columnDefinition = "UUID")
+    @Column(nullable = false, updatable = false, columnDefinition = "UUID")
     private UUID id;
 
     @Column(nullable = false)
@@ -34,8 +32,7 @@ public class User {
     private String password;
 
     @Column(nullable = false)
-    private String role = "employee";
-
+    private String role;
 
     @PrePersist
     @PreUpdate
@@ -46,13 +43,7 @@ public class User {
         }
     }
 
-    /**
-     * Prüft, ob das Passwort bereits ein gültiger BCrypt-Hash ist.
-     */
     private boolean isBcryptHash(String pw) {
-        // alle gültigen bcrypt-hashes beginnen mit $2a$, $2b$ oder $2y$
         return pw.startsWith("$2a$") || pw.startsWith("$2b$") || pw.startsWith("$2y$");
     }
-
-
 }
