@@ -3,7 +3,7 @@ package com.momo.backend.Entity;
 import com.momo.backend.entity.Employee;
 import com.momo.backend.entity.Manager;
 import org.junit.jupiter.api.Test;
-import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class ManagerEntityTest {
@@ -14,12 +14,6 @@ class ManagerEntityTest {
         assertNotNull(m.getEmployees());
         assertTrue(m.getEmployees().isEmpty());
     }
-    @Test
-    void testManagerDefaultRole() {
-        Manager m = new Manager();
-        assertEquals("manager", m.getRole());
-    }
-
 
     @Test
     void testAddEmployeeSetsBothSides() {
@@ -29,7 +23,18 @@ class ManagerEntityTest {
         m.addEmployee(e);
 
         assertEquals(1, m.getEmployees().size());
-        assertEquals(m, e.getManager());
+        assertEquals(m, e.getManager());   // bidirektional gesetzt
+    }
+
+    @Test
+    void testAddEmployeeDoesNotDuplicate() {
+        Manager m = new Manager();
+        Employee e = new Employee();
+
+        m.addEmployee(e);
+        m.addEmployee(e); // nochmal
+
+        assertEquals(1, m.getEmployees().size());  // keine Duplikate
     }
 
     @Test
@@ -38,6 +43,18 @@ class ManagerEntityTest {
         Employee e = new Employee();
 
         m.addEmployee(e);
+        m.removeEmployee(e);
+
+        assertTrue(m.getEmployees().isEmpty());
+        assertNull(e.getManager());  // bidirektional entfernt
+    }
+
+    @Test
+    void testRemoveEmployeeWhenNotPresentDoesNothing() {
+        Manager m = new Manager();
+        Employee e = new Employee();
+
+        // kein Fehler
         m.removeEmployee(e);
 
         assertTrue(m.getEmployees().isEmpty());

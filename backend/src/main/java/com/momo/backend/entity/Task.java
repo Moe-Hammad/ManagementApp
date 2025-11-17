@@ -29,8 +29,12 @@ public class Task {
     private String location;
     private int requiredEmployees;
 
+    @Column(name = "start_time")
     private LocalDateTime start;
+
+    @Column(name = "end_time")
     private LocalDateTime end;
+
 
     // Bis wann Employees reagieren dürfen
     private LocalDateTime responseDeadline;

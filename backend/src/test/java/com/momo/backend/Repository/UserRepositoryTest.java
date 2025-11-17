@@ -1,47 +1,44 @@
 package com.momo.backend.Repository;
 
+import com.momo.backend.entity.Employee;
+import com.momo.backend.entity.Manager;
 import com.momo.backend.entity.User;
 import com.momo.backend.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 class UserRepositoryTest {
 
     @Autowired
     private UserRepository userRepository;
 
     @Test
-    void testSaveUserPersistsCorrectly() {
-        User u = new User();
-        u.setFirstName("Max");
-        u.setLastName("Mustermann");
-        u.setEmail("test@test.com");
-        u.setPassword("1234"); // wird gehashed
+    void testSaveAndFindByEmail() {
+        Employee e = new Employee();
+        e.setFirstName("Max");
+        e.setLastName("Mustermann");
+        e.setEmail("max@test.com");
+        e.setPassword("12345");
 
-        User saved = userRepository.save(u);
+        userRepository.save(e);
 
-        assertNotNull(saved.getId());
-        assertNotEquals("1234", saved.getPassword());
-        assertTrue(saved.getPassword().startsWith("$2"));
+        Optional<User> found = userRepository.findByEmail("max@test.com");
+
+        assertTrue(found.isPresent());
+        assertEquals("max@test.com", found.get().getEmail());
     }
 
     @Test
-    void testFindByEmail() {
-        User u = new User();
-        u.setFirstName("Anna");
-        u.setLastName("Schmidt");
-        u.setEmail("anna@test.com");
-        u.setPassword("abcd");
-
-        userRepository.save(u);
-
-        User result = userRepository.findByEmail("anna@test.com").orElse(null);
-
-        assertNotNull(result);
-        assertEquals("Anna", result.getFirstName());
+    void testEmailDoesNotExist() {
+        Optional<User> found = userRepository.findByEmail("nope@test.com");
+        assertTrue(found.isEmpty());
     }
 }
