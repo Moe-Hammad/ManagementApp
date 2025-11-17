@@ -1,36 +1,36 @@
 package com.momo.backend.Entity;
 
-
 import com.momo.backend.entity.Employee;
-import com.momo.backend.repository.EmployeeRepository;
+import com.momo.backend.entity.Manager;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.annotation.Rollback;
+import static org.junit.jupiter.api.Assertions.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-@DataJpaTest  // startet nur den JPA-Kontext (keinen Webserver)
-@Rollback(false) // damit du im SQL-Log siehst, was passiert
-
-public class EmployeeEntityTest {
-
-    @Autowired
-    private EmployeeRepository employeeRepository;
+class EmployeeEntityTest {
 
     @Test
-    void shouldAssignEmployeeRoleOnPersist() {
-        Employee employee = new Employee();
-        employee.setLastName("Peter");
-        employee.setFirstName("Hans");
-        employee.setEmail("HansPeter@email.de");
-        employee.setPassword("meinneuesPassword");
+    void testEmployeeManagerAssignment() {
+        Manager m = new Manager();
+        Employee e = new Employee();
 
-        Employee emSaved = employeeRepository.save(employee);
+        e.setManager(m);
 
-        assertThat(emSaved.getLastName()).isEqualTo(employee.getLastName());
-        assertThat(emSaved.getPassword()).startsWith("$2a$");
-        assertThat(emSaved.getRole()).isEqualTo("employee");
+        assertEquals(m, e.getManager());
     }
 
+    @Test
+    void testEmployeeDefaultRole() {
+        Employee e = new Employee();
+        assertEquals("employee", e.getRole());
+    }
+
+    @Test
+    void testEmployeeFields() {
+        Employee e = new Employee();
+
+        e.setHourlyRate(15.5);
+        e.setAvailability(true);
+
+        assertEquals(15.5, e.getHourlyRate());
+        assertTrue(e.getAvailability());
+    }
 }

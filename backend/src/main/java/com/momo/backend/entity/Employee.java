@@ -13,6 +13,9 @@ import lombok.Setter;
 @Table(name = "employees")
 public class Employee extends User {
 
+    @Column(nullable = false)
+    private String role = "employee";
+
     private Double hourlyRate;
     private Boolean availability;
 
@@ -23,6 +26,6 @@ public class Employee extends User {
 
     @PrePersist
     public void assignRole() {
-        super.setRole("employee");
+        this.setRole("employee");
     }
 }

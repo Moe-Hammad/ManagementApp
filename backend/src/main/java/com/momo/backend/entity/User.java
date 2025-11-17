@@ -10,11 +10,12 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "users")
 @Inheritance(strategy = InheritanceType.JOINED)
+@Table(name = "users")
 public class User {
 
     @Id
+    @GeneratedValue
     @org.hibernate.annotations.UuidGenerator
     @Column(nullable = false, updatable = false, columnDefinition = "UUID")
     private UUID id;
@@ -31,15 +32,11 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
-    private String role;
-
     @PrePersist
     @PreUpdate
     private void hashPassword() {
         if (password != null && !isBcryptHash(password)) {
-            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-            this.password = encoder.encode(this.password);
+            this.password = new BCryptPasswordEncoder().encode(password);
         }
     }
 

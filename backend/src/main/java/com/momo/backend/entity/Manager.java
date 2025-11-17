@@ -15,6 +15,9 @@ import java.util.List;
 @Table(name = "managers")
 public class Manager extends User {
 
+    @Column(nullable = false)
+    private String role = "manager";
+
     @OneToMany(
             mappedBy = "manager",
             cascade = CascadeType.ALL,
@@ -24,7 +27,7 @@ public class Manager extends User {
 
     @PrePersist
     public void assignRole() {
-        super.setRole("manager");
+        this.setRole("manager");
     }
 
     public void addEmployee(Employee employee) {
