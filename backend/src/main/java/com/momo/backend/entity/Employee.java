@@ -6,6 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,19 +16,17 @@ import lombok.Setter;
 @Table(name = "employees")
 public class Employee extends User {
 
-    @Column(nullable = false)
-    private String role = "employee";
-
     private Double hourlyRate;
-    private Boolean availability;
+
+    // true = verfügbar, false = durch Task blockiert
+    @Column(nullable = false)
+    private boolean availability = true;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manager_id")
     private Manager manager;
 
-    @PrePersist
-    public void assignRole() {
-        this.setRole("employee");
-    }
+    @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TaskAssignment> assignments = new ArrayList<>();
 }

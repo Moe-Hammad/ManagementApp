@@ -15,9 +15,6 @@ import java.util.List;
 @Table(name = "managers")
 public class Manager extends User {
 
-    @Column(nullable = false)
-    private String role = "manager";
-
     @OneToMany(
             mappedBy = "manager",
             cascade = CascadeType.ALL,
@@ -25,10 +22,14 @@ public class Manager extends User {
     )
     private List<Employee> employees = new ArrayList<>();
 
-    @PrePersist
-    public void assignRole() {
-        this.setRole("manager");
-    }
+    @OneToMany(
+            mappedBy = "manager",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Task> tasks = new ArrayList<>();
+
+    // Convenience-Methoden
 
     public void addEmployee(Employee employee) {
         if (!employees.contains(employee)) {
@@ -40,6 +41,19 @@ public class Manager extends User {
     public void removeEmployee(Employee employee) {
         if (employees.remove(employee)) {
             employee.setManager(null);
+        }
+    }
+
+    public void addTask(Task task) {
+        if (!tasks.contains(task)) {
+            tasks.add(task);
+            task.setManager(this);
+        }
+    }
+
+    public void removeTask(Task task) {
+        if (tasks.remove(task)) {
+            task.setManager(null);
         }
     }
 }
