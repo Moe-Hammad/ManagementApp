@@ -1,14 +1,16 @@
 package com.momo.backend.Repository;
 
-import com.momo.backend.entity.Employee;
-import com.momo.backend.entity.Manager;
-import com.momo.backend.repository.EmployeeRepository;
-import com.momo.backend.repository.UserRepository;
+import com.momo.backend.entity.*;
+import com.momo.backend.entity.enums.CalendarEntryType;
+import com.momo.backend.entity.enums.LeaveStatus;
+import com.momo.backend.repository.*;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -130,5 +132,115 @@ class EmployeeRepositoryTest {
 
         assertNotNull(found);
         assertTrue(found.isEmpty());
+    }
+
+
+    // =====================================================
+    // NEUE TESTS: CalendarEntries & LeaveRequests
+    // =====================================================
+
+    private Employee createEmployeeWithManager() {
+        Manager m = new Manager();
+        m.setFirstName("Boss");
+        m.setLastName("Man");
+        m.setEmail("boss@mail.com");
+        m.setPassword("123");
+        userRepository.save(m);
+
+        Employee e = new Employee();
+        e.setFirstName("Tom");
+        e.setLastName("Worker");
+        e.setEmail("tom@mail.com");
+        e.setPassword("123");
+        e.setManager(m);
+
+        userRepository.save(e);
+        return e;
+    }
+
+    // -----------------------------------------------
+    // CalendarEntries by Manager
+    // -----------------------------------------------
+    @Test
+    void testFindCalendarEntriesByManagerId() {
+        Employee emp = createEmployeeWithManager();
+
+        CalendarEntry entry = new CalendarEntry();
+        entry.setEmployee(emp);
+        entry.setType(CalendarEntryType.SICK);
+        entry.setStart(LocalDateTime.now());
+        entry.setEnd(LocalDateTime.now().plusHours(4));
+
+        emp.getCalendarEntries().add(entry);
+        userRepository.save(emp);
+
+        List<CalendarEntry> results =
+                employeeRepository.findCalendarEntriesByManagerId(emp.getManager().getId());
+
+        assertEquals(1, results.size());
+        assertEquals(CalendarEntryType.SICK, results.getFirst().getType());
+    }
+
+    @Test
+    void testFindCalendarEntriesByManagerId_NoEntries() {
+        Employee emp = createEmployeeWithManager();
+
+        List<CalendarEntry> results =
+                employeeRepository.findCalendarEntriesByManagerId(emp.getManager().getId());
+
+        assertTrue(results.isEmpty());
+    }
+
+    // -----------------------------------------------
+    // LeaveRequests by Manager
+    // -----------------------------------------------
+    @Test
+    void testFindLeaveRequestsByManagerId() {
+        Employee emp = createEmployeeWithManager();
+
+        LeaveRequest req = new LeaveRequest();
+        req.setEmployee(emp);
+        req.setReason("Urlaub");
+        req.setStartDate(LocalDateTime.now().plusDays(1));
+        req.setEndDate(LocalDateTime.now().plusDays(3));
+        req.setStatus(LeaveStatus.PENDING);
+
+        emp.getLeaveRequests().add(req);
+        userRepository.save(emp);
+
+        List<LeaveRequest> results =
+                employeeRepository.findLeaveRequestsByManagerId(emp.getManager().getId());
+
+        assertEquals(1, results.size());
+        assertEquals("Urlaub", results.getFirst().getReason());
+    }
+
+    @Test
+    void testFindLeaveRequestsByManagerId_NoRequests() {
+        Employee emp = createEmployeeWithManager();
+
+        List<LeaveRequest> results =
+                employeeRepository.findLeaveRequestsByManagerId(emp.getManager().getId());
+
+        assertTrue(results.isEmpty());
+    }
+
+    // -----------------------------------------------
+    // Manager does NOT exist
+    // -----------------------------------------------
+    @Test
+    void testFindCalendarEntriesByManagerId_ManagerDoesNotExist() {
+        List<CalendarEntry> results =
+                employeeRepository.findCalendarEntriesByManagerId(UUID.randomUUID());
+
+        assertTrue(results.isEmpty());
+    }
+
+    @Test
+    void testFindLeaveRequestsByManagerId_ManagerDoesNotExist() {
+        List<LeaveRequest> results =
+                employeeRepository.findLeaveRequestsByManagerId(UUID.randomUUID());
+
+        assertTrue(results.isEmpty());
     }
 }
