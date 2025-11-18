@@ -26,20 +26,23 @@ public class Task {
     @ManyToOne(optional = false)
     private Manager manager;
 
+    @Column(nullable = false)
     private String location;
+
+    @Column(nullable = false)
     private int requiredEmployees;
 
-    @Column(name = "start_time")
+    @Column(nullable = false,name = "start_time")
     private LocalDateTime start;
 
-    @Column(name = "end_time")
+    @Column(nullable = false, name = "end_time")
     private LocalDateTime end;
 
 
     // Bis wann Employees reagieren dürfen
     private LocalDateTime responseDeadline;
 
-    @OneToMany(mappedBy = "task", cascade = ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "task", cascade = ALL, orphanRemoval = true )
     private List<TaskAssignment> assignments = new ArrayList<>();
 
     // Convenience-Methoden
