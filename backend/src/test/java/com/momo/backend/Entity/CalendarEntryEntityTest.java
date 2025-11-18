@@ -6,12 +6,14 @@ import com.momo.backend.entity.Employee;
 import com.momo.backend.entity.Task;
 import com.momo.backend.entity.enums.CalendarEntryType;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@DataJpaTest
 class CalendarEntryEntityTest {
 
     @Test
