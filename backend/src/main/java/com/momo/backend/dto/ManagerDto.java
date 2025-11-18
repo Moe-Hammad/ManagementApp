@@ -1,4 +1,4 @@
-package com.momo.backend.dto.Backend;
+package com.momo.backend.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.momo.backend.entity.Employee;

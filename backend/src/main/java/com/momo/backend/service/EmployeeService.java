@@ -1,7 +1,7 @@
 package com.momo.backend.service;
 
-import com.momo.backend.dto.Backend.EmployeeDto;
-import com.momo.backend.dto.Backend.ManagerDto;
+import com.momo.backend.dto.EmployeeDto;
+import com.momo.backend.dto.ManagerDto;
 
 import java.util.List;
 import java.util.UUID;

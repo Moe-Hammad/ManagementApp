@@ -1,6 +1,6 @@
 package com.momo.backend.mapper;
 
-import com.momo.backend.dto.Backend.ManagerDto;
+import com.momo.backend.dto.ManagerDto;
 import com.momo.backend.entity.Manager;
 import org.mapstruct.Mapper;
 

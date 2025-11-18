@@ -6,6 +6,7 @@ target/
 
 ### PW ###
 application.properties
+.env
 
 ### STS ###
 .apt_generated

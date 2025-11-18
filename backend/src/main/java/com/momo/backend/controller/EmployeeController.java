@@ -1,6 +1,6 @@
 package com.momo.backend.controller;
 
-import com.momo.backend.dto.Backend.EmployeeDto;
+import com.momo.backend.dto.EmployeeDto;
 import com.momo.backend.service.EmployeeService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -1,7 +1,7 @@
 package com.momo.backend.service.implementation;
 
-import com.momo.backend.dto.Backend.EmployeeDto;
-import com.momo.backend.dto.Backend.ManagerDto;
+import com.momo.backend.dto.EmployeeDto;
+import com.momo.backend.dto.ManagerDto;
 import com.momo.backend.entity.Employee;
 import com.momo.backend.entity.Manager;
 import com.momo.backend.exception.ResourceNotFoundException;
