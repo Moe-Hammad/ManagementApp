@@ -1,29 +1,25 @@
 package com.momo.backend.controller;
 
-import com.momo.backend.dto.Login.LoginRequest;
+
 import com.momo.backend.dto.Login.LoginResponse;
 import com.momo.backend.service.implementation.LoginService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/auth")
-
-
+@RequiredArgsConstructor
+@RequestMapping("/auth")
 public class AuthController {
 
     private final LoginService loginService;
 
-    public AuthController(LoginService loginService) {
-        this.loginService = loginService;
-    }
-
-    @GetMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest request) {
-        return loginService.login(request);
-    }
-    @GetMapping
-    public String welcome() {
-        return "Welcome";
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+            @RequestHeader("Authorization") String authHeader
+    ) {
+        LoginResponse response = loginService.loginWithBasic(authHeader);
+        return ResponseEntity.ok(response);
     }
 }
+
