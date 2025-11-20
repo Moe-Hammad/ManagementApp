@@ -39,9 +39,21 @@ public abstract class User {
 
     @PrePersist
     @PreUpdate
-    private void hashPassword() {
+    private void prepareForSave() {
+        assignDefaultRole();
         if (password != null && !isBcryptHash(password)) {
             this.password = new BCryptPasswordEncoder().encode(password);
+        }
+    }
+
+    private void assignDefaultRole() {
+        if (this.role != null) {
+            return;
+        }
+        if (this instanceof com.momo.backend.entity.Manager) {
+            this.role = UserRole.MANAGER;
+        } else if (this instanceof com.momo.backend.entity.Employee) {
+            this.role = UserRole.EMPLOYEE;
         }
     }
 

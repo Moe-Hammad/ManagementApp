@@ -24,13 +24,12 @@ public class JwtTokenProvider {
 
     @PostConstruct
     void init() {
-        System.out.println("Loaded JWT_TTL ms: " + expirationMs);
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("JWT_SECRET is not set. Provide env or application.properties value.");
+        }
 
         byte[] keyBytes;
         try {
-            if(Objects.equals(secret, "")){
-                throw new Error("Secret is not Set.");
-            }
             keyBytes = Base64.getDecoder().decode(secret);
         } catch (IllegalArgumentException ex) {
             keyBytes = secret.getBytes(StandardCharsets.UTF_8);
