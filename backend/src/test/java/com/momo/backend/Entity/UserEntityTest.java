@@ -18,7 +18,7 @@ class UserEntityTest {
         user.setEmail("max@test.com");
         user.setPassword("1234");
 
-        ReflectionTestUtils.invokeMethod(user, "hashPassword");
+        ReflectionTestUtils.invokeMethod(user, "prepareForSave");
 
         assertNotEquals("1234", user.getPassword());
         assertTrue(user.getPassword().startsWith("$2"));
@@ -29,7 +29,7 @@ class UserEntityTest {
         FakeUser user = new FakeUser();
         user.setPassword("$2b$10$abcdefghijklmnopqrstuv");
 
-        ReflectionTestUtils.invokeMethod(user, "hashPassword");
+        ReflectionTestUtils.invokeMethod(user, "prepareForSave");
 
         assertEquals("$2b$10$abcdefghijklmnopqrstuv", user.getPassword());
     }
