@@ -63,6 +63,7 @@ public class AuthController {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 
+
         return ResponseEntity.ok(buildResponse(user));
     }
 
@@ -100,8 +101,7 @@ public class AuthController {
     }
 
     private LoginResponse buildResponse(User user) {
-        String role = (user instanceof Manager) ? "MANAGER" :
-                (user instanceof Employee) ? "EMPLOYEE" : "USER";
+        String role = (user instanceof Manager) ? "MANAGER" :"EMPLOYEE";
         String token = tokenProvider.generateToken(
                 user.getEmail(),
                 Map.of("uid", user.getId().toString(), "role", role)
@@ -111,7 +111,7 @@ public class AuthController {
 
     private String normalizeRole(String role) {
         if (role == null || role.isBlank()) {
-            return "MANAGER";
+            return "EMPLOYEE";
         }
         return role.trim().toUpperCase();
     }
