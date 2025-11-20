@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -31,6 +32,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
+        System.out.println("URI: " + request.getRequestURI());
+        System.out.println("ServletPath: " + request.getServletPath());
+        System.out.println("ContextPath: " + request.getContextPath());
+
+
+        if (request.getServletPath().equals("/api/auth/login")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // Header lesen — Standard: "Authorization: Bearer <token>"
         String header = request.getHeader("Authorization");
 
@@ -44,14 +55,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             if (tokenProvider.validateToken(token)) {
 
                 // Claims aus dem Token ziehen
-                var id = tokenProvider.getUserId(token);
-                var type = tokenProvider.getUserType(token);
+                UUID id = tokenProvider.getUserId(token);
+                String type = tokenProvider.getUserType(token);
 
                 // Unser CustomUser-Objekt
                 SecurityUser user = new SecurityUser(id, type);
 
                 // Authentication Objekt erstellen
-                var auth = new UsernamePasswordAuthenticationToken(
+                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                         user,            // Principal
                         null,            // Credentials (nicht nötig)
                         user.getAuthorities()   // "type" als Authority

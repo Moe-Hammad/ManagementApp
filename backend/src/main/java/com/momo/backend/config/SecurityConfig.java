@@ -30,9 +30,10 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // BASIC Auth nur für /auth/login
+                // BASIC Auth nur für /api/auth/login
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login").authenticated() // BASIC
+                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers("/api/auth/register").permitAll()
                         .anyRequest().authenticated()
                 )
 

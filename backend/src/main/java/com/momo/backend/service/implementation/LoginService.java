@@ -1,62 +1,72 @@
 package com.momo.backend.service.implementation;
 
-import com.momo.backend.dto.Login.LoginRequest;
 import com.momo.backend.dto.Login.LoginResponse;
 import com.momo.backend.entity.Manager;
+import com.momo.backend.entity.User;
 import com.momo.backend.repository.UserRepository;
 import com.momo.backend.service.security.JwtTokenProvider;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import com.momo.backend.util.UserFunctions;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 @Service
+@RequiredArgsConstructor
+
 public class LoginService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
-    private UserFunctions util;
 
-    public LoginService(UserRepository userRepository,
-                        PasswordEncoder passwordEncoder,
-                        JwtTokenProvider tokenProvider) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.tokenProvider = tokenProvider;
+    public static String getUserType(User user) {
+        return (user instanceof Manager) ? "MANAGER" : "EMPLOYEE";
     }
+
+
 
     public LoginResponse loginWithBasic(String authHeader) {
-
-        if (authHeader == null || !authHeader.startsWith("Basic ")) {
-            throw new RuntimeException("Missing or invalid Authorization header");
-        }
-
-        // "Basic dXNlckBtYWlsLmNvbTpwYXNzMTIz" -> Base64 decode
-        String base64Credentials = authHeader.substring("Basic ".length()).trim();
-        String credentials = new String(Base64.getDecoder().decode(base64Credentials));
-
-        // split email:password
-        String[] parts = credentials.split(":");
-        if (parts.length != 2) {
-            throw new RuntimeException("Invalid basic auth format");
-        }
-
-        String email = parts[0];
-        String password = parts[1];
-
-        var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("Invalid password");
-        }
-
-        String token = tokenProvider.generateToken(user.getId(), util.getUserType(user));
-
-        return new LoginResponse(token, user.getId().toString(), util.getUserType(user));
+    // 1. Header prüfen
+    if (authHeader == null || !authHeader.toLowerCase().startsWith("basic ")) {
+        throw new RuntimeException("Missing or invalid Authorization header");
     }
+
+    // 2. "Basic " abschneiden
+    String base64Credentials = authHeader.substring("Basic ".length()).trim();
+
+    // 3. Base64 decodieren
+    byte[] decodedBytes = Base64.getDecoder().decode(base64Credentials);
+    String credentials = new String(decodedBytes, StandardCharsets.UTF_8);
+
+    // 4. username:password aufsplitten
+    String[] values = credentials.split(":", 2);
+    if (values.length != 2) {
+        throw new RuntimeException("Invalid Basic authentication token");
+    }
+
+    String username = values[0];
+    String password = values[1];
+
+    // 5. User laden (z. B. per E-Mail oder Username)
+    User user = userRepository.findByEmail(username)   // oder findByUsername(...)
+            .orElseThrow(() -> new RuntimeException("Error: Invalid Login"));
+
+    // 6. Passwort prüfen
+    if (!passwordEncoder.matches(password, user.getPassword())) {
+        throw new RuntimeException("Error: Invalid Login");
+    }
+
+    // 7. User-Typ ermitteln (falls vorhanden)
+    String userType = getUserType(user);;
+
+    // 8. JWT generieren
+    String token = tokenProvider.generateToken(user.getId(), userType);
+
+    // 9. Response bauen
+    return new LoginResponse(token, user.getId().toString(), userType);
+}
 
 
 //    public LoginResponse login(LoginRequest request) {
