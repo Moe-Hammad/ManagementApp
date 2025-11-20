@@ -9,7 +9,6 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.Random;
 
@@ -18,7 +17,6 @@ import java.util.Random;
 public class DataLoader {
 
     private final ManagerRepository managerRepo;
-    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private final Random random = new Random();
 
     @Bean

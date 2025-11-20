@@ -14,11 +14,11 @@ import java.nio.charset.StandardCharsets;
 @Component
 public class JwtTokenProvider {
 
-    @Value("${JWT_SECRET}")
+    @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${JWT_TTL}") // 24h default
-    private long  expirationMs;
+    @Value("${jwt.ttl}")
+    private long expirationMs;
 
     private SecretKey key;
 

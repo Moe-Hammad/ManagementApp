@@ -14,7 +14,6 @@ import com.momo.backend.repository.EmployeeRepository;
 import com.momo.backend.repository.ManagerRepository;
 import com.momo.backend.service.interfaces.EmployeeService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,7 +28,6 @@ public class EmployeeServiceImple implements EmployeeService {
     private final ManagerRepository managerRepository;
     private final EmployeeMapper employeeMapper;
     private final ManagerMapper managerMapper;
-    private final PasswordEncoder passwordEncoder;
 
 
     @Override
