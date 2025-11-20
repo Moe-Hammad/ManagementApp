@@ -18,8 +18,9 @@ public class AuthController {
         this.loginService = loginService;
     }
 
-    @GetMapping("/login")
+    @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest request) {
+        System.out.println(request);
         return loginService.login(request);
     }
     @GetMapping

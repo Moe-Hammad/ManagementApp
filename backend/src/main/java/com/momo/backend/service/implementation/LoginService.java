@@ -23,8 +23,6 @@ public class LoginService {
         this.tokenProvider = tokenProvider;
     }
 
-
-
     public LoginResponse login(LoginRequest request) {
 
         String userType = null;
