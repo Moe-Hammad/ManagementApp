@@ -3,6 +3,7 @@ package com.momo.backend.Repository;
 import com.momo.backend.entity.Employee;
 import com.momo.backend.entity.Manager;
 import com.momo.backend.entity.User;
+import com.momo.backend.entity.enums.UserRole;
 import com.momo.backend.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,7 @@ class UserRepositoryTest {
         e.setLastName("Mustermann");
         e.setEmail("max@test.com");
         e.setPassword("12345");
+        e.setRole(UserRole.EMPLOYEE);
 
         userRepository.save(e);
 

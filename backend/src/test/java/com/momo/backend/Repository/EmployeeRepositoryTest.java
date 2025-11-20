@@ -3,6 +3,7 @@ package com.momo.backend.Repository;
 import com.momo.backend.entity.*;
 import com.momo.backend.entity.enums.CalendarEntryType;
 import com.momo.backend.entity.enums.LeaveStatus;
+import com.momo.backend.entity.enums.UserRole;
 import com.momo.backend.repository.*;
 
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,7 @@ class EmployeeRepositoryTest {
         m.setLastName("Boss");
         m.setEmail("boss@test.com");
         m.setPassword("123");
+        m.setRole(UserRole.MANAGER);
         userRepository.save(m);
 
         // Employees erstellen
@@ -46,6 +48,7 @@ class EmployeeRepositoryTest {
         e1.setLastName("Worker");
         e1.setEmail("max@test.com");
         e1.setPassword("abc");
+        e1.setRole(UserRole.EMPLOYEE);
         e1.setManager(m);
 
         Employee e2 = new Employee();
@@ -53,6 +56,7 @@ class EmployeeRepositoryTest {
         e2.setLastName("Worker");
         e2.setEmail("lisa@test.com");
         e2.setPassword("xyz");
+        e2.setRole(UserRole.EMPLOYEE);
         e2.setManager(m);
 
         userRepository.save(e1);
@@ -76,6 +80,7 @@ class EmployeeRepositoryTest {
         m.setLastName("Boss");
         m.setEmail("empty@test.com");
         m.setPassword("123");
+        m.setRole(UserRole.MANAGER);
         userRepository.save(m);
 
         List<Employee> found = employeeRepository.findByManagerId(m.getId());
@@ -108,6 +113,7 @@ class EmployeeRepositoryTest {
         a.setLastName("Boss");
         a.setEmail("a@test.com");
         a.setPassword("123");
+        a.setRole(UserRole.MANAGER);
         userRepository.save(a);
 
         // Manager B
@@ -116,6 +122,7 @@ class EmployeeRepositoryTest {
         b.setLastName("Boss");
         b.setEmail("b@test.com");
         b.setPassword("123");
+        b.setRole(UserRole.MANAGER);
         userRepository.save(b);
 
         // Employee gehört nur A
@@ -124,6 +131,7 @@ class EmployeeRepositoryTest {
         e.setLastName("Other");
         e.setEmail("peter@test.com");
         e.setPassword("pass");
+        e.setRole(UserRole.EMPLOYEE);
         e.setManager(a);
         userRepository.save(e);
 
@@ -145,6 +153,7 @@ class EmployeeRepositoryTest {
         m.setLastName("Man");
         m.setEmail("boss@mail.com");
         m.setPassword("123");
+        m.setRole(UserRole.MANAGER);
         userRepository.save(m);
 
         Employee e = new Employee();
@@ -152,6 +161,7 @@ class EmployeeRepositoryTest {
         e.setLastName("Worker");
         e.setEmail("tom@mail.com");
         e.setPassword("123");
+        e.setRole(UserRole.EMPLOYEE);
         e.setManager(m);
 
         userRepository.save(e);

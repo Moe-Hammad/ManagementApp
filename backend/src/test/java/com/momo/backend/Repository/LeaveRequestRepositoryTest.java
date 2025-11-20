@@ -4,6 +4,7 @@ import com.momo.backend.entity.Employee;
 import com.momo.backend.entity.LeaveRequest;
 import com.momo.backend.entity.Manager;
 import com.momo.backend.entity.enums.LeaveStatus;
+import com.momo.backend.entity.enums.UserRole;
 import com.momo.backend.repository.LeaveRequestRepository;
 import com.momo.backend.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,7 @@ class LeaveRequestRepositoryTest {
         manager.setLastName("Man");
         manager.setEmail("boss@mail.com");
         manager.setPassword("aaa");
+        manager.setRole(UserRole.MANAGER);
         userRepository.save(manager);
 
         Employee emp = new Employee();
@@ -38,6 +40,7 @@ class LeaveRequestRepositoryTest {
         emp.setLastName("Worker");
         emp.setEmail("emp@mail.com");
         emp.setPassword("bbb");
+        emp.setRole(UserRole.EMPLOYEE);
         emp.setManager(manager);
         userRepository.save(emp);
 

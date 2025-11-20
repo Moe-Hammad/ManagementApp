@@ -2,6 +2,7 @@ package com.momo.backend.Repository;
 
 import com.momo.backend.entity.*;
 import com.momo.backend.entity.enums.AssignmentStatus;
+import com.momo.backend.entity.enums.UserRole;
 import com.momo.backend.repository.TaskAssignmentRepository;
 import com.momo.backend.repository.TaskRepository;
 import com.momo.backend.repository.UserRepository;
@@ -45,6 +46,7 @@ class TaskAssignmentRepositoryTest {
         m.setLastName("Man");
         m.setEmail("boss@mail.com");
         m.setPassword("1234");
+        m.setRole(UserRole.MANAGER);
         userRepository.save(m);
 
         // Task
@@ -56,6 +58,7 @@ class TaskAssignmentRepositoryTest {
         e.setLastName("Worker");
         e.setEmail("tim@mail.com");
         e.setPassword("1234");
+        e.setRole(UserRole.EMPLOYEE);
         userRepository.save(e);
 
         // Assignment
@@ -81,6 +84,7 @@ class TaskAssignmentRepositoryTest {
         m.setLastName("Test");
         m.setEmail("boss@test.com");
         m.setPassword("1234");
+        m.setRole(UserRole.MANAGER);
         userRepository.save(m);
 
         Task task = createTask(m);
@@ -90,6 +94,7 @@ class TaskAssignmentRepositoryTest {
         e.setLastName("B");
         e.setEmail("a@b.com");
         e.setPassword("123");
+        e.setRole(UserRole.EMPLOYEE);
         userRepository.save(e);
 
         TaskAssignment ta = new TaskAssignment();
@@ -111,6 +116,7 @@ class TaskAssignmentRepositoryTest {
         m.setLastName("Test");
         m.setEmail("boss2@test.com");
         m.setPassword("1234");
+        m.setRole(UserRole.MANAGER);
         userRepository.save(m);
 
         Task task = createTask(m);
@@ -120,6 +126,7 @@ class TaskAssignmentRepositoryTest {
         e.setLastName("D");
         e.setEmail("c@d.com");
         e.setPassword("123");
+        e.setRole(UserRole.EMPLOYEE);
         userRepository.save(e);
 
         TaskAssignment ta = new TaskAssignment();
@@ -141,6 +148,7 @@ class TaskAssignmentRepositoryTest {
         e.setLastName("Y");
         e.setEmail("zy@mail.com");
         e.setPassword("123");
+        e.setRole(UserRole.EMPLOYEE);
         userRepository.save(e);
 
         TaskAssignment ta = new TaskAssignment();
@@ -160,6 +168,7 @@ class TaskAssignmentRepositoryTest {
         m.setLastName("KK");
         m.setEmail("mm@mail.com");
         m.setPassword("1234");
+        m.setRole(UserRole.MANAGER);
         userRepository.save(m);
 
         Task task = createTask(m);

@@ -2,6 +2,7 @@ package com.momo.backend.config;
 
 import com.momo.backend.entity.Employee;
 import com.momo.backend.entity.Manager;
+import com.momo.backend.entity.enums.UserRole;
 import com.momo.backend.repository.ManagerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationRunner;
@@ -37,6 +38,7 @@ public class DataLoader {
                 manager.setLastName("Boss");
                 manager.setEmail("manager" + i + "@mail.com");
                 manager.setPassword("pass123"); // wird automatisch gehashed
+                manager.setRole(UserRole.MANAGER);
 
                 // Speichern → wichtig: damit Manager in Persistence Context ist
                 managerRepo.save(manager);
@@ -52,6 +54,7 @@ public class DataLoader {
                     e.setHourlyRate(15.0 + j);
                     e.setAvailability(random.nextBoolean());
                     e.setPassword("pass123"); // wird gehashed
+                    e.setRole(UserRole.EMPLOYEE);
 
                     manager.addEmployee(e); // Beziehung setzen
                 }

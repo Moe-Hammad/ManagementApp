@@ -2,6 +2,7 @@ package com.momo.backend.Repository;
 
 import com.momo.backend.entity.Manager;
 import com.momo.backend.entity.Task;
+import com.momo.backend.entity.enums.UserRole;
 import com.momo.backend.repository.TaskRepository;
 import com.momo.backend.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,7 @@ class TaskRepositoryTest {
         manager.setLastName("Man");
         manager.setEmail("boss@mail.com");
         manager.setPassword("1234");
+        manager.setRole(UserRole.MANAGER);
         userRepository.save(manager);
 
         Task task = validTask(manager);
@@ -62,6 +64,7 @@ class TaskRepositoryTest {
         manager.setLastName("Chef");
         manager.setEmail("karl@mail.com");
         manager.setPassword("1234");
+        manager.setRole(UserRole.MANAGER);
         userRepository.save(manager);
 
         Task task = validTask(manager);
@@ -96,6 +99,7 @@ class TaskRepositoryTest {
         m.setLastName("B");
         m.setEmail("boss@mail.com");
         m.setPassword("1234");
+        m.setRole(UserRole.MANAGER);
         userRepository.save(m);
 
         Task task = validTask(m);
@@ -114,6 +118,7 @@ class TaskRepositoryTest {
         m.setLastName("B");
         m.setEmail("boss@mail.com");
         m.setPassword("1234");
+        m.setRole(UserRole.MANAGER);
         userRepository.save(m);
 
         Task task = validTask(m);
@@ -132,6 +137,7 @@ class TaskRepositoryTest {
         m.setLastName("B");
         m.setEmail("boss@mail.com");
         m.setPassword("1234");
+        m.setRole(UserRole.MANAGER);
         userRepository.save(m);
 
         Task task = validTask(m);

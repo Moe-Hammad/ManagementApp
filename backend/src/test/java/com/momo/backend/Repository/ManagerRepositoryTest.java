@@ -1,6 +1,7 @@
 package com.momo.backend.Repository;
 
 import com.momo.backend.entity.*;
+import com.momo.backend.entity.enums.UserRole;
 import com.momo.backend.repository.ManagerRepository;
 import com.momo.backend.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,7 @@ class ManagerRepositoryTest {
         m.setLastName("Hansen");
         m.setEmail("tom@office.com");
         m.setPassword("1234"); // wird gehashed
+        m.setRole(UserRole.MANAGER);
         // Über das UserRepository speichern (wegen Vererbung)
         userRepository.save(m);
 
@@ -47,6 +49,7 @@ class ManagerRepositoryTest {
         manager.setLastName("Schmidt");
         manager.setEmail("anna@manager.com");
         manager.setPassword("secret");
+        manager.setRole(UserRole.MANAGER);
 
         // Employees anlegen
         Employee e1 = new Employee();
@@ -54,12 +57,14 @@ class ManagerRepositoryTest {
         e1.setLastName("Müller");
         e1.setEmail("max@emp.com");
         e1.setPassword("123");
+        e1.setRole(UserRole.EMPLOYEE);
 
         Employee e2 = new Employee();
         e2.setFirstName("Sarah");
         e2.setLastName("Becker");
         e2.setEmail("sarah@emp.com");
         e2.setPassword("123");
+        e2.setRole(UserRole.EMPLOYEE);
 
         // Relationship setzen
         manager.addEmployee(e1);
@@ -93,6 +98,7 @@ class ManagerRepositoryTest {
         manager.setLastName("Krüger");
         manager.setEmail("hans@manager.com");
         manager.setPassword("1234");
+        manager.setRole(UserRole.MANAGER);
 
         Employee emp = new Employee();
 
@@ -100,6 +106,7 @@ class ManagerRepositoryTest {
         emp.setLastName("Winter");
         emp.setEmail("paul@emp.com");
         emp.setPassword("123");
+        emp.setRole(UserRole.EMPLOYEE);
 
         manager.addEmployee(emp);
 
