@@ -28,13 +28,15 @@ public class DataLoader {
                 return;
             }
 
-            for (int i = 1; i <= 2; i++) {
+            String[] managerEmails = {"manager@gmail.com", "manager2@mail.com"};
+
+            for (int i = 0; i < managerEmails.length; i++) {
 
                 // Manager erstellen
                 Manager manager = new Manager();
-                manager.setFirstName("Manager" + i);
+                manager.setFirstName("Manager" + (i + 1));
                 manager.setLastName("Boss");
-                manager.setEmail("manager" + i + "@mail.com");
+                manager.setEmail(managerEmails[i]);
                 manager.setPassword("pass123"); // wird automatisch gehashed
                 manager.setRole(UserRole.MANAGER);
 
@@ -48,7 +50,7 @@ public class DataLoader {
                     Employee e = new Employee();
                     e.setFirstName("Employee" + j);
                     e.setLastName("Worker");
-                    e.setEmail("emp" + i + "_" + j + "@mail.com");
+                    e.setEmail("emp" + (i + 1) + "_" + j + "@mail.com");
                     e.setHourlyRate(15.0 + j);
                     e.setAvailability(random.nextBoolean());
                     e.setPassword("pass123"); // wird gehashed
