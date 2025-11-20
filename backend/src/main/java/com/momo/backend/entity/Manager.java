@@ -1,5 +1,6 @@
 package com.momo.backend.entity;
 
+import com.momo.backend.entity.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,8 +11,8 @@ import java.util.List;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @Entity
+@NoArgsConstructor
 @Table(name = "managers")
 public class Manager extends User {
 
@@ -56,4 +57,5 @@ public class Manager extends User {
             task.setManager(null);
         }
     }
+
 }

@@ -1,5 +1,7 @@
 package com.momo.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.momo.backend.entity.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -31,15 +33,32 @@ public abstract class User {
     @Column(nullable = false)
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserRole role;
+
     @PrePersist
     @PreUpdate
-    private void hashPassword() {
+    private void prepareForSave() {
+        assignDefaultRole();
         if (password != null && !isBcryptHash(password)) {
             this.password = new BCryptPasswordEncoder().encode(password);
+        }
+    }
+
+    private void assignDefaultRole() {
+        if (this.role != null) {
+            return;
+        }
+        if (this instanceof com.momo.backend.entity.Manager) {
+            this.role = UserRole.MANAGER;
+        } else if (this instanceof com.momo.backend.entity.Employee) {
+            this.role = UserRole.EMPLOYEE;
         }
     }
 
     private boolean isBcryptHash(String pw) {
         return pw.startsWith("$2a$") || pw.startsWith("$2b$") || pw.startsWith("$2y$");
     }
+
 }

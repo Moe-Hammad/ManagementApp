@@ -1,6 +1,7 @@
 package com.momo.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.momo.backend.entity.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,6 +16,7 @@ import java.util.List;
 @Entity
 @Table(name = "employees")
 public class Employee extends User {
+
 
     private Double hourlyRate;
 
