@@ -2,6 +2,7 @@ package com.momo.backend.Repository;
 
 import com.momo.backend.entity.*;
 import com.momo.backend.entity.enums.CalendarEntryType;
+import com.momo.backend.entity.enums.UserRole;
 import com.momo.backend.repository.CalendarEntryRepository;
 import com.momo.backend.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,7 @@ class CalendarEntryRepositoryTest {
         m.setLastName("Boss");
         m.setEmail(name.toLowerCase() + "@mail.com");
         m.setPassword("123");
+        m.setRole(UserRole.MANAGER);
         return userRepo.save(m);
     }
 
@@ -38,6 +40,7 @@ class CalendarEntryRepositoryTest {
         e.setLastName("Worker");
         e.setEmail(name.toLowerCase() + "@mail.com");
         e.setPassword("123");
+        e.setRole(UserRole.EMPLOYEE);
         e.setManager(manager);
         return userRepo.save(e);
     }

@@ -15,7 +15,7 @@ import java.util.UUID;
 @RequestMapping("/api/employees")
 public class EmployeeController {
 
-    private EmployeeService employeeService;
+    private final EmployeeService employeeService;
 
     // Build and Employee Rest Api
     @PostMapping 

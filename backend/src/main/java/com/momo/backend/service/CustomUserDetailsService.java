@@ -1,7 +1,7 @@
 package com.momo.backend.service;
 
-import com.momo.backend.entity.Manager;
 import com.momo.backend.entity.User;
+import com.momo.backend.entity.enums.UserRole;
 import com.momo.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,7 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                                 .orElseThrow(() -> new UsernameNotFoundException(
                                                 "User with email " + email + " not found"));
 
-                String role = (user instanceof Manager) ? "MANAGER" : "EMPLOYEE";
+                String role = user.getRole() != null ? user.getRole().name() : UserRole.EMPLOYEE.name();
 
                 return org.springframework.security.core.userdetails.User
                                 .withUsername(user.getEmail())
