@@ -1,6 +1,5 @@
-package com.momo.backend.service.security;
+package com.momo.backend.service;
 
-import com.momo.backend.entity.Employee;
 import com.momo.backend.entity.Manager;
 import com.momo.backend.entity.User;
 import com.momo.backend.repository.UserRepository;

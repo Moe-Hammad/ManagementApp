@@ -2,7 +2,7 @@ package com.momo.backend.controller;
 
 import com.momo.backend.dto.EmployeeDto;
 import com.momo.backend.dto.ManagerDto;
-import com.momo.backend.service.ManagerService;
+import com.momo.backend.service.interfaces.ManagerService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

@@ -1,6 +1,6 @@
 package com.momo.backend.config;
 
-import com.momo.backend.service.security.CustomUserDetailsService;
+import com.momo.backend.service.CustomUserDetailsService;
 import com.momo.backend.service.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
