@@ -40,8 +40,6 @@ public class AuthController {
             @RequestHeader(value = "Authorization", required = true) String authHeader) {
 
         LoginRequest request = authService.decode(authHeader);
-        System.out.println("Authorization Header: " + authHeader);
-
         return ResponseEntity.ok(authService.login(request));
     }
 
