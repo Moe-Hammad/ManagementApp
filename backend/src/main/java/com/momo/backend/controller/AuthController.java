@@ -35,10 +35,16 @@ public class AuthController {
                     content = @Content(schema = @Schema(implementation = LoginResponse.class))),
             @ApiResponse(responseCode = "401", description = "Ungültige Zugangsdaten")
     })
-    public ResponseEntity<LoginResponse> login(@ LoginRequest request) {
+
+    public ResponseEntity<LoginResponse> login(
+            @RequestHeader(value = "Authorization", required = true) String authHeader) {
+
+        LoginRequest request = authService.decode(authHeader);
+        System.out.println("Authorization Header: " + authHeader);
 
         return ResponseEntity.ok(authService.login(request));
     }
+
 
     @PostMapping("/register")
     @Operation(

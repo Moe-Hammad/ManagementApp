@@ -8,4 +8,5 @@ import com.momo.backend.dto.Login.RegisterRequest;
 public interface AuthService {
     LoginResponse login(LoginRequest request);
     LoginResponse register(RegisterRequest request);
+    LoginRequest decode (String authHeader);
 }
