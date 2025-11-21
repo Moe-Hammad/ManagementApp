@@ -11,12 +11,14 @@ import com.momo.backend.service.interfaces.UserService;
 import com.momo.backend.service.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.ErrorResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
@@ -45,8 +47,11 @@ public class AuthServiceImple implements AuthService {
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-
+        if(!userService.emailExists(request.getEmail())){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Email not Found.");
+        }
         UserDto userDto = userService.loadUserDtoByEmail(request.getEmail());
+
         return buildResponse(userDto);
     }
 
@@ -66,11 +71,8 @@ public class AuthServiceImple implements AuthService {
         if ("MANAGER".equals(role)) {
             created = managerService.registerManager(request);
 
-        } else if ("EMPLOYEE".equals(role)) {
-            created = employeeService.registerEmployee(request);
-
         } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported role: " + role);
+            created = employeeService.registerEmployee(request);
         }
 
         return buildResponse(created);
