@@ -19,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Base64;
 import java.util.Map;
 
 @Service
@@ -33,6 +34,29 @@ public class AuthServiceImple implements AuthService {
     private final JwtTokenProvider tokenProvider;
 
     // =======================
+    // Decode
+    // =======================
+
+    public LoginRequest decode(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Basic ")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Authorization header");
+        }
+
+        String base64Credentials = authHeader.substring("Basic ".length());
+        String credentials = new String(Base64.getDecoder().decode(base64Credentials));
+
+        String[] parts = credentials.split(":", 2);
+        if (parts.length != 2) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Basic Auth format");
+        }
+
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setEmail(parts[0]);
+        loginRequest.setPassword(parts[1]);
+        return loginRequest;
+    }
+
+    // =======================
     // LOGIN
     // =======================
     public LoginResponse login(LoginRequest request) {
@@ -45,8 +69,8 @@ public class AuthServiceImple implements AuthService {
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-
         UserDto userDto = userService.loadUserDtoByEmail(request.getEmail());
+
         return buildResponse(userDto);
     }
 
@@ -66,11 +90,8 @@ public class AuthServiceImple implements AuthService {
         if ("MANAGER".equals(role)) {
             created = managerService.registerManager(request);
 
-        } else if ("EMPLOYEE".equals(role)) {
-            created = employeeService.registerEmployee(request);
-
         } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported role: " + role);
+            created = employeeService.registerEmployee(request);
         }
 
         return buildResponse(created);
@@ -80,6 +101,7 @@ public class AuthServiceImple implements AuthService {
     // TOKEN BUILDER
     // =======================
     public LoginResponse buildResponse(UserDto user) {
+
 
         String token = tokenProvider.generateToken(
                 user.getEmail(),

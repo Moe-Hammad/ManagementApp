@@ -7,10 +7,7 @@ import com.momo.backend.service.interfaces.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -38,9 +35,16 @@ public class AuthController {
                     content = @Content(schema = @Schema(implementation = LoginResponse.class))),
             @ApiResponse(responseCode = "401", description = "Ungültige Zugangsdaten")
     })
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+
+    public ResponseEntity<LoginResponse> login(
+            @RequestHeader(value = "Authorization", required = true) String authHeader) {
+
+        LoginRequest request = authService.decode(authHeader);
+        System.out.println("Authorization Header: " + authHeader);
+
         return ResponseEntity.ok(authService.login(request));
     }
+
 
     @PostMapping("/register")
     @Operation(
