@@ -30,8 +30,8 @@ export const makeStyles = (isDark: boolean) => {
 
     card: {
       elevation: isDark ? 8 : 4,
-      padding: 24,
       borderRadius: 20,
+      padding: 24,
       backgroundColor: C.glass,
       borderWidth: 1,
       borderColor: C.border,
