@@ -12,8 +12,7 @@ export async function login(email: string, password: string) {
   });
 
   if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || `HTTP ${response.status}`);
+    throw new Error(`E-Mail or Password is incorrect. Code ${response.status}`);
   }
 
   return response.json();

@@ -74,9 +74,6 @@ export default function LoginScreen() {
 
           {error && <Text style={styles.error}>{error}</Text>}
 
-          {loginResponse && (
-            <Text style={styles.error}>{loginResponse.token}</Text>
-          )}
           {loading ? (
             <Spinner />
           ) : (
