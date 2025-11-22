@@ -7,7 +7,7 @@ export const makeStyles = (isDark: boolean) => {
   return StyleSheet.create({
     screen: {
       flex: 1,
-      padding: 24,
+      padding: 20,
       backgroundColor: C.screenbackground,
     },
 
@@ -53,8 +53,8 @@ export const makeStyles = (isDark: boolean) => {
 
     cardWrapper: {
       width: "100%",
-      maxWidth: 420,
-      backgroundColor: C.card, // eigene Farbe!
+      maxWidth: "auto",
+      backgroundColor: C.card,
       padding: 24,
       borderRadius: 20,
       borderWidth: 1,
@@ -86,6 +86,7 @@ export const makeStyles = (isDark: boolean) => {
     error: {
       color: "red",
       marginBottom: 12,
+      marginTop: 10,
     },
 
     centerWrapper: {

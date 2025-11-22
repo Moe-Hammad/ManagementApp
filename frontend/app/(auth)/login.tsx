@@ -1,8 +1,11 @@
+import Spinner from "@/src/components/Spinner";
 import { useAppDispatch } from "@/src/hooks/useRedux";
 import { setCredentials } from "@/src/redux/authSlice";
+import { login } from "@/src/services/api";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
 import { makeStyles } from "@/src/theme/styles";
-import { useState } from "react";
+import { LoginResponse } from "@/src/types/resources";
+import { useEffect, useState } from "react";
 import {
   Keyboard,
   Pressable,
@@ -19,20 +22,37 @@ export default function LoginScreen() {
   const dispatch = useAppDispatch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loginResponse, setLoginResponse] = useState<LoginResponse | null>(
+    null
+  );
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (loginResponse) {
+      setLoading(false);
+    }
+  }, [loginResponse]);
 
   async function handleLogin() {
     setError(null);
+    setLoading(true);
 
-    const token = "FAKE_TOKEN";
-    dispatch(setCredentials({ token }));
+    try {
+      const token = await login(email, password);
+      dispatch(setCredentials(token));
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.centerWrapper}>
         <View style={styles.cardWrapper}>
-          <Text style={styles.title}> Willkommen👋 </Text>
+          <Text style={styles.title}> Willkommen </Text>
 
           <Text style={styles.label}>Email</Text>
           <TextInput
@@ -54,9 +74,16 @@ export default function LoginScreen() {
 
           {error && <Text style={styles.error}>{error}</Text>}
 
-          <Pressable style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Login</Text>
-          </Pressable>
+          {loginResponse && (
+            <Text style={styles.error}>{loginResponse.token}</Text>
+          )}
+          {loading ? (
+            <Spinner />
+          ) : (
+            <Pressable style={styles.button} onPress={handleLogin}>
+              <Text style={styles.buttonText}>Login</Text>
+            </Pressable>
+          )}
         </View>
       </View>
     </TouchableWithoutFeedback>

@@ -24,3 +24,9 @@ export enum UserRole {
   EMPLOYEE = "EMPLOYEE",
   MANAGER = "MANAGER",
 }
+
+export type LoginResponse = {
+  token: string;
+  id: string;
+  userType: UserRole;
+};

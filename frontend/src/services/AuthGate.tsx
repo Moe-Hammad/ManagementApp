@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 import { useAppSelector } from "../hooks/useRedux";
 
 export default function AuthGate({ children }: { children: ReactNode }) {
-  const token = useAppSelector((state) => state.auth.token);
+  const loginResponse = useAppSelector((state) => state.auth.token);
   const segments = useSegments();
 
   const inAuthGroup = segments[0] === "(auth)";
@@ -16,12 +16,12 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   }
 
   // Case 1: kein Token → redirect zum Login
-  if (!token && !inAuthGroup) {
+  if (!loginResponse && !inAuthGroup) {
     return <Redirect href="/(auth)/login" />;
   }
 
   // Case 2: Token vorhanden → NICHT auth zeigen
-  if (token && inAuthGroup) {
+  if (loginResponse && inAuthGroup) {
     return <Redirect href="/(tabs)" />;
   }
 
