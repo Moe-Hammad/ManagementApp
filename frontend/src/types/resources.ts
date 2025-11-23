@@ -30,3 +30,12 @@ export type LoginResponse = {
   id: string;
   userType: UserRole;
 };
+
+export type RegisterRequest = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  role: string;
+  hourlyRate?: number;
+};

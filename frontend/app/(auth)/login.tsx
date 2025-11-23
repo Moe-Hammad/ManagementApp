@@ -5,6 +5,7 @@ import { login } from "@/src/services/api";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
 import { makeStyles } from "@/src/theme/styles";
 import { LoginResponse } from "@/src/types/resources";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Keyboard,
@@ -48,12 +49,15 @@ export default function LoginScreen() {
     }
   }
 
+  async function handleRegister() {
+    return router.push("/(auth)/register");
+  }
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.centerWrapper}>
         <View style={styles.cardWrapper}>
           <Text style={styles.title}> Willkommen </Text>
-
           <Text style={styles.label}>Email</Text>
           <TextInput
             style={styles.input}
@@ -62,7 +66,6 @@ export default function LoginScreen() {
             autoCapitalize="none"
             placeholder="myemail@mail.com"
           />
-
           <Text style={styles.label}>Passwort</Text>
           <TextInput
             style={styles.input}
@@ -71,9 +74,11 @@ export default function LoginScreen() {
             onChangeText={setPassword}
             placeholder="Password"
           />
+          <Pressable onPress={handleRegister}>
+            <Text style={styles.link}>Register</Text>
+          </Pressable>
 
           {error && <Text style={styles.error}>{error}</Text>}
-
           {loading ? (
             <Spinner />
           ) : (
