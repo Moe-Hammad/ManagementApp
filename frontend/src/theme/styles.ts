@@ -10,6 +10,38 @@ export const makeStyles = (isDark: boolean) => {
       padding: 20,
       backgroundColor: C.screenbackground,
     },
+    roleButton: {
+      flex: 1,
+      paddingVertical: 12,
+      borderRadius: 10,
+      borderWidth: 1,
+      marginRight: 8,
+      alignItems: "center",
+    },
+
+    roleButtonActive: {
+      backgroundColor: C.primary,
+      borderColor: C.primary,
+    },
+
+    roleButtonInactive: {
+      backgroundColor: "transparent",
+      borderColor: C.text,
+    },
+
+    viewButtonRow: {
+      flexDirection: "row",
+      marginBottom: 16,
+    },
+
+    roleButtonTextActive: {
+      color: "#fff",
+      fontWeight: "700",
+    },
+
+    roleButtonTextInactive: {
+      color: C.text,
+    },
 
     title: {
       fontSize: 28,
@@ -99,6 +131,14 @@ export const makeStyles = (isDark: boolean) => {
       color: "red",
       marginBottom: 12,
       marginTop: 10,
+    },
+
+    errorInput: {
+      borderColor: "red",
+    },
+    errorUnderText: {
+      color: "red",
+      marginBottom: 10,
     },
 
     centerWrapper: {

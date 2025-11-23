@@ -74,9 +74,6 @@ export default function LoginScreen() {
             onChangeText={setPassword}
             placeholder="Password"
           />
-          <Pressable onPress={handleRegister}>
-            <Text style={styles.link}>Register</Text>
-          </Pressable>
 
           {error && <Text style={styles.error}>{error}</Text>}
           {loading ? (
@@ -86,6 +83,14 @@ export default function LoginScreen() {
               <Text style={styles.buttonText}>Login</Text>
             </Pressable>
           )}
+          <Pressable
+            onPress={handleRegister}
+            style={{ alignSelf: "center", marginTop: 14 }}
+          >
+            <Text style={styles.link}>
+              Noch kein Konto? Jetzt registrieren.
+            </Text>
+          </Pressable>
         </View>
       </View>
     </TouchableWithoutFeedback>

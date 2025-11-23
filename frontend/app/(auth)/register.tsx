@@ -2,6 +2,7 @@ import Spinner from "@/src/components/Spinner";
 import { register as apiRegister } from "@/src/services/api"; // ← Anpassen falls nötig
 import { makeStyles } from "@/src/theme/styles";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
+import { UserRole } from "@/src/types/resources";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -17,31 +18,51 @@ export default function Register() {
   const { isDark } = useThemeMode();
   const styles = makeStyles(isDark);
 
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-
+  const [role, setRole] = useState<UserRole>(UserRole.EMPLOYEE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState({
+    firstName: false,
+    lastName: false,
+    email: false,
+    password: false,
+    confirm: false,
+  });
 
   async function handleRegister() {
     setError(null);
 
-    if (!name || !email || !password || !confirm) {
-      return setError("Bitte fülle alle Felder aus.");
-    }
+    const newErrors = {
+      firstName: !firstName,
+      lastName: !lastName,
+      email: !email || !email.includes("@"),
+      password: !password,
+      confirm: !confirm || password !== confirm,
+    };
 
-    if (password !== confirm) {
-      return setError("Die Passwörter stimmen nicht überein.");
+    setErrors(newErrors);
+
+    // Wenn Fehler: abbrechen
+    if (Object.values(newErrors).includes(true)) {
+      return;
     }
 
     setLoading(true);
 
     try {
-      const response = await apiRegister({ name, email, password });
-      // Success → redirect
-      router.replace("/(auth)/login");
+      await apiRegister({
+        firstName,
+        lastName,
+        email,
+        password,
+        role,
+      });
+      // Erfolgreich → AuthGate übernimmt
     } catch (e: any) {
       setError(e.message || "Registrierung fehlgeschlagen.");
     } finally {
@@ -60,46 +81,134 @@ export default function Register() {
           <Text style={styles.title}>Registrieren</Text>
 
           {/* Name */}
-          <Text style={styles.label}>Name</Text>
+          {/* Email */}
+          <Text style={styles.label}>
+            Vorname<Text style={{ color: "red" }}>*</Text>
+          </Text>
           <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-            placeholder="Max Mustermann"
+            style={[styles.input, errors.firstName && styles.errorInput]}
+            value={firstName}
+            onChangeText={(text) => {
+              setFirstName(text);
+              setErrors({ ...errors, firstName: false });
+            }}
+            placeholder="Max"
+            autoCapitalize="words"
+          />
+
+          <Text style={styles.label}>
+            Name<Text style={{ color: "red" }}>*</Text>
+          </Text>
+          <TextInput
+            style={[styles.input, errors.lastName && styles.errorInput]}
+            value={lastName}
+            onChangeText={(text) => {
+              setLastName(text);
+              setErrors({ ...errors, lastName: false });
+            }}
+            placeholder="Mustermann"
             autoCapitalize="words"
           />
 
           {/* Email */}
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>
+            Email<Text style={{ color: "red" }}>*</Text>
+          </Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, errors.email && styles.errorInput]}
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => {
+              setEmail(text);
+              setErrors({ ...errors, email: false });
+            }}
             placeholder="email@mail.com"
             autoCapitalize="none"
           />
+          {errors.email && (
+            <Text style={styles.errorUnderText}>
+              Bitte gib eine gültige Email ein.
+            </Text>
+          )}
 
-          {/* Passwort */}
-          <Text style={styles.label}>Passwort</Text>
+          <Text style={styles.label}>
+            Password<Text style={{ color: "red" }}>*</Text>
+          </Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, errors.password && styles.errorInput]}
             secureTextEntry
             value={password}
-            onChangeText={setPassword}
-            placeholder="••••••••"
+            onChangeText={(text) => {
+              setPassword(text);
+              setErrors({ ...errors, password: false });
+            }}
+            placeholder="*******"
           />
 
           {/* Passwort bestätigen */}
-          <Text style={styles.label}>Passwort bestätigen</Text>
+          <Text style={styles.label}>
+            Password bestätigen<Text style={{ color: "red" }}>*</Text>
+          </Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, errors.confirm && styles.errorInput]}
             secureTextEntry
             value={confirm}
-            onChangeText={setConfirm}
-            placeholder="••••••••"
+            onChangeText={(text) => {
+              setConfirm(text);
+              setErrors({ ...errors, confirm: false });
+            }}
+            placeholder="*******"
           />
 
-          {error && <Text style={styles.error}>{error}</Text>}
+          {errors.confirm && (
+            <Text style={styles.errorUnderText}>
+              Die Passwörter stimmen nicht überein.
+            </Text>
+          )}
+
+          {/* Role */}
+          <Text style={styles.label}>Welche Rolle</Text>
+
+          <View style={styles.viewButtonRow}>
+            <Pressable
+              style={[
+                styles.roleButton,
+                role === UserRole.EMPLOYEE
+                  ? styles.roleButtonActive
+                  : styles.roleButtonInactive,
+              ]}
+              onPress={() => setRole(UserRole.EMPLOYEE)}
+            >
+              <Text
+                style={
+                  role === UserRole.EMPLOYEE
+                    ? styles.roleButtonTextActive
+                    : styles.roleButtonTextInactive
+                }
+              >
+                Arbeiter
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={[
+                styles.roleButton,
+                role === UserRole.MANAGER
+                  ? styles.roleButtonActive
+                  : styles.roleButtonInactive,
+              ]}
+              onPress={() => setRole(UserRole.MANAGER)}
+            >
+              <Text
+                style={
+                  role === UserRole.MANAGER
+                    ? styles.roleButtonTextActive
+                    : styles.roleButtonTextInactive
+                }
+              >
+                Manager
+              </Text>
+            </Pressable>
+          </View>
 
           {loading ? (
             <Spinner />

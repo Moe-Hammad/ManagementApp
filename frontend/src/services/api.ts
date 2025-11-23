@@ -13,18 +13,22 @@ export async function login(email: string, password: string) {
   });
 
   if (!response.ok) {
-    throw new Error(`E-Mail or Password is incorrect. Code ${response.status}`);
+    throw new Error(
+      `E-Mail oder Password stimmen nicht. Code ${response.status}`
+    );
   }
 
-  return response.json();
+  return await response.json();
 }
 
 export async function register(
   registrationData: RegisterRequest
 ): Promise<void> {
   if (!registrationData.firstName) throw new Error("First Name not defined");
-  if (!registrationData.email) throw new Error("email not defined");
+  if (!registrationData.lastName) throw new Error("Last Name not defined");
+  if (!registrationData.email) throw new Error("Email not defined");
   if (!registrationData.password) throw new Error("Password not defined");
+  if (!registrationData.role) throw new Error("Role not defined");
 
   const response = await fetch(`http://192.168.0.128:8080/api/auth/register`, {
     method: "POST",
@@ -32,10 +36,16 @@ export async function register(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      name: registrationData.username,
+      firstName: registrationData.firstName,
+      lastName: registrationData.lastName,
       email: registrationData.email,
-      password: registrationData.password1,
+      password: registrationData.password,
+      role: registrationData.role,
     }),
   });
-  response.json();
+
+  if (!response.ok) {
+    throw new Error(`Fehler mit dem Code ${response.status}`);
+  }
+  return await response.json();
 }
