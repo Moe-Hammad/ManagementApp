@@ -24,6 +24,17 @@ export const makeStyles = (isDark: boolean) => {
       fontSize: 20,
     },
 
+    link: {
+      color: C.primary,
+      fontSize: 15,
+      fontWeight: "600",
+      letterSpacing: 0.3,
+      textDecorationLine: "underline",
+      textDecorationColor: C.primary,
+      textDecorationStyle: "solid",
+      paddingVertical: 4,
+    },
+
     text: {
       color: C.text,
     },
@@ -41,6 +52,7 @@ export const makeStyles = (isDark: boolean) => {
       shadowOffset: { width: 0, height: 6 },
       backdropFilter: "blur(20px)", // iOS
     },
+
     button: {
       backgroundColor: C.primary,
       paddingVertical: 16,

@@ -1,5 +1,6 @@
 package com.momo.backend.config;
 
+
 import com.momo.backend.exception.CustomAccessDeniedHandler;
 import com.momo.backend.exception.CustomAuthEntryPoint;
 import com.momo.backend.service.CustomUserDetailsService;
@@ -79,7 +80,16 @@ public class SecurityConfig {
                 )
                 .httpBasic(req -> req.authenticationEntryPoint(customAuthEntryPoint))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs.yaml",
+                                "/swagger-resources/**",
+                                "/webjars/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
