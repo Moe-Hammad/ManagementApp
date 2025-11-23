@@ -1,18 +1,12 @@
+import ScreenController from "@/src/components/ScreenController";
 import Spinner from "@/src/components/Spinner";
-import { register as apiRegister } from "@/src/services/api"; // ← Anpassen falls nötig
+import { register as apiRegister } from "@/src/services/api";
 import { makeStyles } from "@/src/theme/styles";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
 import { UserRole } from "@/src/types/resources";
 import { router } from "expo-router";
 import { useState } from "react";
-import {
-  Keyboard,
-  Pressable,
-  Text,
-  TextInput,
-  TouchableWithoutFeedback,
-  View,
-} from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 
 export default function Register() {
   const { isDark } = useThemeMode();
@@ -24,8 +18,10 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [role, setRole] = useState<UserRole>(UserRole.EMPLOYEE);
+
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+
   const [errors, setErrors] = useState({
     firstName: false,
     lastName: false,
@@ -34,23 +30,26 @@ export default function Register() {
     confirm: false,
   });
 
-  async function handleRegister() {
-    setError(null);
-
+  // Validate all fields
+  function validateFields() {
     const newErrors = {
-      firstName: !firstName,
-      lastName: !lastName,
-      email: !email || !email.includes("@"),
-      password: !password,
-      confirm: !confirm || password !== confirm,
+      firstName: firstName.trim().length === 0,
+      lastName: lastName.trim().length === 0,
+      email: !email.trim().includes("@"),
+      password: password.trim().length === 0,
+      confirm: confirm.trim().length === 0 || password !== confirm,
     };
 
     setErrors(newErrors);
 
-    // Wenn Fehler: abbrechen
-    if (Object.values(newErrors).includes(true)) {
-      return;
-    }
+    // If any error → return false
+    return !Object.values(newErrors).includes(true);
+  }
+
+  async function handleRegister() {
+    setServerError(null);
+
+    if (!validateFields()) return;
 
     setLoading(true);
 
@@ -62,26 +61,20 @@ export default function Register() {
         password,
         role,
       });
-      // Erfolgreich → AuthGate übernimmt
     } catch (e: any) {
-      setError(e.message || "Registrierung fehlgeschlagen.");
+      setServerError(e.message || "Registrierung fehlgeschlagen.");
     } finally {
       setLoading(false);
     }
   }
 
-  function rerouteLogin() {
-    router.push("/(auth)/login");
-  }
-
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    <ScreenController scroll>
       <View style={styles.centerWrapper}>
         <View style={styles.cardWrapper}>
           <Text style={styles.title}>Registrieren</Text>
 
-          {/* Name */}
-          {/* Email */}
+          {/* First Name */}
           <Text style={styles.label}>
             Vorname<Text style={{ color: "red" }}>*</Text>
           </Text>
@@ -90,21 +83,22 @@ export default function Register() {
             value={firstName}
             onChangeText={(text) => {
               setFirstName(text);
-              setErrors({ ...errors, firstName: false });
+              setErrors((prev) => ({ ...prev, firstName: false }));
             }}
             placeholder="Max"
             autoCapitalize="words"
           />
 
+          {/* Last Name */}
           <Text style={styles.label}>
-            Name<Text style={{ color: "red" }}>*</Text>
+            Nachname<Text style={{ color: "red" }}>*</Text>
           </Text>
           <TextInput
             style={[styles.input, errors.lastName && styles.errorInput]}
             value={lastName}
             onChangeText={(text) => {
               setLastName(text);
-              setErrors({ ...errors, lastName: false });
+              setErrors((prev) => ({ ...prev, lastName: false }));
             }}
             placeholder="Mustermann"
             autoCapitalize="words"
@@ -119,7 +113,7 @@ export default function Register() {
             value={email}
             onChangeText={(text) => {
               setEmail(text);
-              setErrors({ ...errors, email: false });
+              setErrors((prev) => ({ ...prev, email: false }));
             }}
             placeholder="email@mail.com"
             autoCapitalize="none"
@@ -130,8 +124,9 @@ export default function Register() {
             </Text>
           )}
 
+          {/* Password */}
           <Text style={styles.label}>
-            Password<Text style={{ color: "red" }}>*</Text>
+            Passwort<Text style={{ color: "red" }}>*</Text>
           </Text>
           <TextInput
             style={[styles.input, errors.password && styles.errorInput]}
@@ -139,14 +134,14 @@ export default function Register() {
             value={password}
             onChangeText={(text) => {
               setPassword(text);
-              setErrors({ ...errors, password: false });
+              setErrors((prev) => ({ ...prev, password: false }));
             }}
             placeholder="*******"
           />
 
-          {/* Passwort bestätigen */}
+          {/* Confirm Password */}
           <Text style={styles.label}>
-            Password bestätigen<Text style={{ color: "red" }}>*</Text>
+            Passwort bestätigen<Text style={{ color: "red" }}>*</Text>
           </Text>
           <TextInput
             style={[styles.input, errors.confirm && styles.errorInput]}
@@ -154,7 +149,7 @@ export default function Register() {
             value={confirm}
             onChangeText={(text) => {
               setConfirm(text);
-              setErrors({ ...errors, confirm: false });
+              setErrors((prev) => ({ ...prev, confirm: false }));
             }}
             placeholder="*******"
           />
@@ -210,6 +205,14 @@ export default function Register() {
             </Pressable>
           </View>
 
+          {/* SERVER ERROR */}
+          {serverError && (
+            <Text style={[styles.errorUnderText, { marginBottom: 10 }]}>
+              {serverError}
+            </Text>
+          )}
+
+          {/* Submit */}
           {loading ? (
             <Spinner />
           ) : (
@@ -218,11 +221,15 @@ export default function Register() {
             </Pressable>
           )}
 
-          <Pressable onPress={rerouteLogin} style={{ marginTop: 14 }}>
+          {/* Link */}
+          <Pressable
+            onPress={() => router.push("/(auth)/login")}
+            style={{ marginTop: 14 }}
+          >
             <Text style={styles.link}>Schon ein Konto? Jetzt einloggen</Text>
           </Pressable>
         </View>
       </View>
-    </TouchableWithoutFeedback>
+    </ScreenController>
   );
 }

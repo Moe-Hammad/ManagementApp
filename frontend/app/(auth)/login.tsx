@@ -1,3 +1,4 @@
+import ScreenController from "@/src/components/ScreenController";
 import Spinner from "@/src/components/Spinner";
 import { useAppDispatch } from "@/src/hooks/useRedux";
 import { setCredentials } from "@/src/redux/authSlice";
@@ -7,14 +8,7 @@ import { makeStyles } from "@/src/theme/styles";
 import { LoginResponse } from "@/src/types/resources";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import {
-  Keyboard,
-  Pressable,
-  Text,
-  TextInput,
-  TouchableWithoutFeedback,
-  View,
-} from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 
 export default function LoginScreen() {
   const { isDark } = useThemeMode();
@@ -54,7 +48,7 @@ export default function LoginScreen() {
   }
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    <ScreenController scroll={true}>
       <View style={styles.centerWrapper}>
         <View style={styles.cardWrapper}>
           <Text style={styles.title}> Willkommen </Text>
@@ -93,6 +87,6 @@ export default function LoginScreen() {
           </Pressable>
         </View>
       </View>
-    </TouchableWithoutFeedback>
+    </ScreenController>
   );
 }
