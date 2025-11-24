@@ -36,7 +36,8 @@ export const makeStyles = (isDark: boolean) => {
 
     roleButtonTextActive: {
       color: "#fff",
-      fontWeight: "700",
+      fontWeight: 700,
+      borderBlockColor: "#000",
     },
 
     roleButtonTextInactive: {

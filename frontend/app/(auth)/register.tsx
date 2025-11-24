@@ -1,5 +1,7 @@
 import ScreenController from "@/src/components/ScreenController";
 import Spinner from "@/src/components/Spinner";
+import { useAppDispatch } from "@/src/hooks/useRedux";
+import { setCredentials } from "@/src/redux/authSlice";
 import { register as apiRegister } from "@/src/services/api";
 import { makeStyles } from "@/src/theme/styles";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
@@ -18,7 +20,7 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [role, setRole] = useState<UserRole>(UserRole.EMPLOYEE);
-
+  const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -54,13 +56,14 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await apiRegister({
+      const res = await apiRegister({
         firstName,
         lastName,
         email,
         password,
         role,
       });
+      dispatch(setCredentials(res));
     } catch (e: any) {
       setServerError(e.message || "Registrierung fehlgeschlagen.");
     } finally {
@@ -74,6 +77,12 @@ export default function Register() {
         <View style={styles.cardWrapper}>
           <Text style={styles.title}>Registrieren</Text>
 
+          {/* SERVER ERROR */}
+          {serverError && (
+            <Text style={[styles.errorUnderText, { marginBottom: 10 }]}>
+              {serverError}
+            </Text>
+          )}
           {/* First Name */}
           <Text style={styles.label}>
             Vorname<Text style={{ color: "red" }}>*</Text>
@@ -204,13 +213,6 @@ export default function Register() {
               </Text>
             </Pressable>
           </View>
-
-          {/* SERVER ERROR */}
-          {serverError && (
-            <Text style={[styles.errorUnderText, { marginBottom: 10 }]}>
-              {serverError}
-            </Text>
-          )}
 
           {/* Submit */}
           {loading ? (

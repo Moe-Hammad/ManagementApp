@@ -1,5 +1,5 @@
 import { Buffer } from "buffer";
-import { RegisterRequest } from "../types/resources";
+import { LoginResponse, RegisterRequest } from "../types/resources";
 
 export async function login(email: string, password: string) {
   const credentials = Buffer.from(`${email}:${password}`).toString("base64");
@@ -23,7 +23,7 @@ export async function login(email: string, password: string) {
 
 export async function register(
   registrationData: RegisterRequest
-): Promise<void> {
+): Promise<LoginResponse> {
   if (!registrationData.firstName) throw new Error("First Name not defined");
   if (!registrationData.lastName) throw new Error("Last Name not defined");
   if (!registrationData.email) throw new Error("Email not defined");
@@ -45,7 +45,8 @@ export async function register(
   });
 
   if (!response.ok) {
-    throw new Error(`Fehler mit dem Code ${response.status}`);
+    const errorBody = await response.json();
+    throw new Error(errorBody.error || "Unbekannter Fehler");
   }
   return await response.json();
 }
