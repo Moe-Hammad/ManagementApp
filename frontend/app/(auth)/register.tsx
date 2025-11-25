@@ -1,5 +1,5 @@
-import ScreenController from "@/src/components/ScreenController";
-import Spinner from "@/src/components/Spinner";
+import ScreenController from "@/src/components/util/ScreenController";
+import Spinner from "@/src/components/util/Spinner";
 import { useAppDispatch } from "@/src/hooks/useRedux";
 import { setCredentials } from "@/src/redux/authSlice";
 import { register as apiRegister } from "@/src/services/api";

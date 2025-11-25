@@ -1,4 +1,7 @@
-export type User = Employee | Manager;
+export enum UserRole {
+  EMPLOYEE = "EMPLOYEE",
+  MANAGER = "MANAGER",
+}
 
 export type BaseUser = {
   id: string;
@@ -20,10 +23,7 @@ export type Manager = BaseUser & {
   employees: Employee[];
 };
 
-export enum UserRole {
-  EMPLOYEE = "EMPLOYEE",
-  MANAGER = "MANAGER",
-}
+export type User = Employee | Manager;
 
 export type LoginResponse = {
   token: string;

@@ -72,6 +72,12 @@ export const makeStyles = (isDark: boolean) => {
       color: C.text,
     },
 
+    titles: {
+      color: C.text,
+      fontWeight: "700",
+      fontSize: 28,
+    },
+
     card: {
       elevation: isDark ? 8 : 4,
       borderRadius: 20,
@@ -140,6 +146,45 @@ export const makeStyles = (isDark: boolean) => {
     errorUnderText: {
       color: "red",
       marginBottom: 10,
+    },
+    section: {
+      width: "100%",
+      marginBottom: 24,
+    },
+
+    row: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      gap: 16,
+    },
+
+    col: {
+      flex: 1,
+    },
+
+    widget: {
+      backgroundColor: C.glass,
+      borderRadius: 18,
+      padding: 20,
+      borderWidth: 1,
+      borderColor: C.border,
+      shadowColor: C.shadow,
+      shadowOpacity: 0.2,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 4 },
+    },
+
+    widgetTitle: {
+      color: C.text,
+      fontSize: 18,
+      fontWeight: "700",
+      marginBottom: 12,
+    },
+
+    widgetValue: {
+      color: C.primary,
+      fontSize: 32,
+      fontWeight: "800",
     },
 
     centerWrapper: {

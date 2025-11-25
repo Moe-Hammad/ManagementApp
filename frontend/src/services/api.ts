@@ -46,7 +46,9 @@ export async function register(
 
   if (!response.ok) {
     const errorBody = await response.json();
-    throw new Error(errorBody.error || "Unbekannter Fehler");
+    throw new Error(
+      errorBody.error || "Server Fehler, versuchen Sie es später nochmal."
+    );
   }
   return await response.json();
 }

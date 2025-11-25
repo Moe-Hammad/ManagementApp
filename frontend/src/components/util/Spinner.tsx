@@ -1,6 +1,6 @@
 import { ActivityIndicator, View } from "react-native";
-import { makeStyles } from "../theme/styles";
-import { useThemeMode } from "../theme/ThemeProvider";
+import { makeStyles } from "../../theme/styles";
+import { useThemeMode } from "../../theme/ThemeProvider";
 
 export default function Spinner() {
   const { isDark } = useThemeMode();
