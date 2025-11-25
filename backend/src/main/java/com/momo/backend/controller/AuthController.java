@@ -3,6 +3,7 @@ package com.momo.backend.controller;
 import com.momo.backend.dto.Login.LoginRequest;
 import com.momo.backend.dto.Login.LoginResponse;
 import com.momo.backend.dto.Login.RegisterRequest;
+import com.momo.backend.dto.UserDto;
 import com.momo.backend.service.interfaces.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -59,4 +60,20 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(authService.register(request));
     }
+
+    @GetMapping("/me")
+    @Operation(
+            summary = "Gibt den eingeloggten User zurück",
+            description = "Basierend auf dem JWT wird der vollständige User inkl. Role-Daten zurückgegeben."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "User erfolgreich geladen"),
+            @ApiResponse(responseCode = "401", description = "Nicht eingeloggt oder Token ungültig")
+    })
+    public ResponseEntity<UserDto> me() {
+        return ResponseEntity.ok(authService.getCurrentUser());
+    }
+
+
+
 }

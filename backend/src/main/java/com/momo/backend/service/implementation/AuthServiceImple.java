@@ -4,6 +4,9 @@ import com.momo.backend.dto.Login.LoginRequest;
 import com.momo.backend.dto.Login.LoginResponse;
 import com.momo.backend.dto.Login.RegisterRequest;
 import com.momo.backend.dto.UserDto;
+import com.momo.backend.entity.*;
+import com.momo.backend.mapper.UserMapper;
+import com.momo.backend.repository.UserRepository;
 import com.momo.backend.service.interfaces.AuthService;
 import com.momo.backend.service.interfaces.EmployeeService;
 import com.momo.backend.service.interfaces.ManagerService;
@@ -21,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Base64;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +36,8 @@ public class AuthServiceImple implements AuthService {
     private final ManagerService managerService;
     private final EmployeeService employeeService;
     private final JwtTokenProvider tokenProvider;
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     // =======================
     // Decode
@@ -119,4 +125,37 @@ public class AuthServiceImple implements AuthService {
         if (role.equalsIgnoreCase("manager")) return "MANAGER";
         return "EMPLOYEE";
     }
+
+    @Override
+    public UserDto getCurrentUser() {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
+        }
+
+        // principal = uid (aus JWT Filter)
+        String uid = (String) auth.getPrincipal();
+
+        UUID userId;
+        try {
+            userId = UUID.fromString(uid);
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid user id in token");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (user instanceof Manager manager) {
+            return userMapper.managerToUserDto(manager);
+        } else if (user instanceof Employee employee) {
+            return userMapper.employeeToUserDto(employee);
+        }
+
+        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unknown user role");
+    }
+
+
 }

@@ -10,6 +10,7 @@ import com.momo.backend.entity.enums.UserRole;
 import com.momo.backend.exception.ResourceNotFoundException;
 import com.momo.backend.mapper.EmployeeMapper;
 import com.momo.backend.mapper.ManagerMapper;
+import com.momo.backend.mapper.UserMapper;
 import com.momo.backend.repository.EmployeeRepository;
 import com.momo.backend.repository.ManagerRepository;
 import com.momo.backend.service.interfaces.ManagerService;
@@ -31,6 +32,7 @@ public class ManagerServiceImple implements ManagerService {
     private final EmployeeRepository employeeRepository;
     private final ManagerMapper managerMapper;
     private final EmployeeMapper employeeMapper;
+    private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
 
     // ----------------------
@@ -46,7 +48,7 @@ public class ManagerServiceImple implements ManagerService {
         manager.setRole(UserRole.MANAGER);
 
         Manager saved = managerRepository.save(manager);
-        return new UserDto(saved.getId(), saved.getEmail(), saved.getRole());
+        return userMapper.managerToUserDto(saved);
     }
 
     @Override

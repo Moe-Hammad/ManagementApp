@@ -1,7 +1,10 @@
 package com.momo.backend.service.implementation;
 
 import com.momo.backend.dto.UserDto;
+import com.momo.backend.entity.Employee;
+import com.momo.backend.entity.Manager;
 import com.momo.backend.entity.User;
+import com.momo.backend.mapper.UserMapper;
 import com.momo.backend.repository.UserRepository;
 import com.momo.backend.service.interfaces.UserService;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class UserServiceImple implements UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     @Override
     public boolean emailExists(String email) {
@@ -25,10 +29,14 @@ public class UserServiceImple implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-        return new UserDto(
-                user.getId(),
-                user.getEmail(),
-                user.getRole()
-        );
+        if (user instanceof Manager manager) {
+            return userMapper.managerToUserDto(manager);
+        }
+        if (user instanceof Employee employee) {
+            return userMapper.employeeToUserDto(employee);
+        }
+
+        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unknown user role");
     }
+
 }

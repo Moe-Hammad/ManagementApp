@@ -6,7 +6,7 @@ import com.momo.backend.entity.Manager;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {EmployeeMapper.class})
 public interface UserMapper {
 
     @Mapping(target = "role", constant = "MANAGER")

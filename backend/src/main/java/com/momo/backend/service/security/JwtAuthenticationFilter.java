@@ -1,5 +1,6 @@
 package com.momo.backend.service.security;
 
+import com.momo.backend.entity.enums.UserRole;
 import com.momo.backend.service.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -8,14 +9,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -31,22 +34,43 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = trimBearer(request);
 
-        if (token != null && tokenProvider.validateToken(token) &&
+        if (token != null &&
+                tokenProvider.validateToken(token) &&
                 SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            String email = tokenProvider.getEmail(token);
-            // email, pw und authority (role)
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            // Claims lesen
+            var claims = tokenProvider.parseClaims(token);
 
+            String uid = claims.get("uid", String.class);
+            String roleStr = claims.get("role", String.class);
+
+            // Enum-Rolle aus String erzeugen
+            UserRole role = UserRole.valueOf(roleStr);
+
+            // Authorities erzeugen
+            List<GrantedAuthority> authorities = mapRoleToAuthorities(role);
+
+            // Authentication bauen
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                            uid,        // principal = userId
+                            token,      // credentials = JWT
+                            authorities // ROLE_MANAGER / ROLE_EMPLOYEE
+                    );
+
+            authentication.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request)
+            );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    // Rolle → Spring Authorities
+    public List<GrantedAuthority> mapRoleToAuthorities(UserRole role) {
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
     private String trimBearer(HttpServletRequest request) {

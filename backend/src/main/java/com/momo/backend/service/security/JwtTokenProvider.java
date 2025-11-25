@@ -63,6 +63,10 @@ public class JwtTokenProvider {
         }
     }
 
+    public UUID getId(String token) {
+        return UUID.fromString(parseClaims(token).get("id", String.class));
+    }
+
     public String getEmail(String token) {
         return parseClaims(token).getSubject();
     }
