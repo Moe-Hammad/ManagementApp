@@ -30,18 +30,21 @@ export async function register(
   if (!registrationData.password) throw new Error("Password not defined");
   if (!registrationData.role) throw new Error("Role not defined");
 
+  const payload: RegisterRequest = {
+    firstName: registrationData.firstName,
+    lastName: registrationData.lastName,
+    email: registrationData.email,
+    password: registrationData.password,
+    role: registrationData.role,
+    hourlyRate: registrationData.hourlyRate,
+  };
+
   const response = await fetch(`http://192.168.0.128:8080/api/auth/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      firstName: registrationData.firstName,
-      lastName: registrationData.lastName,
-      email: registrationData.email,
-      password: registrationData.password,
-      role: registrationData.role,
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {

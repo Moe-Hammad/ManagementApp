@@ -21,6 +21,7 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [role, setRole] = useState<UserRole>(UserRole.EMPLOYEE);
+  const [hourlyRate, setHourlyRate] = useState("");
   const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -31,6 +32,7 @@ export default function Register() {
     email: false,
     password: false,
     confirm: false,
+    hourlyRate: false,
   });
 
   // Validate all fields
@@ -41,6 +43,9 @@ export default function Register() {
       email: !email.trim().includes("@"),
       password: password.trim().length === 0,
       confirm: confirm.trim().length === 0 || password !== confirm,
+      hourlyRate:
+        role === UserRole.EMPLOYEE &&
+        (hourlyRate.trim().length === 0 || isNaN(Number(hourlyRate))),
     };
 
     setErrors(newErrors);
@@ -63,6 +68,10 @@ export default function Register() {
         email,
         password,
         role,
+        hourlyRate:
+          role === UserRole.EMPLOYEE && hourlyRate.trim().length > 0
+            ? Number(hourlyRate)
+            : undefined,
       });
 
       const loginRes = res?.token ? res : await apiLogin(email, password);
@@ -219,6 +228,30 @@ export default function Register() {
               </Text>
             </Pressable>
           </View>
+
+          {/* Hourly Rate only for employees */}
+          {role === UserRole.EMPLOYEE && (
+            <>
+              <Text style={styles.label}>
+                Stundenlohn<Text style={{ color: "red" }}>*</Text>
+              </Text>
+              <TextInput
+                style={[styles.input, errors.hourlyRate && styles.errorInput]}
+                value={hourlyRate}
+                onChangeText={(text) => {
+                  setHourlyRate(text);
+                  setErrors((prev) => ({ ...prev, hourlyRate: false }));
+                }}
+                placeholder="15"
+                keyboardType="numeric"
+              />
+              {errors.hourlyRate && (
+                <Text style={styles.errorUnderText}>
+                  Bitte gib einen g&uuml;ltigen Stundenlohn ein.
+                </Text>
+              )}
+            </>
+          )}
 
           {/* Submit */}
           {loading ? (
