@@ -13,5 +13,6 @@ public interface UserMapper {
     UserDto managerToUserDto(Manager manager);
 
     @Mapping(target = "role", constant = "EMPLOYEE")
+    @Mapping(target = "managerId", source = "manager.id")
     UserDto employeeToUserDto(Employee employee);
 }
