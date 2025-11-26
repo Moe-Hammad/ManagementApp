@@ -4,7 +4,7 @@ import { LoginResponse, RegisterRequest } from "../types/resources";
 export async function login(email: string, password: string) {
   const credentials = Buffer.from(`${email}:${password}`).toString("base64");
 
-  const response = await fetch("http://192.168.0.128:8080/api/auth/login", {
+  const response = await fetch("http://localhost:8080/api/auth/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -39,7 +39,7 @@ export async function register(
     hourlyRate: registrationData.hourlyRate,
   };
 
-  const response = await fetch(`http://192.168.0.128:8080/api/auth/register`, {
+  const response = await fetch(`http://localhost:8080/api/auth/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

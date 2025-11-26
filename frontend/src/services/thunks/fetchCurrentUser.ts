@@ -8,7 +8,7 @@ export const fetchCurrentUser = createAsyncThunk<
   { rejectValue: string }
 >("auth/fetchCurrentUser", async (token, { dispatch, rejectWithValue }) => {
   try {
-    const response = await fetch("http://192.168.0.128:8080/api/auth/me", {
+    const response = await fetch("http://localhost:8080/api/auth/me", {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
