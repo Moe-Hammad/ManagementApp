@@ -2,7 +2,8 @@ import ScreenController from "@/src/components/util/ScreenController";
 import Spinner from "@/src/components/util/Spinner";
 import { useAppDispatch } from "@/src/hooks/useRedux";
 import { setCredentials } from "@/src/redux/authSlice";
-import { register as apiRegister } from "@/src/services/api";
+import { login as apiLogin, register as apiRegister } from "@/src/services/api";
+import { fetchCurrentUser } from "@/src/services/thunks/fetchCurrentUser";
 import { makeStyles } from "@/src/theme/styles";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
 import { UserRole } from "@/src/types/resources";
@@ -63,7 +64,12 @@ export default function Register() {
         password,
         role,
       });
-      dispatch(setCredentials(res));
+
+      const loginRes = res?.token ? res : await apiLogin(email, password);
+
+      dispatch(setCredentials(loginRes));
+      await dispatch(fetchCurrentUser(loginRes.token));
+      router.replace("/");
     } catch (e: any) {
       setServerError(e.message || "Registrierung fehlgeschlagen.");
     } finally {

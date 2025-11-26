@@ -2,6 +2,7 @@ import { fetchCurrentUser } from "@/src/services/thunks/fetchCurrentUser";
 import { Redirect, useSegments } from "expo-router";
 import { ReactNode, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../hooks/useRedux";
+import Spinner from "./Spinner";
 
 export default function AuthGate({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch();
@@ -34,7 +35,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 
   // Wenn Token existiert aber User noch nicht geladen ist → warten
   if (token && !user) {
-    return null; // Loading-Phase
+    return <Spinner />; // Loading-Phase
   }
 
   // Router noch nicht geladen → einfach nichts machen
@@ -47,8 +48,9 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     // Weiterleitung Rolle-basiert -> Später
     if (user.role === "MANAGER") {
       return <Redirect href="/" />;
+    } else {
+      return <Redirect href="/" />;
     }
-    return <Redirect href="/" />;
   }
 
   // -----------------------------
