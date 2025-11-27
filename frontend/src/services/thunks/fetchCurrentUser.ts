@@ -1,13 +1,8 @@
 import { clearToken, setUser } from "@/src/redux/authSlice";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { User } from "../../types/resources";
-import { BACKEND_URL } from "@env";
 
-const API_BASE_URL = BACKEND_URL;
-
-if (!API_BASE_URL) {
-  throw new Error("BACKEND_URL is not set");
-}
+const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 export const fetchCurrentUser = createAsyncThunk<
   User | null,

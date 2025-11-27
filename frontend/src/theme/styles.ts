@@ -1,8 +1,23 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { DarkColors, LightColors } from "./colors";
 
 export const makeStyles = (isDark: boolean) => {
   const C = isDark ? DarkColors : LightColors;
+  const shadow = (
+    color: string,
+    offsetY: number,
+    radius: number,
+    opacity: number
+  ) =>
+    Platform.select({
+      web: { boxShadow: `0 ${offsetY}px ${radius}px ${color}` },
+      default: {
+        shadowColor: color,
+        shadowOpacity: opacity,
+        shadowRadius: radius,
+        shadowOffset: { width: 0, height: offsetY },
+      },
+    });
 
   return StyleSheet.create({
     screen: {
@@ -85,10 +100,7 @@ export const makeStyles = (isDark: boolean) => {
       backgroundColor: C.glass,
       borderWidth: 1,
       borderColor: C.border,
-      shadowColor: C.shadow,
-      shadowOpacity: 0.3,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 6 },
+      ...shadow(C.shadow, 6, 12, 0.3),
       backdropFilter: "blur(20px)", // iOS
     },
 
@@ -96,10 +108,7 @@ export const makeStyles = (isDark: boolean) => {
       backgroundColor: C.primary,
       paddingVertical: 16,
       borderRadius: 12,
-      shadowColor: C.primary,
-      shadowOpacity: 0.5,
-      shadowRadius: 10,
-      shadowOffset: { width: 0, height: 4 },
+      ...shadow(C.primary, 4, 10, 0.5),
     },
 
     cardWrapper: {
@@ -110,10 +119,7 @@ export const makeStyles = (isDark: boolean) => {
       borderRadius: 20,
       borderWidth: 1,
       borderColor: C.border,
-      shadowColor: C.shadow,
-      shadowOpacity: 0.3,
-      shadowRadius: 16,
-      shadowOffset: { width: 0, height: 8 },
+      ...shadow(C.shadow, 8, 16, 0.3),
     },
 
     input: {
@@ -168,10 +174,7 @@ export const makeStyles = (isDark: boolean) => {
       padding: 20,
       borderWidth: 1,
       borderColor: C.border,
-      shadowColor: C.shadow,
-      shadowOpacity: 0.2,
-      shadowRadius: 10,
-      shadowOffset: { width: 0, height: 4 },
+      ...shadow(C.shadow, 4, 10, 0.2),
     },
 
     widgetTitle: {

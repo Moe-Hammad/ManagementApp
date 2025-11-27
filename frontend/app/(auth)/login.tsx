@@ -37,7 +37,11 @@ export default function LoginScreen() {
     try {
       const loginRes = await login(email, password);
       dispatch(setCredentials(loginRes));
-      await dispatch(fetchCurrentUser(loginRes.token));
+      const action = await dispatch(fetchCurrentUser(loginRes.token));
+      if (action.meta.requestStatus === "rejected") {
+        setError("Konnte User nicht laden");
+        return;
+      }
     } catch (e: any) {
       setError(e.message);
     } finally {

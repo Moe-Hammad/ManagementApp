@@ -1,16 +1,10 @@
 import { Buffer } from "buffer";
 import { LoginResponse, RegisterRequest } from "../types/resources";
-import { BACKEND_URL } from "@env";
 
-const API_BASE_URL = BACKEND_URL;
-
-if (!API_BASE_URL) {
-  throw new Error("BACKEND_URL is not set");
-}
+const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 export async function login(email: string, password: string) {
   const credentials = Buffer.from(`${email}:${password}`).toString("base64");
-
   const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
     method: "POST",
     headers: {

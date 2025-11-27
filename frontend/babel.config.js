@@ -1,16 +1,20 @@
+// babel.config.js
 module.exports = function (api) {
   api.cache(true);
+
   return {
     presets: ["babel-preset-expo"],
     plugins: [
       [
-        "module:react-native-dotenv",
+        "module-resolver",
         {
-          moduleName: "@env",
-          path: ".env",
+          root: ["./"],
+          alias: {
+            "@": "./",
+          },
+          extensions: [".tsx", ".ts", ".js", ".json"],
         },
       ],
-      "react-native-reanimated/plugin", // WICHTIG: immer als letztes Plugin
     ],
   };
 };

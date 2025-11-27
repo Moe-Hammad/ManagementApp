@@ -1,5 +1,5 @@
 import { fetchCurrentUser } from "@/src/services/thunks/fetchCurrentUser";
-import { Redirect, useSegments } from "expo-router";
+import { Redirect, useRootNavigationState, useSegments } from "expo-router";
 import { ReactNode, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../hooks/useRedux";
 import Spinner from "./Spinner";
@@ -15,7 +15,8 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   const segments = useSegments();
   const inAuthGroup = segments[0] === "(auth)";
 
-  const ready = segments.length > 0;
+  const navigationState = useRootNavigationState();
+  const ready = navigationState?.key != null;
 
   // -----------------------------
   //   1. Wenn Token existiert → /me laden
@@ -25,7 +26,6 @@ export default function AuthGate({ children }: { children: ReactNode }) {
       dispatch(fetchCurrentUser(token));
     }
   }, [token]);
-
   // -----------------------------
   //   2. Kein Token → redirect login
   // -----------------------------
@@ -37,9 +37,6 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   if (token && !user) {
     return <Spinner />; // Loading-Phase
   }
-
-  // Router noch nicht geladen → einfach nichts machen
-  if (!ready) return null;
 
   // -----------------------------
   //   3. Bereits eingeloggt → nicht mehr Login anzeigen
@@ -53,6 +50,10 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     }
   }
 
+  // Router noch nicht geladen → einfach nichts machen
+  if (!ready) {
+    return null;
+  }
   // -----------------------------
   //   4. Alles normal anzeigen
   // -----------------------------
