@@ -90,6 +90,20 @@ public class EmployeeServiceImple implements EmployeeService {
     }
 
     @Override
+    public List<EmployeeDto> getUnassignedEmployees(String query) {
+        List<Employee> employees;
+        if (query == null || query.isBlank()) {
+            employees = employeeRepository.findByManagerIsNull();
+        } else {
+            employees = employeeRepository.searchUnassigned(query);
+        }
+
+        return employees.stream()
+                .map(employeeMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public ManagerDto getEmployeeManager(UUID employeeId) {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));

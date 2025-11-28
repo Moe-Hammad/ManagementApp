@@ -23,4 +23,6 @@ public interface EmployeeService {
     void deleteEmployee(UUID employeeId);
 
     ManagerDto getEmployeeManager(UUID employeeId);
+
+    List<EmployeeDto> getUnassignedEmployees(String query);
 }

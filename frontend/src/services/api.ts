@@ -1,7 +1,15 @@
 import { Buffer } from "buffer";
-import { LoginResponse, RegisterRequest } from "../types/resources";
+import {
+  LoginResponse,
+  RegisterRequest,
+  RequestItem,
+  RequestStatus,
+} from "../types/resources";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+
+const authHeader = (token?: string): Record<string, string> =>
+  token ? { Authorization: `Bearer ${token}` } : {};
 
 export async function login(email: string, password: string) {
   const credentials = Buffer.from(`${email}:${password}`).toString("base64");
@@ -19,7 +27,15 @@ export async function login(email: string, password: string) {
     );
   }
 
-  return await response.json();
+  const authHeaderValue =
+    response.headers.get("Authorization") ||
+    response.headers.get("authorization");
+  const body = await response.json();
+  const token =
+    (authHeaderValue && authHeaderValue.replace(/Bearer\s+/i, "")) ||
+    (body as any)?.token;
+
+  return { ...(body as any), token };
 }
 
 export async function register(
@@ -51,8 +67,128 @@ export async function register(
   if (!response.ok) {
     const errorBody = await response.json();
     throw new Error(
-      errorBody.error || "Server Fehler, versuchen Sie es später nochmal."
+      (errorBody as any).error || "Server Fehler, versuchen Sie es spaeter nochmal."
     );
   }
-  return await response.json();
+
+  const authHeaderValue =
+    response.headers.get("Authorization") ||
+    response.headers.get("authorization");
+  const body = await response.json();
+  const token =
+    (authHeaderValue && authHeaderValue.replace(/Bearer\s+/i, "")) ||
+    (body as any)?.token;
+
+  return { ...(body as any), token };
+}
+
+// ============================
+// Requests / Matching
+// ============================
+
+export async function fetchUnassignedEmployees(query: string, token: string) {
+  const url = new URL(`${API_BASE_URL}/api/employees/unassigned`);
+  if (query) url.searchParams.append("query", query);
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(token),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Unassigned employees failed (${response.status})`);
+  }
+
+  return response.json();
+}
+
+export async function listRequestsForManager(
+  managerId: string,
+  token: string
+): Promise<RequestItem[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/requests/manager/${managerId}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeader(token),
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Requests fetch failed (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function listRequestsForEmployee(
+  employeeId: string,
+  token: string
+): Promise<RequestItem[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/requests/employee/${employeeId}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeader(token),
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Requests fetch failed (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function createRequestApi(
+  payload: { employeeId: string; managerId: string; message?: string },
+  token: string
+): Promise<RequestItem> {
+  const response = await fetch(`${API_BASE_URL}/api/requests`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(token),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Request create failed (${response.status}) - ${errorBody || ""}`.trim()
+    );
+  }
+
+  return response.json();
+}
+
+export async function updateRequestStatusApi(
+  requestId: string,
+  status: RequestStatus,
+  token: string
+): Promise<RequestItem> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/requests/${requestId}?status=${status}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeader(token),
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Request update failed (${response.status}) - ${errorBody || ""}`.trim()
+    );
+  }
+
+  return response.json();
 }

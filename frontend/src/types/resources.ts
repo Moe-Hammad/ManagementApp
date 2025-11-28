@@ -39,3 +39,19 @@ export type RegisterRequest = {
   role: string;
   hourlyRate?: number;
 };
+
+export enum RequestStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+}
+
+export type RequestItem = {
+  id: string;
+  managerId: string;
+  employeeId: string;
+  status: RequestStatus;
+  message?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};

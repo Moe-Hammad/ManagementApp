@@ -9,6 +9,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+// Für das freigeben von Arbeitstagen Urlaub, Krank etc
 @Getter
 @Setter
 @NoArgsConstructor
