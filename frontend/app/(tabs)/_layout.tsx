@@ -38,6 +38,16 @@ export default function TabsLayout() {
         />
 
         <Tabs.Screen
+          name="requests"
+          options={{
+            title: "Inbox",
+            tabBarIcon: ({ color }) => (
+              <MaterialCommunityIcons name="message-text" size={26} color={color} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
           name="create"
           options={{
             title: "Erstellen",

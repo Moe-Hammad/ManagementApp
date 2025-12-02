@@ -22,7 +22,7 @@ export default function ManagerDashboard({
   return (
     <View style={styles.screen}>
       <View style={styles.section}>
-        <Text style={styles.titles}>Hello {manager.firstName} 👋</Text>
+        <Text style={styles.titles}>Hallo {manager.firstName}!</Text>
         <Text style={[styles.text, { opacity: 0.6 }]}>
           Manager Overview – {manager.employees.length} Mitarbeiter im Team
         </Text>

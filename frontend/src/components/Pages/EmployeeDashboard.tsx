@@ -16,7 +16,7 @@ export default function EmployeeDashboard({ employee }: Props) {
   return (
     <View style={styles.screen}>
       <View style={styles.section}>
-        <Text style={styles.titles}>Hey {employee.firstName} 👋</Text>
+        <Text style={styles.titles}>Hey {employee.firstName}!</Text>
         <Text style={[styles.text, { opacity: 0.6 }]}>
           Deine aktuelle Rolle: Employee
         </Text>
@@ -37,7 +37,7 @@ export default function EmployeeDashboard({ employee }: Props) {
       <View style={[styles.widget, { marginTop: 16 }]}>
         <Text style={styles.widgetTitle}>Stundensatz</Text>
         <Text style={styles.widgetValue}>
-          {employee.hourlyRate ? `${employee.hourlyRate} €` : "—"}
+          {employee.hourlyRate ? `${employee.hourlyRate} €` : "-"}
         </Text>
       </View>
 

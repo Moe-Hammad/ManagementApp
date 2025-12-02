@@ -247,7 +247,7 @@ export default function Register() {
               />
               {errors.hourlyRate && (
                 <Text style={styles.errorUnderText}>
-                  Bitte gib einen g&uuml;ltigen Stundenlohn ein.
+                  Bitte gib einen gültigen Stundenlohn ein.
                 </Text>
               )}
             </>

@@ -197,5 +197,51 @@ export const makeStyles = (isDark: boolean) => {
       paddingHorizontal: 24,
       backgroundColor: C.screenbackground,
     },
+
+    // Requests/Chats screen
+    requestsContainer: {
+      paddingTop: 12,
+    },
+    requestsTitle: {
+      marginBottom: 4,
+    },
+    requestsSubtitle: {
+      color: C.secondary,
+      marginBottom: 20,
+    },
+    requestsSegmentRow: {
+      flexDirection: "row",
+      gap: 8,
+    },
+    requestsSegmentTab: {
+      flex: 1,
+      paddingVertical: 10,
+      alignItems: "center",
+      borderRadius: 12,
+      borderWidth: 1,
+    },
+    requestsSegmentTabActive: {
+      backgroundColor: C.primary,
+      borderColor: C.primary,
+    },
+    requestsSegmentTabInactive: {
+      backgroundColor: C.surface,
+      borderColor: C.border,
+    },
+    requestsSegmentText: {
+      color: C.text,
+      fontWeight: "500",
+    },
+    requestsSegmentTextActive: {
+      color: "#fff",
+      fontWeight: "700",
+    },
+    requestsBodyCard: {
+      marginTop: 16,
+      gap: 8,
+    },
+    requestsNote: {
+      opacity: 0.7,
+    },
   });
 };

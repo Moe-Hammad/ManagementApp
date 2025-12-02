@@ -1,0 +1,76 @@
+import ScreenController from "@/src/components/util/ScreenController";
+import { useThemeMode } from "@/src/theme/ThemeProvider";
+import { makeStyles } from "@/src/theme/styles";
+import { useState } from "react";
+import { Pressable, Text, View } from "react-native";
+
+const TABS = [
+  { key: "chats", label: "Chats" },
+  { key: "requests", label: "Requests" },
+];
+
+export default function RequestsScreen() {
+  const { isDark } = useThemeMode();
+  const styles = makeStyles(isDark);
+  const [activeTab, setActiveTab] = useState<string>("chats");
+
+  const isRequests = activeTab === "requests";
+
+  return (
+    <ScreenController scroll>
+      <View style={[styles.screen, styles.requestsContainer]}>
+        <Text style={[styles.titles, styles.requestsTitle]}>Inbox</Text>
+        <Text style={[styles.text, styles.requestsSubtitle]}>
+          Live Requests und Chats (WebSocket)
+        </Text>
+
+        <View style={styles.requestsSegmentRow}>
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <Pressable
+                key={tab.key}
+                style={[
+                  styles.requestsSegmentTab,
+                  isActive
+                    ? styles.requestsSegmentTabActive
+                    : styles.requestsSegmentTabInactive,
+                ]}
+                onPress={() => setActiveTab(tab.key)}
+              >
+                <Text
+                  style={[
+                    styles.requestsSegmentText,
+                    isActive && styles.requestsSegmentTextActive,
+                  ]}
+                >
+                  {tab.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <View style={[styles.widget, styles.requestsBodyCard]}>
+          {isRequests ? (
+            <>
+              <Text style={styles.widgetTitle}>Requests (live)</Text>
+              <Text style={[styles.text, styles.requestsNote]}>
+                Hier erscheinen eingehende Anfragen. Wir binden gleich den
+                WebSocket an und nutzen dein Request-Slice.
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.widgetTitle}>Chats (live)</Text>
+              <Text style={[styles.text, styles.requestsNote]}>
+                Chat-Nachrichten werden hier gestreamt, sobald der WS-Client
+                steht.
+              </Text>
+            </>
+          )}
+        </View>
+      </View>
+    </ScreenController>
+  );
+}
