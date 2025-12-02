@@ -1,18 +1,23 @@
 package com.momo.backend.service.implementation;
 
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
 import com.momo.backend.dto.TaskDto;
 import com.momo.backend.entity.Manager;
 import com.momo.backend.entity.Task;
 import com.momo.backend.exception.ResourceNotFoundException;
+import com.momo.backend.mapper.TaskMapper;
 import com.momo.backend.repository.ManagerRepository;
 import com.momo.backend.repository.TaskRepository;
 import com.momo.backend.service.interfaces.TaskService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import com.momo.backend.service.interfaces.ChatService;
+import org.springframework.util.StringUtils;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -20,29 +25,34 @@ public class TaskServiceImple implements TaskService {
 
     private final TaskRepository taskRepository;
     private final ManagerRepository managerRepository;
+    private final TaskMapper taskMapper;
+    private final ChatService chatService;
 
     @Override
     public TaskDto createTask(TaskDto dto) {
         Manager manager = managerRepository.findById(dto.getManagerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Manager not found"));
 
-        Task task = new Task();
-        applyFields(task, dto, manager);
+        validate(dto);
+        Task task = taskMapper.toEntity(dto);
+        task.setManager(manager);
 
-        return toDto(taskRepository.save(task));
+        Task saved = taskRepository.save(task);
+        chatService.createTaskGroup(saved, manager);
+        return taskMapper.toDto(saved);
     }
 
     @Override
     public TaskDto getTask(UUID id) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
-        return toDto(task);
+        return taskMapper.toDto(task);
     }
 
     @Override
     public List<TaskDto> getTasksByManager(UUID managerId) {
         return taskRepository.findByManagerId(managerId).stream()
-                .map(this::toDto)
+                .map(taskMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -57,8 +67,10 @@ public class TaskServiceImple implements TaskService {
                     .orElseThrow(() -> new ResourceNotFoundException("Manager not found"));
         }
 
-        applyFields(existing, dto, manager);
-        return toDto(taskRepository.save(existing));
+        validate(dto);
+        taskMapper.updateFromDto(dto, existing);
+        existing.setManager(manager);
+        return taskMapper.toDto(taskRepository.save(existing));
     }
 
     @Override
@@ -68,24 +80,12 @@ public class TaskServiceImple implements TaskService {
         taskRepository.delete(task);
     }
 
-    private TaskDto toDto(Task task) {
-        return new TaskDto(
-                task.getId(),
-                task.getManager() != null ? task.getManager().getId() : null,
-                task.getLocation(),
-                task.getRequiredEmployees(),
-                task.getStart(),
-                task.getEnd(),
-                task.getResponseDeadline()
-        );
-    }
-
-    private void applyFields(Task task, TaskDto dto, Manager manager) {
-        task.setManager(manager);
-        task.setLocation(dto.getLocation());
-        task.setRequiredEmployees(dto.getRequiredEmployees());
-        task.setStart(dto.getStart());
-        task.setEnd(dto.getEnd());
-        task.setResponseDeadline(dto.getResponseDeadline());
+    private void validate(TaskDto dto) {
+        if (!StringUtils.hasText(dto.getCompany())) {
+            throw new IllegalArgumentException("Company must not be empty");
+        }
+        if (!StringUtils.hasText(dto.getLocation())) {
+            throw new IllegalArgumentException("Location must not be empty");
+        }
     }
 }

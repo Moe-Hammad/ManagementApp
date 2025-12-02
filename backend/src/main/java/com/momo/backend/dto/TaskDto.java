@@ -16,6 +16,7 @@ public class TaskDto {
     private UUID id;
     private UUID managerId;
     private String location;
+    private String company;
     private int requiredEmployees;
     private LocalDateTime start;
     private LocalDateTime end;
