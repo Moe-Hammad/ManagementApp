@@ -18,6 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Handles request lifecycle and pushes events to WebSocket subscribers.
+ */
 @Service
 @RequiredArgsConstructor
 public class RequestServiceImple implements RequestService {
@@ -48,6 +51,7 @@ public class RequestServiceImple implements RequestService {
 
         Request saved = requestRepository.save(request);
         RequestDto result = requestMapper.toDto(saved);
+        // Publish WS event on create
         requestEventPublisher.publishCreated(result);
         return result;
     }
@@ -96,6 +100,7 @@ public class RequestServiceImple implements RequestService {
 
         Request saved = requestRepository.save(request);
         RequestDto result = requestMapper.toDto(saved);
+        // Publish WS event on status change
         requestEventPublisher.publishUpdated(result);
         return result;
     }

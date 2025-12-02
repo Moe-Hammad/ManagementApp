@@ -1,7 +1,10 @@
 import ScreenController from "@/src/components/util/ScreenController";
+import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
+import { upsertRequest } from "@/src/redux/requestSlice";
+import { subscribeRequestsTopic } from "@/src/services/wsClient";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
 import { makeStyles } from "@/src/theme/styles";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
 const TABS = [
@@ -12,17 +15,45 @@ const TABS = [
 export default function RequestsScreen() {
   const { isDark } = useThemeMode();
   const styles = makeStyles(isDark);
+  const dispatch = useAppDispatch();
+  const token = useAppSelector((s) => s.auth.token?.token);
   const [activeTab, setActiveTab] = useState<string>("chats");
+  const [wsStatus, setWsStatus] = useState<"idle" | "connected" | "error">(
+    "idle"
+  );
 
   const isRequests = activeTab === "requests";
+
+  useEffect(() => {
+    if (!token) return;
+
+    const subscription = subscribeRequestsTopic(
+      token,
+      (payload) => {
+        if (payload?.payload) {
+          dispatch(upsertRequest(payload.payload));
+        }
+        setWsStatus("connected");
+      },
+      () => setWsStatus("error")
+    );
+
+    return () => {
+      subscription.disconnect();
+      setWsStatus("idle");
+    };
+  }, [token, dispatch]);
 
   return (
     <ScreenController scroll>
       <View style={[styles.screen, styles.requestsContainer]}>
         <Text style={[styles.titles, styles.requestsTitle]}>Inbox</Text>
-        <Text style={[styles.text, styles.requestsSubtitle]}>
-          Live Requests und Chats (WebSocket)
-        </Text>
+        <View style={styles.requestsBadgeRow}>
+          <Text style={[styles.text, styles.requestsSubtitle]}>
+            Live Requests und Chats (WebSocket)
+          </Text>
+          {token && <View style={styles.requestsBadge} />}
+        </View>
 
         <View style={styles.requestsSegmentRow}>
           {TABS.map((tab) => {
@@ -55,10 +86,15 @@ export default function RequestsScreen() {
           {isRequests ? (
             <>
               <Text style={styles.widgetTitle}>Requests (live)</Text>
-              <Text style={[styles.text, styles.requestsNote]}>
-                Hier erscheinen eingehende Anfragen. Wir binden gleich den
-                WebSocket an und nutzen dein Request-Slice.
-              </Text>
+              <View>
+                <Text style={[styles.text, styles.requestsNote]}>
+                  Hier erscheinen eingehende Anfragen. Wir binden gleich den
+                  WebSocket an und nutzen dein Request-Slice.
+                </Text>
+                <Text style={[styles.text, styles.requestsNote]}>
+                  Status: {wsStatus === "connected" ? "verbunden" : wsStatus}
+                </Text>
+              </View>
             </>
           ) : (
             <>

@@ -27,7 +27,9 @@ import java.util.List;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
-
+/**
+ * HTTP security configuration: stateless JWT, CORS, and Swagger/Auth whitelisting.
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {

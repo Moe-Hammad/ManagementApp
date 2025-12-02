@@ -5,6 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
+/**
+ * Publishes request-related events to STOMP subscribers on /topic/requests.
+ */
 @Component
 @RequiredArgsConstructor
 public class RequestEventPublisher {

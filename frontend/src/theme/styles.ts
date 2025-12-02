@@ -243,5 +243,16 @@ export const makeStyles = (isDark: boolean) => {
     requestsNote: {
       opacity: 0.7,
     },
+    requestsBadgeRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    requestsBadge: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: "red",
+    },
   });
 };
