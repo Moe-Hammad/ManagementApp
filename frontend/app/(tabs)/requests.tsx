@@ -1,7 +1,7 @@
-import ScreenController from "@/src/components/util/ScreenController";
 import { ChatsTab } from "@/src/components/Inbox/ChatsTab";
 import { RequestsTab } from "@/src/components/Inbox/RequestsTab";
 import { SearchTab } from "@/src/components/Inbox/SearchTab";
+import ScreenController from "@/src/components/util/ScreenController";
 import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
 import { addMessage, upsertRoom } from "@/src/redux/chatSlice";
 import {
@@ -108,8 +108,22 @@ export default function RequestsScreen() {
     return () => clearTimeout(handler);
   }, [employeeSearch, isManager, token, dispatch]);
 
+  const handleSendRequest = (employeeId: string) => {
+    if (!token || !userId) return;
+    // TODO: replace with createRequest thunk once backend is wired
+    dispatch(
+      upsertRequest({
+        id: "temp",
+        managerId: userId,
+        employeeId,
+        status: "PENDING",
+      } as any)
+    );
+    alert("pressed");
+  };
+
   return (
-    <ScreenController scroll>
+    <ScreenController scroll={false}>
       <View style={[styles.screen, styles.requestsContainer]}>
         <Text style={[styles.titles, styles.requestsTitle]}>Inbox</Text>
         <View style={styles.requestsBadgeRow}>
@@ -167,6 +181,9 @@ export default function RequestsScreen() {
             employeeSearch={employeeSearch}
             setEmployeeSearch={setEmployeeSearch}
             unassigned={unassigned}
+            onRequest={function (employeeId: string): void {
+              alert("Pressed");
+            }}
           />
         )}
       </View>

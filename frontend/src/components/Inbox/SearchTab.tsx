@@ -1,8 +1,8 @@
-import { Dispatch, SetStateAction } from "react";
-import { ScrollView, Text, TextInput, View } from "react-native";
 import { DarkColors, LightColors } from "@/src/theme/colors";
 import { makeStyles } from "@/src/theme/styles";
-import { Employee, UserRole } from "@/src/types/resources";
+import { Employee } from "@/src/types/resources";
+import { Dispatch, SetStateAction } from "react";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
 type Props = {
   styles: ReturnType<typeof makeStyles>;
@@ -11,6 +11,7 @@ type Props = {
   employeeSearch: string;
   setEmployeeSearch: Dispatch<SetStateAction<string>>;
   unassigned: Employee[];
+  onRequest: (employeeId: string) => void;
 };
 
 export function SearchTab({
@@ -20,6 +21,7 @@ export function SearchTab({
   employeeSearch,
   setEmployeeSearch,
   unassigned,
+  onRequest,
 }: Props) {
   return (
     <View style={[styles.widget, styles.requestsBodyCard, { gap: 12 }]}>
@@ -32,25 +34,36 @@ export function SearchTab({
         placeholderTextColor={palette.secondary}
         autoCapitalize="none"
       />
-      {!isManager ? (
-        <Text style={[styles.text, styles.requestsNote]}>
-          Suche ist nur für Manager verfügbar.
-        </Text>
-      ) : unassigned.length === 0 ? (
-        <Text style={[styles.text, styles.requestsNote]}>
-          Keine unassigned Employees gefunden.
-        </Text>
-      ) : (
-        <ScrollView style={{ maxHeight: 320 }}>
-          {unassigned.map((emp) => (
-            <View key={emp.id} style={styles.requestsRoomItem}>
+      <ScrollView
+        style={styles.searchResultsContainer}
+        nestedScrollEnabled
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {!isManager ? (
+          <Text style={[styles.text, styles.requestsNote]}>
+            Suche ist nur für Manager verfügbar.
+          </Text>
+        ) : unassigned.length === 0 ? (
+          <Text style={[styles.text, styles.requestsNote]}>
+            Keine unassigned Employees gefunden.
+          </Text>
+        ) : (
+          unassigned.map((emp) => (
+            <View key={emp.id} style={styles.searchResultRow}>
               <Text style={styles.text}>
                 {emp.firstName} {emp.lastName} ({emp.email})
               </Text>
+              <Pressable
+                style={styles.searchActionButton}
+                onPress={() => onRequest(emp.id)}
+              >
+                <Text style={styles.requestsActionText}>Anfragen</Text>
+              </Pressable>
             </View>
-          ))}
-        </ScrollView>
-      )}
+          ))
+        )}
+      </ScrollView>
     </View>
   );
 }

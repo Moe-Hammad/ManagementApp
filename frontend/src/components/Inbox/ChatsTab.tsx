@@ -1,8 +1,8 @@
-import { Dispatch, SetStateAction } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
 import { DarkColors, LightColors } from "@/src/theme/colors";
 import { makeStyles } from "@/src/theme/styles";
 import { ChatRoom } from "@/src/types/resources";
+import { Dispatch, SetStateAction } from "react";
+import { Pressable, Text, TextInput, View } from "react-native";
 
 type Props = {
   styles: ReturnType<typeof makeStyles>;

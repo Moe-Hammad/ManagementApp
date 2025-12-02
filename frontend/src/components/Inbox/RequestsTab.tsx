@@ -1,5 +1,5 @@
-import { Text, View } from "react-native";
 import { makeStyles } from "@/src/theme/styles";
+import { Text, View } from "react-native";
 
 type Props = {
   styles: ReturnType<typeof makeStyles>;

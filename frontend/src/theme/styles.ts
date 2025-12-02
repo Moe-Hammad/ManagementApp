@@ -175,6 +175,7 @@ export const makeStyles = (isDark: boolean) => {
       borderWidth: 1,
       borderColor: C.border,
       ...shadow(C.shadow, 4, 10, 0.2),
+      width: "100%",
     },
 
     widgetTitle: {
@@ -276,6 +277,26 @@ export const makeStyles = (isDark: boolean) => {
       paddingVertical: 10,
       borderBottomWidth: 1,
       borderBottomColor: C.border,
+    },
+    searchResultRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: C.border,
+    },
+    searchResultsContainer: {
+      maxHeight: 320,
+      width: "100%",
+    },
+    searchActionButton: {
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: C.border,
+      backgroundColor: C.surface,
     },
   });
 };
