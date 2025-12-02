@@ -1,28 +1,64 @@
 import ScreenController from "@/src/components/util/ScreenController";
+import { ChatsTab } from "@/src/components/Inbox/ChatsTab";
+import { RequestsTab } from "@/src/components/Inbox/RequestsTab";
+import { SearchTab } from "@/src/components/Inbox/SearchTab";
 import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
-import { upsertRequest } from "@/src/redux/requestSlice";
-import { subscribeRequestsTopic } from "@/src/services/wsClient";
+import { addMessage, upsertRoom } from "@/src/redux/chatSlice";
+import {
+  fetchUnassigned,
+  selectUnassigned,
+  upsertRequest,
+} from "@/src/redux/requestSlice";
+import {
+  subscribeRequestsTopic,
+  subscribeUserMessages,
+} from "@/src/services/wsClient";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
+import { DarkColors, LightColors } from "@/src/theme/colors";
 import { makeStyles } from "@/src/theme/styles";
-import { useEffect, useState } from "react";
+import { ChatRoom, UserRole } from "@/src/types/resources";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
-
-const TABS = [
-  { key: "chats", label: "Chats" },
-  { key: "requests", label: "Requests" },
-];
 
 export default function RequestsScreen() {
   const { isDark } = useThemeMode();
   const styles = makeStyles(isDark);
+  const palette = isDark ? DarkColors : LightColors;
   const dispatch = useAppDispatch();
   const token = useAppSelector((s) => s.auth.token?.token);
+  const userId = useAppSelector((s) => s.auth.user?.id);
+  const role = useAppSelector((s) => s.auth.user?.role);
+  const isManager = role === UserRole.MANAGER;
+  const isEmployee = role === UserRole.EMPLOYEE;
   const [activeTab, setActiveTab] = useState<string>("chats");
   const [wsStatus, setWsStatus] = useState<"idle" | "connected" | "error">(
     "idle"
   );
+  const [chatSearch, setChatSearch] = useState("");
+  const [employeeSearch, setEmployeeSearch] = useState("");
 
+  const tabs = useMemo(() => {
+    const base = [
+      { key: "chats", label: "Chats" },
+      { key: "requests", label: "Requests" },
+    ];
+    if (isManager) {
+      base.push({ key: "search", label: "Search" });
+    }
+    return base;
+  }, [isManager]);
+
+  const isSearch = activeTab === "search";
   const isRequests = activeTab === "requests";
+  const isChats = activeTab === "chats";
+  const chatRooms = useAppSelector((s) => s.chat.rooms);
+  const unassigned = useAppSelector(selectUnassigned);
+  const filteredRooms = useMemo(() => {
+    if (!chatSearch.trim()) return chatRooms;
+    return chatRooms.filter((r) =>
+      r.title.toLowerCase().includes(chatSearch.trim().toLowerCase())
+    );
+  }, [chatRooms, chatSearch]);
 
   useEffect(() => {
     if (!token) return;
@@ -44,6 +80,34 @@ export default function RequestsScreen() {
     };
   }, [token, dispatch]);
 
+  useEffect(() => {
+    if (!token || !userId) return;
+    const sub = subscribeUserMessages(
+      token,
+      userId,
+      (payload) => {
+        if (payload?.room) {
+          dispatch(upsertRoom(payload.room as ChatRoom));
+        }
+        if (payload?.message) {
+          dispatch(addMessage(payload.message));
+        }
+        setWsStatus("connected");
+      },
+      () => setWsStatus("error")
+    );
+    return () => sub.disconnect();
+  }, [token, userId, dispatch]);
+
+  // Manager: Suche nach unassigned Employees
+  useEffect(() => {
+    if (!isManager || !token) return;
+    const handler = setTimeout(() => {
+      dispatch(fetchUnassigned({ query: employeeSearch.trim(), token }));
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [employeeSearch, isManager, token, dispatch]);
+
   return (
     <ScreenController scroll>
       <View style={[styles.screen, styles.requestsContainer]}>
@@ -56,7 +120,7 @@ export default function RequestsScreen() {
         </View>
 
         <View style={styles.requestsSegmentRow}>
-          {TABS.map((tab) => {
+          {tabs.map((tab) => {
             const isActive = activeTab === tab.key;
             return (
               <Pressable
@@ -82,30 +146,29 @@ export default function RequestsScreen() {
           })}
         </View>
 
-        <View style={[styles.widget, styles.requestsBodyCard]}>
-          {isRequests ? (
-            <>
-              <Text style={styles.widgetTitle}>Requests (live)</Text>
-              <View>
-                <Text style={[styles.text, styles.requestsNote]}>
-                  Hier erscheinen eingehende Anfragen. Wir binden gleich den
-                  WebSocket an und nutzen dein Request-Slice.
-                </Text>
-                <Text style={[styles.text, styles.requestsNote]}>
-                  Status: {wsStatus === "connected" ? "verbunden" : wsStatus}
-                </Text>
-              </View>
-            </>
-          ) : (
-            <>
-              <Text style={styles.widgetTitle}>Chats (live)</Text>
-              <Text style={[styles.text, styles.requestsNote]}>
-                Chat-Nachrichten werden hier gestreamt, sobald der WS-Client
-                steht.
-              </Text>
-            </>
-          )}
-        </View>
+        {isRequests ? (
+          <RequestsTab styles={styles} wsStatus={wsStatus} />
+        ) : isChats ? (
+          <ChatsTab
+            styles={styles}
+            palette={palette}
+            filteredRooms={filteredRooms}
+            chatSearch={chatSearch}
+            setChatSearch={setChatSearch}
+            isManager={isManager}
+            isEmployee={isEmployee}
+            onStartChat={() => {}}
+          />
+        ) : (
+          <SearchTab
+            styles={styles}
+            palette={palette}
+            isManager={isManager}
+            employeeSearch={employeeSearch}
+            setEmployeeSearch={setEmployeeSearch}
+            unassigned={unassigned}
+          />
+        )}
       </View>
     </ScreenController>
   );

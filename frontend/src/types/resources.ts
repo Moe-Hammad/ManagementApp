@@ -55,3 +55,21 @@ export type RequestItem = {
   createdAt?: string;
   updatedAt?: string;
 };
+
+export type ChatRoom = {
+  id: string;
+  managerId: string;
+  employeeId: string;
+  title: string; // Anzeigename des Gegenübers
+  unread?: number;
+  lastMessagePreview?: string;
+  updatedAt?: string;
+};
+
+export type ChatMessage = {
+  id: string;
+  chatId: string;
+  senderId: string;
+  text: string;
+  createdAt: string;
+};

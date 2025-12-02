@@ -254,5 +254,28 @@ export const makeStyles = (isDark: boolean) => {
       borderRadius: 5,
       backgroundColor: "red",
     },
+    requestsHeaderRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    requestsActionButton: {
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: C.border,
+      backgroundColor: C.surface,
+    },
+    requestsActionText: {
+      color: C.text,
+      fontWeight: "600",
+      letterSpacing: 0.3,
+    },
+    requestsRoomItem: {
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: C.border,
+    },
   });
 };

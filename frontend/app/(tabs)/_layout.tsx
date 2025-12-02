@@ -24,21 +24,21 @@ export default function TabsLayout() {
         }}
       >
         <Tabs.Screen
-          name="index"
-          options={{
-            title: "Dashboard",
-            tabBarIcon: ({ color }) => (
-              <MaterialCommunityIcons name="home" size={26} color={color} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
           name="calendar"
           options={{
             title: "Kalender",
             tabBarIcon: ({ color }) => (
               <MaterialCommunityIcons name="calendar" size={26} color={color} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: "Dashboard",
+            tabBarIcon: ({ color }) => (
+              <MaterialCommunityIcons name="home" size={26} color={color} />
             ),
           }}
         />
@@ -63,7 +63,11 @@ export default function TabsLayout() {
             title: "Erstellen",
             tabBarIcon: ({ color }) =>
               showManagerTab ? (
-                <MaterialCommunityIcons name="plus-box" size={26} color={color} />
+                <MaterialCommunityIcons
+                  name="plus-box"
+                  size={26}
+                  color={color}
+                />
               ) : null,
             tabBarItemStyle: showManagerTab ? undefined : { display: "none" },
             tabBarLabelStyle: showManagerTab ? undefined : { display: "none" },
