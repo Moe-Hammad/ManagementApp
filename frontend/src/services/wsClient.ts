@@ -6,8 +6,8 @@ type StompSubscription = {
 
 type StompMessageHandler = (payload: any) => void;
 
-// Minimal STOMP 1.2 client for one subscription (/topic/requests)
-export function subscribeRequestsTopic(
+// Minimal STOMP 1.2 client for user-specific queue (/user/queue/requests)
+export function subscribeUserRequests(
   token: string,
   onMessage: StompMessageHandler,
   onError?: (err: Error) => void
@@ -35,7 +35,7 @@ export function subscribeRequestsTopic(
     });
     sendFrame("SUBSCRIBE", {
       id: "requests-sub",
-      destination: "/topic/requests",
+      destination: "/user/queue/requests",
     });
   };
 

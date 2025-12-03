@@ -1,0 +1,193 @@
+import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
+import {
+  addMessage,
+  createDirectChat,
+  fetchChatRooms,
+  fetchMessagesForChat,
+  sendChatMessage,
+} from "@/src/redux/chatSlice";
+import { subscribeUserMessages } from "@/src/services/wsClient";
+import { useThemeMode } from "@/src/theme/ThemeProvider";
+import { DarkColors, LightColors } from "@/src/theme/colors";
+import { makeStyles } from "@/src/theme/styles";
+import { ChatMessage, ChatRoom, UserRole } from "@/src/types/resources";
+import { useEffect, useMemo, useState } from "react";
+
+/**
+ * useChat
+ * ---------------------------------------------------------
+ * Dieser Hook kapselt alle Chat-bezogenen Funktionen und
+ * Daten, die vorher im RequestsScreen verstreut lagen.
+ *
+ * Verantwortlichkeiten:
+ * - Laden & Filtern von Chat-Räumen
+ * - Nachrichten laden + WebSocket-Listener für neue Messages
+ * - Nachricht senden
+ * - Direkt-Chat starten
+ * - Auswahl eines Chats / Entfernen der Auswahl
+ * - Theme, Styles & UI-bezogene Zustände
+ *
+ * Warum existiert dieser Hook?
+ * - Reduziert die Größe von RequestsScreen massiv
+ * - Trennung zwischen UI (Komponenten) und Logik (Hooks)
+ * - Wiederverwendbar & testbarer
+ *
+ * @returns Objekt mit:
+ *  - chatState: alle berechneten Werte & UI-Daten für Chats
+ *  - actions: Methoden zum Interagieren (selectChat, sendMessage usw.)
+ */
+
+export function useChat() {
+  const dispatch = useAppDispatch();
+
+  // ==== Theme / Styles ======================================================
+  const { isDark } = useThemeMode();
+  const styles = makeStyles(isDark);
+  const palette = isDark ? DarkColors : LightColors;
+
+  // ==== Auth / User Info =====================================================
+  const token = useAppSelector((s) => s.auth.token?.token);
+  const userId = useAppSelector((s) => s.auth.user?.id);
+  const role = useAppSelector((s) => s.auth.user?.role);
+  const isManager = role === UserRole.MANAGER;
+  const isEmployee = role === UserRole.EMPLOYEE;
+
+  // ==== Redux-Daten ==========================================================
+  const chatRooms = useAppSelector((s) => s.chat.rooms);
+  const messagesByChat = useAppSelector((s) => s.chat.messages);
+  const loadingMessages = useAppSelector((s) => s.chat.loadingMessages);
+  const sendingMessage = useAppSelector((s) => s.chat.sending);
+
+  // ==== Lokale UI-Zustände ===================================================
+  const [chatSearch, setChatSearch] = useState("");
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const [messageText, setMessageText] = useState("");
+  const [hasAutoSelected, setHasAutoSelected] = useState(false);
+
+  /**
+   * Filtert Chatrooms nach Suchwort.
+   */
+  const filteredRooms = useMemo(() => {
+    if (!chatSearch.trim()) return chatRooms;
+
+    return chatRooms.filter((r) =>
+      (r.name || "").toLowerCase().includes(chatSearch.trim().toLowerCase())
+    );
+  }, [chatRooms, chatSearch]);
+
+  /**
+   * Liefert den aktuell ausgewählten Chatroom.
+   */
+  const selectedChat: ChatRoom | null = selectedChatId
+    ? chatRooms.find((r) => r.id === selectedChatId) || null
+    : null;
+
+  /**
+   * Nachrichten des ausgewählten Chats.
+   */
+  const selectedMessages: ChatMessage[] = selectedChatId
+    ? messagesByChat[selectedChatId] || []
+    : [];
+
+  const isLoadingMessages = selectedChatId
+    ? loadingMessages[selectedChatId]
+    : false;
+
+  // ==== WebSocket: Eingehende Nachrichten ====================================
+  useEffect(() => {
+    if (!token || !userId) return;
+
+    const sub = subscribeUserMessages(
+      token,
+      userId,
+      (payload) => {
+        const msg = payload as ChatMessage;
+        if (msg?.chatId) dispatch(addMessage(msg));
+      },
+      () => console.log("WS Error (messages)")
+    );
+
+    return () => sub.disconnect();
+  }, [token, userId, dispatch]);
+
+  // ==== Chat-Räume laden =====================================================
+  useEffect(() => {
+    if (!token) return;
+    dispatch(fetchChatRooms({ token }));
+  }, [token, dispatch]);
+
+  // ==== Nachrichten laden bei Chat-Auswahl ===================================
+  useEffect(() => {
+    if (!token || !selectedChatId) return;
+    dispatch(fetchMessagesForChat({ chatId: selectedChatId, token }));
+  }, [selectedChatId, token, dispatch]);
+
+  // ==== Actions ===============================================================
+  const selectChat = (chatId: string) => {
+    setSelectedChatId(chatId);
+  };
+
+  const clearSelection = () => {
+    setSelectedChatId(null);
+  };
+
+  const sendMessage = async () => {
+    if (!selectedChatId || !messageText.trim() || !token) return;
+
+    try {
+      await dispatch(
+        sendChatMessage({
+          chatId: selectedChatId,
+          text: messageText.trim(),
+          token,
+        })
+      ).unwrap();
+
+      setMessageText("");
+    } catch (err: any) {
+      alert(err.message || "Nachricht konnte nicht gesendet werden.");
+    }
+  };
+
+  const startDirectChat = async (managerId: string, employeeId: string) => {
+    if (!token) return;
+
+    try {
+      const chat = await dispatch(
+        createDirectChat({ managerId, employeeId, token })
+      ).unwrap();
+
+      setSelectedChatId(chat.id);
+    } catch (err: any) {
+      alert(err.message || "Chat konnte nicht erstellt werden.");
+    }
+  };
+
+  // ==== Rückgabe ==============================================================
+  return {
+    chatState: {
+      chatRooms,
+      filteredRooms,
+      selectedChat,
+      selectedMessages,
+      isLoadingMessages,
+      sendingMessage,
+      palette,
+      styles,
+      role,
+      isManager,
+      isEmployee,
+      chatSearch,
+      selectedChatId,
+      messageText,
+    },
+    actions: {
+      setChatSearch,
+      setMessageText,
+      selectChat,
+      clearSelection,
+      sendMessage,
+      startDirectChat,
+    },
+  };
+}

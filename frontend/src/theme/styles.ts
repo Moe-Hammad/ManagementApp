@@ -298,5 +298,166 @@ export const makeStyles = (isDark: boolean) => {
       borderColor: C.border,
       backgroundColor: C.surface,
     },
+    chatFullScreenContainer: {
+      flex: 1,
+      width: "100%",
+      padding: 0,
+      backgroundColor: C.screenbackground, // oder C.background
+    },
+
+    chatHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 12,
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderColor: C.border,
+    },
+
+    chatMessagesContainer: {
+      flex: 1,
+      paddingHorizontal: 16,
+    },
+
+    chatMessageBubble: {
+      padding: 12,
+      borderRadius: 12,
+      marginBottom: 10,
+      maxWidth: "80%",
+    },
+
+    chatMessageMine: {
+      alignSelf: "flex-end",
+      backgroundColor: C.primary,
+    },
+
+    chatMessageTheirs: {
+      alignSelf: "flex-start",
+      backgroundColor: C.surface,
+    },
+
+    chatTimestamp: {
+      fontSize: 11,
+      opacity: 0.6,
+      marginTop: 4,
+    },
+    chatInputContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      borderTopWidth: 1,
+      borderColor: C.border,
+      backgroundColor: C.surface,
+    },
+
+    chatInputField: {
+      flex: 1,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 25,
+      backgroundColor: C.card,
+      borderWidth: 1,
+      borderColor: C.border,
+      color: C.text,
+      marginRight: 10,
+    },
+
+    chatSendButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      backgroundColor: C.primary,
+      borderRadius: 25,
+    },
+
+    chatSendText: {
+      color: "#fff",
+      fontWeight: "700",
+    },
+    // ==== Employee Picker ======================================================
+    employeePickerOverlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: "rgba(0,0,0,0.6)",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 16,
+      zIndex: 999,
+    },
+
+    employeePickerCard: {
+      width: "100%",
+      maxHeight: "70%",
+      backgroundColor: C.surface,
+      borderRadius: 16,
+      padding: 20,
+      borderWidth: 1,
+      borderColor: C.border,
+    },
+
+    employeePickerList: {
+      marginTop: 10,
+      maxHeight: 300,
+    },
+
+    employeePickerItem: {
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: C.border,
+    },
+
+    employeePickerCancel: {
+      marginTop: 16,
+      alignSelf: "flex-end",
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: C.border,
+      backgroundColor: C.surface,
+    },
+    requestItem: {
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: C.border,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+
+    requestInfo: {
+      flexDirection: "column",
+      flex: 1,
+    },
+
+    requestActions: {
+      flexDirection: "row",
+      gap: 10,
+    },
+
+    requestActionApprove: {
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 10,
+      backgroundColor: C.success,
+    },
+
+    requestActionReject: {
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 10,
+      backgroundColor: C.danger,
+    },
+
+    requestActionText: {
+      color: "#fff",
+      fontWeight: "700",
+    },
   });
 };

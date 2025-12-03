@@ -1,27 +1,57 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import {
+  createDirectChatApi,
+  listChats,
+  listMessages,
+  sendChatMessageApi,
+} from "@/src/services/api";
 import { ChatMessage, ChatRoom } from "../types/resources";
 
 type ChatState = {
   rooms: ChatRoom[];
-  messages: Record<string, ChatMessage[]>; // key: chatId
-  loading: boolean;
+  messages: Record<string, ChatMessage[]>;
+  loadingRooms: boolean;
+  loadingMessages: Record<string, boolean>;
+  sending: boolean;
   error: string | null;
 };
 
 const initialState: ChatState = {
   rooms: [],
   messages: {},
-  loading: false,
+  loadingRooms: false,
+  loadingMessages: {},
+  sending: false,
   error: null,
 };
 
-// Platzhalter-Thunk (Backend noch offen)
-export const fetchChatRooms = createAsyncThunk<ChatRoom[]>(
+export const fetchChatRooms = createAsyncThunk<ChatRoom[], { token: string }>(
   "chat/fetchRooms",
-  async () => {
-    return [];
-  }
+  async ({ token }) => listChats(token)
 );
+
+export const fetchMessagesForChat = createAsyncThunk<
+  { chatId: string; messages: ChatMessage[] },
+  { chatId: string; token: string }
+>("chat/fetchMessages", async ({ chatId, token }) => {
+  const messages = await listMessages(chatId, token);
+  return { chatId, messages };
+});
+
+export const createDirectChat = createAsyncThunk<
+  ChatRoom,
+  { managerId: string; employeeId: string; token: string }
+>("chat/createDirect", async ({ managerId, employeeId, token }) =>
+  createDirectChatApi(managerId, employeeId, token)
+);
+
+export const sendChatMessage = createAsyncThunk<
+  { chatId: string; message: ChatMessage },
+  { chatId: string; text: string; token: string }
+>("chat/sendMessage", async ({ chatId, text, token }) => {
+  const message = await sendChatMessageApi(chatId, text, token);
+  return { chatId, message };
+});
 
 const chatSlice = createSlice({
   name: "chat",
@@ -49,17 +79,54 @@ const chatSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchChatRooms.pending, (state) => {
-        state.loading = true;
+        state.loadingRooms = true;
         state.error = null;
       })
       .addCase(fetchChatRooms.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loadingRooms = false;
         state.rooms = action.payload;
       })
       .addCase(fetchChatRooms.rejected, (state, action) => {
-        state.loading = false;
+        state.loadingRooms = false;
         state.error =
           action.error.message || "Chat-Räume konnten nicht geladen werden.";
+      })
+      .addCase(fetchMessagesForChat.pending, (state, action) => {
+        state.loadingMessages[action.meta.arg.chatId] = true;
+      })
+      .addCase(fetchMessagesForChat.fulfilled, (state, action) => {
+        state.loadingMessages[action.payload.chatId] = false;
+        state.messages[action.payload.chatId] = action.payload.messages;
+      })
+      .addCase(fetchMessagesForChat.rejected, (state, action) => {
+        const chatId = action.meta.arg.chatId;
+        state.loadingMessages[chatId] = false;
+        state.error =
+          action.error.message || "Nachrichten konnten nicht geladen werden.";
+      })
+      .addCase(createDirectChat.fulfilled, (state, action) => {
+        const idx = state.rooms.findIndex((r) => r.id === action.payload.id);
+        if (idx >= 0) {
+          state.rooms[idx] = action.payload;
+        } else {
+          state.rooms.unshift(action.payload);
+        }
+      })
+      .addCase(sendChatMessage.pending, (state) => {
+        state.sending = true;
+      })
+      .addCase(sendChatMessage.fulfilled, (state, action) => {
+        state.sending = false;
+        const { chatId, message } = action.payload;
+        if (!state.messages[chatId]) {
+          state.messages[chatId] = [];
+        }
+        state.messages[chatId].push(message);
+      })
+      .addCase(sendChatMessage.rejected, (state, action) => {
+        state.sending = false;
+        state.error =
+          action.error.message || "Nachricht konnte nicht gesendet werden.";
       });
   },
 });

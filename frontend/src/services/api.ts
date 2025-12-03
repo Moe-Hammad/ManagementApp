@@ -1,5 +1,7 @@
 import { Buffer } from "buffer";
 import {
+  ChatMessage,
+  ChatRoom,
   LoginResponse,
   RegisterRequest,
   RequestItem,
@@ -187,6 +189,91 @@ export async function updateRequestStatusApi(
     const errorBody = await response.text();
     throw new Error(
       `Request update failed (${response.status}) - ${errorBody || ""}`.trim()
+    );
+  }
+
+  return response.json();
+}
+
+// ============================
+// Chats
+// ============================
+
+export async function listChats(token: string): Promise<ChatRoom[]> {
+  const response = await fetch(`${API_BASE_URL}/api/chats`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(token),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Chats fetch failed (${response.status})`);
+  }
+
+  return response.json();
+}
+
+export async function listMessages(
+  chatId: string,
+  token: string
+): Promise<ChatMessage[]> {
+  const response = await fetch(`${API_BASE_URL}/api/chats/${chatId}/messages`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(token),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Messages fetch failed (${response.status})`);
+  }
+
+  return response.json();
+}
+
+export async function createDirectChatApi(
+  managerId: string,
+  employeeId: string,
+  token: string
+): Promise<ChatRoom> {
+  const response = await fetch(`${API_BASE_URL}/api/chats/direct`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(token),
+    },
+    body: JSON.stringify({ managerId, employeeId }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Direct chat create failed (${response.status}) - ${errorBody || ""}`.trim()
+    );
+  }
+
+  return response.json();
+}
+
+export async function sendChatMessageApi(
+  chatId: string,
+  text: string,
+  token: string
+): Promise<ChatMessage> {
+  const response = await fetch(`${API_BASE_URL}/api/chats/${chatId}/messages`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain",
+      ...authHeader(token),
+    },
+    body: text,
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Message send failed (${response.status}) - ${errorBody || ""}`.trim()
     );
   }
 

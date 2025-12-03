@@ -56,12 +56,19 @@ export type RequestItem = {
   updatedAt?: string;
 };
 
+export enum ChatType {
+  DIRECT = "DIRECT",
+  GROUP = "GROUP",
+}
+
 export type ChatRoom = {
   id: string;
+  name: string;
+  type: ChatType;
   managerId: string;
-  employeeId: string;
-  title: string; // Anzeigename des Gegenübers
-  unread?: number;
+  taskId?: string | null;
+  memberIds: string[];
+  createdAt: string;
   lastMessagePreview?: string;
   updatedAt?: string;
 };
@@ -70,6 +77,7 @@ export type ChatMessage = {
   id: string;
   chatId: string;
   senderId: string;
+  senderRole?: string;
   text: string;
   createdAt: string;
 };

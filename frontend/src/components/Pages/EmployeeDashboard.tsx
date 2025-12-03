@@ -1,3 +1,5 @@
+import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
+import { fetchUserById, selectUserById } from "@/src/redux/userSlice";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
 import { makeStyles } from "@/src/theme/styles";
 import { Employee } from "@/src/types/resources";
@@ -10,7 +12,13 @@ type Props = {
 export default function EmployeeDashboard({ employee }: Props) {
   const { isDark } = useThemeMode();
   const styles = makeStyles(isDark);
+  const dispatch = useAppDispatch();
 
+  const loadManager = (id: string) => {
+    const cached = useAppSelector((s) => selectUserById(s, id));
+    if (!cached) dispatch(fetchUserById(id));
+    return cached;
+  };
   const availabilityText = employee.availability ? "Verfügbar" : "Beschäftigt";
 
   return (
@@ -44,7 +52,9 @@ export default function EmployeeDashboard({ employee }: Props) {
       <View style={[styles.widget, { marginTop: 16 }]}>
         <Text style={styles.widgetTitle}>Manager</Text>
         <Text style={styles.text}>
-          {employee.managerId ? employee.managerId : "Noch kein Manager zugeordnet"}
+          {employee.managerId
+            ? employee.managerId
+            : "Noch kein Manager zugeordnet"}
         </Text>
       </View>
     </View>
