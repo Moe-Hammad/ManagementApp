@@ -1,4 +1,5 @@
 import AuthGate from "@/src/components/core/AuthGate";
+import WebSocketBridge from "@/src/components/core/WebSocketBridge";
 import { store } from "@/src/redux/store";
 import { makeStyles } from "@/src/theme/styles";
 import { ThemeProvider, useThemeMode } from "@/src/theme/ThemeProvider";
@@ -16,6 +17,7 @@ function RootWrapper() {
     <KeyboardProvider>
       <SafeAreaProvider>
         <AuthGate>
+          <WebSocketBridge />
           <Slot />
         </AuthGate>
       </SafeAreaProvider>

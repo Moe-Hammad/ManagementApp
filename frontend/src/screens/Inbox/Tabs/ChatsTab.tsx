@@ -1,9 +1,11 @@
 import { useOpenDirectChat } from "@/src/hooks/useOpenDirectChat";
 import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
 import { fetchChatRooms } from "@/src/redux/chatSlice";
+import EmployeePicker from "@/src/screens/Inbox/components/EmployeePicker";
+import { Manager, UserRole } from "@/src/types/resources";
 import { useRouter } from "expo-router";
-import { useEffect } from "react";
-import { Text, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Pressable, Text, View } from "react-native";
 import ChatList from "../chat/ChatList";
 
 export default function ChatsTab({
@@ -22,6 +24,13 @@ export default function ChatsTab({
   const loading = useAppSelector((s) => s.chat.loadingRooms);
 
   const openDirectChat = useOpenDirectChat();
+  const [pickerVisible, setPickerVisible] = useState(false);
+
+  const isManager = user?.role === UserRole.MANAGER;
+  const employees = useMemo(
+    () => (isManager ? (user as Manager | undefined)?.employees ?? [] : []),
+    [isManager, user]
+  );
 
   useEffect(() => {
     if (token) dispatch(fetchChatRooms({ token }));
@@ -41,9 +50,22 @@ export default function ChatsTab({
     });
   };
 
+  const handleNewChat = () => {
+    if (isManager) {
+      setPickerVisible(true);
+    }
+  };
+
   return (
-    <View style={[styles.widget, { flex: 1 }]}>
-      <Text style={styles.widgetTitle}>Chats</Text>
+    <View style={[styles.widget, styles.chatsContainer]}>
+      <View style={styles.chatsHeaderRow}>
+        <Text style={styles.widgetTitle}>Chats</Text>
+        {isManager && (
+          <Pressable style={styles.chatsNewButton} onPress={handleNewChat}>
+            <Text style={styles.chatsNewButtonText}>Neuer Chat</Text>
+          </Pressable>
+        )}
+      </View>
 
       {loading ? (
         <Text style={[styles.text, styles.requestsNote]}>
@@ -58,6 +80,13 @@ export default function ChatsTab({
           onOpenChat={(room) => handleOpenChat(room.id)}
         />
       )}
+
+      <EmployeePicker
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        employees={employees}
+        styles={styles}
+      />
     </View>
   );
 }

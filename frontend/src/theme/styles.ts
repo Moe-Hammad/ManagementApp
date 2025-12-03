@@ -317,7 +317,15 @@ export const makeStyles = (isDark: boolean) => {
 
     chatMessagesContainer: {
       flex: 1,
+    },
+    chatMessagesContent: {
       paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 12,
+      flexGrow: 1,
+    },
+    chatBody: {
+      flex: 1,
     },
 
     chatMessageBubble: {
@@ -569,6 +577,34 @@ export const makeStyles = (isDark: boolean) => {
       fontSize: 13,
       color: C.secondary,
       marginTop: 2,
+    },
+
+    chatListContainer: {
+      marginTop: 10,
+      gap: 8,
+    },
+
+    // Chats Tab
+    chatsContainer: {
+      flex: 1,
+      gap: 8,
+    },
+    chatsHeaderRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 4,
+    },
+    chatsNewButton: {
+      backgroundColor: C.primary,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 10,
+      ...shadow(C.primary, 3, 8, 0.4),
+    },
+    chatsNewButtonText: {
+      color: "#fff",
+      fontWeight: "700",
     },
   });
 };

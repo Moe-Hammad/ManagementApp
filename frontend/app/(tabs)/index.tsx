@@ -18,7 +18,6 @@ export default function LandingPage() {
   return (
     <ScreenController>
       <View style={styles.screen}>
-        {/* <WelcomeBox /> */}
         <Dashboard />
         <Pressable style={styles.button} onPress={handleLogout}>
           <Text style={styles.buttonText}>Logout</Text>

@@ -1,7 +1,6 @@
 import { useOpenDirectChat } from "@/src/hooks/useOpenDirectChat";
 import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
 import { fetchUserById } from "@/src/redux/userSlice";
-
 import {
   Employee,
   Manager,
@@ -9,17 +8,8 @@ import {
   RequestStatus,
   UserRole,
 } from "@/src/types/resources";
-
 import { useEffect } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
-
-/**
- * RequestsTab
- * ---------------------------------------------------------
- * - Zeigt Requests für Manager & Employees
- * - Lädt Manager-Daten für Employees automatisch
- * - Beim ANNEHMEN wird automatisch ein DirectChat geöffnet (Step 1.5)
- */
 
 export default function RequestsTab({
   styles,
@@ -42,7 +32,6 @@ export default function RequestsTab({
   const isManager = user.role === UserRole.MANAGER;
   const isEmployee = user.role === UserRole.EMPLOYEE;
 
-  // Map der Mitarbeiter für Manager
   const employeeMap = isManager
     ? Object.fromEntries((user as Manager).employees.map((e) => [e.id, e]))
     : {};
@@ -50,15 +39,11 @@ export default function RequestsTab({
   const userMap = useAppSelector((s) => s.users.userMap);
   const token = useAppSelector((s) => s.auth.token?.token);
 
-  /**
-   * 📌 Manager-Daten vorladen (nur für Employees)
-   */
+  // Manager-Daten vorladen (nur für Employees)
   useEffect(() => {
-    if (!isEmployee) return;
-    if (!token) return;
+    if (!isEmployee || !token) return;
 
     const managerIds = Array.from(new Set(requests.map((r) => r.managerId)));
-
     managerIds.forEach((id) => {
       if (!userMap[id]) {
         dispatch(fetchUserById(id));
@@ -66,15 +51,26 @@ export default function RequestsTab({
     });
   }, [isEmployee, requests, userMap, dispatch, token]);
 
-  /**
-   * 📌 DirectChat öffnen, nachdem Employee ACCEPT gedrückt hat
-   */
+  // Employee-Daten vorladen (nur für Manager, z. B. pending Requests)
+  useEffect(() => {
+    if (!isManager || !token) return;
+
+    const missing = Array.from(
+      new Set(
+        requests
+          .map((r) => r.employeeId)
+          .filter((id) => id && !employeeMap[id] && !userMap[id])
+      )
+    );
+
+    missing.forEach((id) => {
+      dispatch(fetchUserById(id));
+    });
+  }, [isManager, requests, employeeMap, userMap, dispatch, token]);
+
   const handleAccept = async (requestId: string, managerId: string) => {
     onAccept(requestId);
-
-    // DirectChat öffnen
-    const room = await openDirectChat(managerId);
-    // ChatScreen Navigation erfolgt im Hook/ChatsTab
+    await openDirectChat(managerId);
   };
 
   return (
@@ -88,18 +84,18 @@ export default function RequestsTab({
           </Text>
         ) : (
           requests.map((req) => {
-            // 🔍 Namen auflösen
             let displayName = "";
 
-            // Manager → Employee anzeigen
             if (isManager) {
               const emp = employeeMap[req.employeeId];
+              const cached = userMap[req.employeeId];
               displayName = emp
                 ? `${emp.firstName} ${emp.lastName}`
-                : req.employeeId;
+                : cached
+                ? `${cached.firstName} ${cached.lastName}`
+                : "Lade Mitarbeiter...";
             }
 
-            // Employee → Manager anzeigen
             if (isEmployee) {
               const manager = userMap[req.managerId];
               displayName = manager
@@ -116,7 +112,6 @@ export default function RequestsTab({
 
             return (
               <View key={req.id} style={styles.requestItem}>
-                {/* LEFT SIDE */}
                 <View style={styles.requestInfo}>
                   {isManager ? (
                     <Text style={styles.text}>
@@ -140,10 +135,8 @@ export default function RequestsTab({
                   </Text>
                 </View>
 
-                {/* Employee kann ACCEPT/REJECT */}
                 {isEmployee && req.status === RequestStatus.PENDING && (
                   <View style={styles.requestActions}>
-                    {/* ACCEPT */}
                     <Pressable
                       style={styles.requestActionApprove}
                       onPress={() => handleAccept(req.id, req.managerId)}
@@ -151,12 +144,11 @@ export default function RequestsTab({
                       <Text style={styles.requestActionText}>✔</Text>
                     </Pressable>
 
-                    {/* REJECT */}
                     <Pressable
                       style={styles.requestActionReject}
                       onPress={() => onReject(req.id)}
                     >
-                      <Text style={styles.requestActionText}>✖</Text>
+                      <Text style={styles.requestActionText}>✕</Text>
                     </Pressable>
                   </View>
                 )}

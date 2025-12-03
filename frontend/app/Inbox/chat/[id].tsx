@@ -10,7 +10,7 @@ export default function ChatWrapper() {
   const palette = isDark ? DarkColors : LightColors;
 
   return (
-    <ScreenController>
+    <ScreenController scroll={false}>
       <ChatScreen styles={styles} palette={palette} />
     </ScreenController>
   );

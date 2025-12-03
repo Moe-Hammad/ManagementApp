@@ -81,10 +81,11 @@ const chatSlice = createSlice({
     },
     addMessage(state, action: PayloadAction<ChatMessage>) {
       const { chatId } = action.payload;
-      if (!state.messages[chatId]) {
-        state.messages[chatId] = [];
-      }
-      state.messages[chatId].push(action.payload);
+      const current = state.messages[chatId] || [];
+      const exists = current.some((m) => m.id === action.payload.id);
+      state.messages[chatId] = exists
+        ? current
+        : [...current, action.payload];
     },
     setRooms(state, action: PayloadAction<ChatRoom[]>) {
       state.rooms = action.payload;
@@ -132,10 +133,9 @@ const chatSlice = createSlice({
       .addCase(sendChatMessage.fulfilled, (state, action) => {
         state.sending = false;
         const { chatId, message } = action.payload;
-        if (!state.messages[chatId]) {
-          state.messages[chatId] = [];
-        }
-        state.messages[chatId].push(message);
+        const current = state.messages[chatId] || [];
+        const exists = current.some((m) => m.id === message.id);
+        state.messages[chatId] = exists ? current : [...current, message];
       })
       .addCase(sendChatMessage.rejected, (state, action) => {
         state.sending = false;

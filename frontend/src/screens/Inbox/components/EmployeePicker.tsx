@@ -19,39 +19,30 @@ export default function EmployeePicker({
   onClose,
   employees,
   styles,
-  palette,
 }: {
   visible: boolean;
   onClose: () => void;
   employees: Employee[];
   styles: any;
-  palette: any;
 }) {
   const router = useRouter();
   const openDirectChat = useOpenDirectChat();
 
   if (!visible) return null;
 
-  /**
-   * Employee auswählen → DirectChat öffnen
-   */
   const handlePick = async (employeeId: string) => {
     const room = await openDirectChat(employeeId);
     if (!room) return;
 
-    onClose(); // Popup schließen
-
-    // Zum Chat navigieren
-    router.push(`./Inbox/chat/${room.id}`);
+    onClose();
+    router.push(`/Inbox/chat/${room.id}`);
   };
 
   return (
     <View style={styles.employeePickerOverlay}>
       <View style={styles.employeePickerCard}>
-        {/* HEADER */}
         <Text style={styles.widgetTitle}>Mitarbeiter auswählen</Text>
 
-        {/* LISTE */}
         <ScrollView
           showsVerticalScrollIndicator={false}
           style={styles.employeePickerList}
@@ -78,7 +69,6 @@ export default function EmployeePicker({
           )}
         </ScrollView>
 
-        {/* CANCEL BUTTON */}
         <Pressable style={styles.employeePickerCancel} onPress={onClose}>
           <Text style={styles.requestsActionText}>Abbrechen</Text>
         </Pressable>
