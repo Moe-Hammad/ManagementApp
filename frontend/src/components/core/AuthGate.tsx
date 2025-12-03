@@ -1,4 +1,4 @@
-import { fetchCurrentUser } from "@/src/services/thunks/fetchCurrentUser";
+import { fetchCurrentUser } from "@/src/redux/fetchCurrentUser";
 import { Redirect, useRootNavigationState, useSegments } from "expo-router";
 import { ReactNode, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../hooks/useRedux";

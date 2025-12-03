@@ -1,11 +1,12 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {
   createDirectChatApi,
   listChats,
   listMessages,
   sendChatMessageApi,
 } from "@/src/services/api";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { ChatMessage, ChatRoom } from "../types/resources";
+import { RootState } from "./store";
 
 type ChatState = {
   rooms: ChatRoom[];
@@ -52,6 +53,19 @@ export const sendChatMessage = createAsyncThunk<
   const message = await sendChatMessageApi(chatId, text, token);
   return { chatId, message };
 });
+
+export const selectExistingDirectChat = (
+  state: RootState,
+  userId: string,
+  partnerId: string
+) => {
+  return state.chat.rooms.find(
+    (room) =>
+      room.type === "DIRECT" &&
+      room.memberIds.includes(userId) &&
+      room.memberIds.includes(partnerId)
+  );
+};
 
 const chatSlice = createSlice({
   name: "chat",

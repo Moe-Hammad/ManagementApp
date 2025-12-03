@@ -459,5 +459,116 @@ export const makeStyles = (isDark: boolean) => {
       color: "#fff",
       fontWeight: "700",
     },
+    chatHeaderContainer: {
+      height: 60,
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: C.border,
+      backgroundColor: C.background,
+    },
+
+    chatHeaderBackButton: {
+      padding: 8,
+      marginRight: 8,
+    },
+
+    chatHeaderBackIcon: {
+      fontSize: 22,
+      color: C.primary,
+    },
+
+    chatHeaderCenter: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    chatHeaderTitle: {
+      fontSize: 17,
+      fontWeight: "700",
+      color: C.text,
+    },
+
+    chatHeaderSubtitle: {
+      fontSize: 13,
+      color: C.secondary,
+    },
+
+    chatHeaderRight: {
+      width: 32,
+      height: 32,
+    },
+    messageRow: {
+      paddingHorizontal: 10,
+      marginVertical: 6,
+      flexDirection: "row",
+    },
+
+    messageRowLeft: {
+      justifyContent: "flex-start",
+    },
+
+    messageRowRight: {
+      justifyContent: "flex-end",
+    },
+
+    messageBubble: {
+      maxWidth: "80%",
+      borderRadius: 12,
+      padding: 10,
+    },
+
+    messageBubbleOwn: {
+      backgroundColor: C.primary,
+      borderTopRightRadius: 0,
+    },
+
+    messageBubbleOther: {
+      backgroundColor: C.card,
+      borderTopLeftRadius: 0,
+    },
+
+    messageSender: {
+      color: C.secondary,
+      fontSize: 12,
+      marginBottom: 3,
+      fontWeight: "600",
+    },
+
+    messageText: {
+      color: C.text,
+      fontSize: 15,
+    },
+
+    messageTime: {
+      color: C.secondary,
+      fontSize: 10,
+      marginTop: 5,
+      alignSelf: "flex-end",
+    },
+    chatListItem: {
+      paddingVertical: 12,
+      paddingHorizontal: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: C.border,
+    },
+
+    chatListTextContainer: {
+      flexDirection: "column",
+    },
+
+    chatListTitle: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: C.text,
+    },
+
+    chatListSubtitle: {
+      fontSize: 13,
+      color: C.secondary,
+      marginTop: 2,
+    },
   });
 };

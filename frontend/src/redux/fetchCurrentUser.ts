@@ -1,6 +1,6 @@
 import { clearToken, setUser } from "@/src/redux/authSlice";
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { User } from "../../types/resources";
+import { User } from "../types/resources";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 

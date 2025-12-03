@@ -3,8 +3,8 @@ import { makeStyles } from "@/src/theme/styles";
 import React, { useEffect } from "react";
 import {
   Keyboard,
+  Pressable,
   ScrollView,
-  TouchableWithoutFeedback,
   View,
   ViewStyle,
 } from "react-native";
@@ -81,15 +81,17 @@ export default function ScreenController({
 
   return (
     <SafeAreaView style={[{ flex: 1 }, styles.screen]}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <View style={{ flex: 1 }}>
-          <Animated.View style={[{ flex: 1 }, animatedStyle]}>
-            <Container style={[{ flex: 1 }, style]} {...containerProps}>
-              {children}
-            </Container>
-          </Animated.View>
-        </View>
-      </TouchableWithoutFeedback>
+      <Pressable
+        style={{ flex: 1 }}
+        onPress={Keyboard.dismiss}
+        accessible={false}
+      >
+        <Animated.View style={[{ flex: 1 }, animatedStyle]}>
+          <Container style={[{ flex: 1 }, style]} {...containerProps}>
+            {children}
+          </Container>
+        </Animated.View>
+      </Pressable>
     </SafeAreaView>
   );
 }

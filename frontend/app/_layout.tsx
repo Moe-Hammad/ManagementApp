@@ -1,4 +1,4 @@
-import AuthGate from "@/src/components/util/AuthGate";
+import AuthGate from "@/src/components/core/AuthGate";
 import { store } from "@/src/redux/store";
 import { makeStyles } from "@/src/theme/styles";
 import { ThemeProvider, useThemeMode } from "@/src/theme/ThemeProvider";

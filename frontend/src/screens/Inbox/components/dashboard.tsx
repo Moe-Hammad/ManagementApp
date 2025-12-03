@@ -1,15 +1,10 @@
-import EmployeeDashboard from "@/src/components/Pages/EmployeeDashboard";
-import ManagerDashboard from "@/src/components/Pages/ManagerDashboard";
+import EmployeeDashboard from "@/src/screens/Inbox/components/EmployeeDashboard";
+import ManagerDashboard from "@/src/screens/Inbox/components/ManagerDashboard";
 import { useUserStats } from "@/src/hooks/useUserStats";
 
 export default function Dashboard() {
-  const {
-    manager,
-    employee,
-    isManager,
-    totalEmployees,
-    availableEmployees,
-  } = useUserStats();
+  const { manager, employee, isManager, totalEmployees, availableEmployees } =
+    useUserStats();
 
   if (isManager && manager) {
     return (

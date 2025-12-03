@@ -1,150 +1,254 @@
 const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL || "";
 
-type StompSubscription = {
-  disconnect: () => void;
+type SubscriptionCallback = (payload: any) => void;
+
+export type Subscription = {
+  id: string;
+  unsubscribe: () => void;
 };
 
-type StompMessageHandler = (payload: any) => void;
+/**
+ * 🔥 Globaler WebSocket STOMP-Client (1 Connection für alles!)
+ */
+class WebSocketManager {
+  private static instance: WebSocketManager;
 
-// Minimal STOMP 1.2 client for user-specific queue (/user/queue/requests)
-export function subscribeUserRequests(
-  token: string,
-  onMessage: StompMessageHandler,
-  onError?: (err: Error) => void
-): StompSubscription {
-  const wsUrl = API_BASE_URL.replace(/^http/, "ws") + "/ws";
-  const ws = new WebSocket(wsUrl);
+  private ws: WebSocket | null = null;
+  private token: string | null = null;
 
-  const sendFrame = (
+  private subscriptions: Map<
+    string,
+    { cb: SubscriptionCallback; destination: string }
+  > = new Map();
+  private heartbeatInterval?: ReturnType<typeof setInterval>;
+  private reconnectTimeout?: ReturnType<typeof setTimeout>;
+
+  private connected = false;
+  private reconnectAttempts = 0;
+
+  public isConnected() {
+    return this.connected;
+  }
+
+  public static getInstance() {
+    if (!WebSocketManager.instance) {
+      WebSocketManager.instance = new WebSocketManager();
+    }
+    return WebSocketManager.instance;
+  }
+
+  /**
+   * Verbinden
+   */
+  connect(token: string) {
+    this.token = token;
+
+    const wsUrl = API_BASE_URL.replace(/^http/, "ws") + "/ws";
+    this.ws = new WebSocket(wsUrl);
+
+    this.ws.onopen = () => {
+      this.connected = true;
+      this.reconnectAttempts = 0;
+
+      // CONNECT Frame senden
+      this.sendFrame("CONNECT", {
+        "accept-version": "1.2",
+        host: wsUrl,
+        Authorization: `Bearer ${token}`,
+      });
+
+      // Heartbeat starten
+      this.startHeartbeat();
+
+      // Alle Subscriptions erneut anmelden
+      this.resubscribeAll();
+    };
+
+    this.ws.onclose = () => {
+      this.connected = false;
+      this.scheduleReconnect();
+    };
+
+    this.ws.onerror = () => {
+      this.connected = false;
+      this.scheduleReconnect();
+    };
+
+    this.ws.onmessage = (event) => {
+      const frame = this.parseFrame(event.data);
+
+      if (!frame) return;
+
+      if (frame.command === "MESSAGE") {
+        const subId = frame.headers.subscription;
+        const meta = this.subscriptions.get(subId);
+
+        if (meta && frame.body) {
+          try {
+            const json = JSON.parse(frame.body);
+            meta.cb(json);
+          } catch (err) {
+            console.error("WS JSON Parse Error", err);
+          }
+        }
+      }
+    };
+  }
+
+  /**
+   * Abonnieren eines Themas
+   */
+  subscribe(destination: string, cb: SubscriptionCallback): Subscription {
+    const id = "sub-" + Math.random().toString(36).slice(2);
+    this.subscriptions.set(id, { cb, destination });
+
+    if (this.connected) {
+      this.sendFrame("SUBSCRIBE", { id, destination });
+    }
+
+    return {
+      id,
+      unsubscribe: () => {
+        this.subscriptions.delete(id);
+        if (this.connected) {
+          this.sendFrame("UNSUBSCRIBE", { id });
+        }
+      },
+    };
+  }
+
+  /**
+   * Nachrichten senden
+   */
+  send(destination: string, body: any) {
+    if (!this.connected) return;
+    this.sendFrame("SEND", { destination }, JSON.stringify(body));
+  }
+
+  /**
+   * STOMP Frame senden
+   */
+  private sendFrame(
     command: string,
-    headers: Record<string, string> = {},
-    body = ""
-  ) => {
+    headers: Record<string, string>,
+    body: string = ""
+  ) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+
     const headerString = Object.entries(headers)
       .map(([k, v]) => `${k}:${v}`)
       .join("\n");
+
     const frame = `${command}\n${headerString}\n\n${body}\0`;
-    ws.send(frame);
-  };
 
-  ws.onopen = () => {
-    sendFrame("CONNECT", {
-      "accept-version": "1.2",
-      host: wsUrl,
-      Authorization: `Bearer ${token}`,
-    });
-    sendFrame("SUBSCRIBE", {
-      id: "requests-sub",
-      destination: "/user/queue/requests",
-    });
-  };
+    this.ws.send(frame);
+  }
 
-  ws.onerror = () => {
-    onError?.(new Error("WebSocket error"));
-  };
+  /**
+   * Heartbeat (Ping alle 15 Sekunden)
+   */
+  private startHeartbeat() {
+    if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
 
-  ws.onclose = () => {
-    onError?.(new Error("WebSocket closed"));
-  };
-
-  ws.onmessage = (event) => {
-    const frame = parseStompFrame(typeof event.data === "string" ? event.data : "");
-    if (frame?.command === "MESSAGE" && frame.body) {
-      try {
-        const payload = JSON.parse(frame.body);
-        onMessage(payload);
-      } catch (err) {
-        onError?.(new Error("Failed to parse WS payload"));
+    this.heartbeatInterval = setInterval(() => {
+      if (this.connected) {
+        this.sendFrame("PING", {});
       }
+    }, 15000);
+  }
+
+  /**
+   * Reconnect Strategie (exponential backoff)
+   */
+  private scheduleReconnect() {
+    if (this.reconnectTimeout) return;
+
+    const delay = Math.min(1000 * 2 ** this.reconnectAttempts, 30000);
+    this.reconnectAttempts++;
+
+    this.reconnectTimeout = setTimeout(() => {
+      this.connect(this.token!);
+      this.reconnectTimeout = undefined;
+    }, delay);
+  }
+
+  /**
+   * Subscriptions nach Reconnect neu anmelden
+   */
+  private resubscribeAll() {
+    for (const [id, meta] of this.subscriptions.entries()) {
+      this.sendFrame("SUBSCRIBE", {
+        id,
+        destination: meta.destination,
+      });
     }
-  };
+  }
 
-  return {
-    disconnect: () => {
-      try {
-        sendFrame("DISCONNECT");
-        ws.close();
-      } catch {
-        // ignore
+  /**
+   * STOMP Frame parser
+   */
+  private parseFrame(raw: string) {
+    if (!raw) return null;
+
+    const [head, bodyWithNull] = raw.split("\n\n");
+    const body = bodyWithNull?.replace(/\0+$/, "") ?? "";
+
+    const lines = head.split("\n").filter(Boolean);
+    const command = lines.shift() ?? "";
+
+    const headers: Record<string, string> = {};
+    lines.forEach((line) => {
+      const i = line.indexOf(":");
+      if (i !== -1) {
+        headers[line.slice(0, i)] = line.slice(i + 1);
       }
-    },
-  };
+    });
+
+    return { command, headers, body };
+  }
 }
+
+const manager = WebSocketManager.getInstance();
+
+const ensureConnected = (token: string) => {
+  if (!manager.isConnected()) {
+    manager.connect(token);
+  }
+};
 
 export function subscribeUserMessages(
   token: string,
   userId: string,
-  onMessage: StompMessageHandler,
-  onError?: (err: Error) => void
-): StompSubscription {
-  const wsUrl = API_BASE_URL.replace(/^http/, "ws") + "/ws";
-  const ws = new WebSocket(wsUrl);
-
-  const sendFrame = (
-    command: string,
-    headers: Record<string, string> = {},
-    body = ""
-  ) => {
-    const headerString = Object.entries(headers)
-      .map(([k, v]) => `${k}:${v}`)
-      .join("\n");
-    const frame = `${command}\n${headerString}\n\n${body}\0`;
-    ws.send(frame);
-  };
-
-  ws.onopen = () => {
-    sendFrame("CONNECT", {
-      "accept-version": "1.2",
-      host: wsUrl,
-      Authorization: `Bearer ${token}`,
-    });
-    sendFrame("SUBSCRIBE", {
-      id: "messages-sub",
-      destination: `/user/${userId}/queue/messages`,
-    });
-  };
-
-  ws.onerror = () => onError?.(new Error("WebSocket error"));
-  ws.onclose = () => onError?.(new Error("WebSocket closed"));
-
-  ws.onmessage = (event) => {
-    const frame = parseStompFrame(typeof event.data === "string" ? event.data : "");
-    if (frame?.command === "MESSAGE" && frame.body) {
-      try {
-        const payload = JSON.parse(frame.body);
-        onMessage(payload);
-      } catch (err) {
-        onError?.(new Error("Failed to parse WS payload"));
-      }
-    }
-  };
-
-  return {
-    disconnect: () => {
-      try {
-        sendFrame("DISCONNECT");
-        ws.close();
-      } catch {
-        // ignore
-      }
-    },
-  };
+  onMessage: (payload: any) => void,
+  onError?: () => void
+) {
+  try {
+    ensureConnected(token);
+    const sub = manager.subscribe(`/user/queue/messages`, onMessage);
+    return {
+      disconnect: () => sub.unsubscribe(),
+    };
+  } catch (err) {
+    onError?.();
+    return { disconnect: () => {} };
+  }
 }
 
-function parseStompFrame(raw: string): { command: string; headers: Record<string, string>; body: string } | null {
-  if (!raw) return null;
-  const [head, bodyWithNull] = raw.split("\n\n");
-  const body = bodyWithNull?.replace(/\0+$/, "") ?? "";
-  const lines = head.split("\n").filter(Boolean);
-  const command = lines.shift() || "";
-  const headers: Record<string, string> = {};
-  lines.forEach((line) => {
-    const idx = line.indexOf(":");
-    if (idx > -1) {
-      const key = line.slice(0, idx);
-      const value = line.slice(idx + 1);
-      headers[key] = value;
-    }
-  });
-  return { command, headers, body };
+export function subscribeUserRequests(
+  token: string,
+  onMessage: (payload: any) => void,
+  onError?: () => void
+) {
+  try {
+    ensureConnected(token);
+    const sub = manager.subscribe(`/user/queue/requests`, onMessage);
+    return {
+      disconnect: () => sub.unsubscribe(),
+    };
+  } catch (err) {
+    onError?.();
+    return { disconnect: () => {} };
+  }
 }
+
+export const wsClient = WebSocketManager.getInstance();

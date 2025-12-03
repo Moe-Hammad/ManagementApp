@@ -5,7 +5,9 @@ import {
   fetchUnassigned,
   selectRequests,
   upsertRequest,
+  updateRequestStatus,
 } from "@/src/redux/requestSlice";
+import { fetchCurrentUser } from "@/src/redux/fetchCurrentUser";
 import { subscribeUserRequests } from "@/src/services/wsClient";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
 import { DarkColors, LightColors } from "@/src/theme/colors";
@@ -60,6 +62,16 @@ export function useRequests() {
     "idle"
   );
 
+  const refreshUser = () => {
+    if (!token) return;
+    dispatch(fetchCurrentUser(token));
+  };
+
+  const pendingRequests = useMemo(
+    () => requests.filter((r) => r.status === RequestStatus.PENDING),
+    [requests]
+  );
+
   // ==== WS: Live-Updates für Requests =======================================
   useEffect(() => {
     if (!token) return;
@@ -67,10 +79,12 @@ export function useRequests() {
     const sub = subscribeUserRequests(
       token,
       (payload) => {
-        if (payload?.payload) {
-          dispatch(upsertRequest(payload.payload));
+        const req = payload?.payload ?? payload;
+        if (req) {
+          dispatch(upsertRequest(req));
+          refreshUser();
+          setWsStatus("connected");
         }
-        setWsStatus("connected");
       },
       () => setWsStatus("error")
     );
@@ -125,9 +139,44 @@ export function useRequests() {
         createRequest({ employeeId, managerId: userId, token })
       ).unwrap();
 
+      refreshUser();
       alert("Anfrage wurde gesendet.");
     } catch (err: any) {
       alert(err.message || "Anfrage konnte nicht gesendet werden.");
+    }
+  };
+
+  const acceptRequest = async (requestId: string) => {
+    if (!token) return;
+
+    try {
+      await dispatch(
+        updateRequestStatus({
+          requestId,
+          status: RequestStatus.APPROVED,
+          token,
+        })
+      ).unwrap();
+      refreshUser();
+    } catch (err: any) {
+      alert(err.message || "Request konnte nicht akzeptiert werden.");
+    }
+  };
+
+  const rejectRequest = async (requestId: string) => {
+    if (!token) return;
+
+    try {
+      await dispatch(
+        updateRequestStatus({
+          requestId,
+          status: RequestStatus.REJECTED,
+          token,
+        })
+      ).unwrap();
+      refreshUser();
+    } catch (err: any) {
+      alert(err.message || "Request konnte nicht abgelehnt werden.");
     }
   };
 
@@ -139,6 +188,7 @@ export function useRequests() {
       wsStatus,
       unassigned,
       requests,
+      pendingRequests,
       employeeSearch,
       approvedEmployeeIds,
       user,
@@ -146,6 +196,8 @@ export function useRequests() {
     actions: {
       setEmployeeSearch,
       sendRequest,
+      acceptRequest,
+      rejectRequest,
     },
   };
 }

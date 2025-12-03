@@ -1,51 +1,61 @@
+import { useOpenDirectChat } from "@/src/hooks/useOpenDirectChat";
+import { Employee } from "@/src/types/resources";
+import { useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 /**
  * EmployeePicker
- * ---------------------------------------------------------
- * Popup für Manager zur Auswahl eines Mitarbeiters,
- * mit dem ein neuer Direktchat erstellt werden soll.
- *
- * Verantwortlichkeiten:
- * - Halbtransparenten Overlay anzeigen
- * - Popup zentriert anzeigen
- * - Liste der Mitarbeiter rendern
- * - Auswählen eines Mitarbeiters → pick()
- * - Abbrechen → close()
- *
- * Warum existiert diese Komponente?
- * - Entkoppelt UI vollständig von der Logik (useEmployeePicker)
- * - Saubere Wiederverwendbarkeit
- * - Verhindert große UI-Blöcke im Screen
- *
- * @param employees  Liste der auswählbaren Mitarbeiter
- * @param onPick     Callback, wenn ein Mitarbeiter ausgewählt wird
- * @param onClose    Schließt das Popup
- * @param styles     Globales StyleSheet aus makeStyles()
- * @param palette    Farbpalette für den aktuellen Modus
+ * ----------------------------------------------------
+ * Popup zum Auswählen eines Mitarbeiters.
+ * Beim Klicken wird:
+ *  - Step 1.5 genutzt (DirectChat Prevention)
+ *  - existierender Chat geöffnet ODER neuer erstellt
+ *  - Popup geschlossen
+ *  - Navigation zum ChatScreen ausgeführt
  */
 
 export default function EmployeePicker({
-  employees,
-  onPick,
+  visible,
   onClose,
+  employees,
   styles,
   palette,
 }: {
-  employees: any[];
-  onPick: (id: string) => void;
+  visible: boolean;
   onClose: () => void;
+  employees: Employee[];
   styles: any;
   palette: any;
 }) {
+  const router = useRouter();
+  const openDirectChat = useOpenDirectChat();
+
+  if (!visible) return null;
+
+  /**
+   * Employee auswählen → DirectChat öffnen
+   */
+  const handlePick = async (employeeId: string) => {
+    const room = await openDirectChat(employeeId);
+    if (!room) return;
+
+    onClose(); // Popup schließen
+
+    // Zum Chat navigieren
+    router.push(`./Inbox/chat/${room.id}`);
+  };
+
   return (
     <View style={styles.employeePickerOverlay}>
-      {/* Card in der Mitte */}
       <View style={styles.employeePickerCard}>
+        {/* HEADER */}
         <Text style={styles.widgetTitle}>Mitarbeiter auswählen</Text>
 
-        {/* Scrollbarer Bereich */}
-        <ScrollView style={styles.employeePickerList}>
+        {/* LISTE */}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={styles.employeePickerList}
+        >
           {employees.length === 0 ? (
             <Text style={[styles.text, styles.requestsNote]}>
               Keine Mitarbeiter gefunden.
@@ -54,8 +64,8 @@ export default function EmployeePicker({
             employees.map((emp) => (
               <Pressable
                 key={emp.id}
-                onPress={() => onPick(emp.id)}
                 style={styles.employeePickerItem}
+                onPress={() => handlePick(emp.id)}
               >
                 <Text style={styles.text}>
                   {emp.firstName} {emp.lastName}
@@ -68,7 +78,7 @@ export default function EmployeePicker({
           )}
         </ScrollView>
 
-        {/* Cancel Button */}
+        {/* CANCEL BUTTON */}
         <Pressable style={styles.employeePickerCancel} onPress={onClose}>
           <Text style={styles.requestsActionText}>Abbrechen</Text>
         </Pressable>

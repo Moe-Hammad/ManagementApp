@@ -3,6 +3,7 @@ package com.momo.backend.service.base;
 import com.momo.backend.entity.enums.UserRole;
 import com.momo.backend.exception.CustomAccessDeniedException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.UUID;
@@ -47,8 +48,14 @@ public abstract class AbstractSecuredService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null) return false;
 
+        // In HTTP + WebSocket SecurityConfig werden Authorities als "ROLE_<ROLE>"
+        // gesetzt. Wir erlauben beide Schreibweisen, um konsistent zu sein.
+        String raw = role.name();
+        String prefixed = "ROLE_" + raw;
+
         return auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(role.name()));
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(a -> a.equals(raw) || a.equals(prefixed));
     }
 
     /**

@@ -1,4 +1,16 @@
+import ScreenController from "@/src/components/core/ScreenController";
+import { Tabs } from "expo-router";
 import { View } from "react-native";
+import ChatList from "../chat/ChatList";
+import ChatView from "../chat/ChatView";
+import EmployeePicker from "../components/EmployeePicker";
+import { useChat } from "../hooks/useChat";
+import { useEmployeePicker } from "../hooks/useEmployeePicker";
+import { useInboxTabs } from "../hooks/useInboxTabs";
+import { useRequests } from "../hooks/useRequest";
+import RequestsTab from "../Tabs/RequestsTab";
+import SearchTab from "../Tabs/SearchTab";
+import RequestsInfo from "./RequestsInfo";
 
 export default function RequestsScreen() {
   const { activeTab, setActiveTab, tabs } = useInboxTabs();

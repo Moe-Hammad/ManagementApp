@@ -44,7 +44,7 @@ export default function TabsLayout() {
         />
 
         <Tabs.Screen
-          name="requests"
+          name="Inbox"
           options={{
             title: "Inbox",
             tabBarIcon: ({ color }) => (
