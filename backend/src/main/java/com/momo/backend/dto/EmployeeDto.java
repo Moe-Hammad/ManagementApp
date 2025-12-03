@@ -4,8 +4,7 @@ import com.momo.backend.entity.enums.UserRole;
 import lombok.*;
 import java.util.UUID;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class EmployeeDto implements BaseUserDto {

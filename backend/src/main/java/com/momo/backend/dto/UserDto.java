@@ -7,11 +7,10 @@ import lombok.*;
 import java.util.List;
 import java.util.UUID;
 
-@Getter
-@Setter
+
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
 public class UserDto {
     private UUID id;
     private String email;

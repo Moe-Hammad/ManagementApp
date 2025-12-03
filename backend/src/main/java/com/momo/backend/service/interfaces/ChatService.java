@@ -12,8 +12,9 @@ import java.util.UUID;
 public interface ChatService {
     ChatDto createTaskGroup(Task task, Manager manager);
     ChatDto addMemberToTaskChat(UUID taskId, UUID memberId);
-    List<ChatDto> getChatsForUser(UUID userId);
-    List<MessageDto> getMessages(UUID chatId);
-    MessageDto sendMessage(UUID chatId, UUID senderId, String senderRole, String text);
+    ChatDto createGroupChat(ChatDto dto, UUID taskId);
     ChatDto createDirectChat(UUID managerId, UUID employeeId);
+    List<ChatDto> getChatsForCurrentUser();
+    List<MessageDto> getMessages(UUID chatId);
+    MessageDto sendMessage(UUID chatId, String text);
 }

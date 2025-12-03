@@ -1,6 +1,8 @@
 package com.momo.backend.controller;
 
 import com.momo.backend.dto.ChatDto;
+import com.momo.backend.dto.CreateDirectChatRequest;
+import com.momo.backend.dto.CreateGroupChatRequest;
 import com.momo.backend.dto.MessageDto;
 import com.momo.backend.service.interfaces.ChatService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,9 +24,9 @@ public class ChatController {
     private final ChatService chatService;
 
     @GetMapping
-    @Operation(summary = "Alle Chats eines Users")
-    public ResponseEntity<List<ChatDto>> getChats(@RequestParam UUID userId) {
-        return ResponseEntity.ok(chatService.getChatsForUser(userId));
+    @Operation(summary = "Alle Chats des eingeloggten Users")
+    public ResponseEntity<List<ChatDto>> getChats() {
+        return ResponseEntity.ok(chatService.getChatsForCurrentUser());
     }
 
     @GetMapping("/{chatId}/messages")
@@ -33,15 +35,30 @@ public class ChatController {
         return ResponseEntity.ok(chatService.getMessages(chatId));
     }
 
+    @PostMapping("/direct")
+    @Operation(summary = "Direkten Chat anlegen (Manager/Employee)")
+    public ResponseEntity<ChatDto> createDirect(@RequestBody CreateDirectChatRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(chatService.createDirectChat(req.getManagerId(), req.getEmployeeId()));
+    }
+
+    @PostMapping("/group")
+    @Operation(summary = "Gruppenchat anlegen")
+    public ResponseEntity<ChatDto> createGroup(@RequestBody CreateGroupChatRequest req) {
+        ChatDto chatDto = new ChatDto();
+        chatDto.setName(req.getName());
+        chatDto.setMemberIds(req.getMemberIds());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(chatService.createGroupChat(chatDto, req.getTaskId()));
+    }
+
     @PostMapping("/{chatId}/messages")
     @Operation(summary = "Nachricht in Chat senden")
     public ResponseEntity<MessageDto> sendMessage(
             @PathVariable UUID chatId,
-            @RequestParam UUID senderId,
-            @RequestParam String senderRole,
             @RequestBody String text
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(chatService.sendMessage(chatId, senderId, senderRole, text));
+                .body(chatService.sendMessage(chatId, text));
     }
 }

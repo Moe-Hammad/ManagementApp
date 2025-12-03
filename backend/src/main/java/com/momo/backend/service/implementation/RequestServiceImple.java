@@ -5,11 +5,14 @@ import com.momo.backend.entity.Employee;
 import com.momo.backend.entity.Manager;
 import com.momo.backend.entity.Request;
 import com.momo.backend.entity.enums.RequestStatus;
+import com.momo.backend.exception.CustomAccessDeniedException;
 import com.momo.backend.exception.ResourceNotFoundException;
 import com.momo.backend.mapper.RequestMapper;
 import com.momo.backend.repository.EmployeeRepository;
 import com.momo.backend.repository.ManagerRepository;
 import com.momo.backend.repository.RequestRepository;
+import com.momo.backend.service.RequestEventPublisher;
+import com.momo.backend.service.base.AbstractSecuredService;
 import com.momo.backend.service.interfaces.RequestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,19 +26,30 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
-public class RequestServiceImple implements RequestService {
+public class RequestServiceImple extends AbstractSecuredService implements RequestService {
 
     private final RequestRepository requestRepository;
     private final ManagerRepository managerRepository;
     private final EmployeeRepository employeeRepository;
     private final RequestMapper requestMapper;
-    private final com.momo.backend.service.RequestEventPublisher requestEventPublisher;
+    private final RequestEventPublisher requestEventPublisher;
 
+    // ============================================================
+    // CREATE REQUEST  (Only a manager can create a request)
+    // ============================================================
     @Override
     @Transactional
     public RequestDto createRequest(RequestDto dto) {
-        Manager manager = managerRepository.findById(dto.getManagerId())
+
+        // 🔒 Stelle sicher, dass ein Manager angemeldet ist
+        UUID managerId = requireManagerAndGetId();
+
+        // 🔒 Optional: DTO-ManagerId überschreiben (falls jemand manipuliert)
+        dto.setManagerId(managerId);
+
+        Manager manager = managerRepository.findById(managerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Manager not found"));
+
         Employee employee = employeeRepository.findById(dto.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
 
@@ -51,27 +65,58 @@ public class RequestServiceImple implements RequestService {
 
         Request saved = requestRepository.save(request);
         RequestDto result = requestMapper.toDto(saved);
-        // Publish WS event on create
+
+        // 🔔 WebSocket Event senden
         requestEventPublisher.publishCreated(result);
+
         return result;
     }
 
+    // ============================================================
+    // GET REQUESTS FOR MANAGER
+    // ============================================================
     @Override
     @Transactional(readOnly = true)
     public List<RequestDto> getRequestsForManager(UUID managerId) {
+
+        // 🔒 Sicherstellen, dass Manager eingeloggt
+        requireManager();
+
+        UUID currentId = getCurrentUserId();
+        if (!currentId.equals(managerId)) {
+            throw new CustomAccessDeniedException(
+                    "Du darfst nur deine eigenen Requests sehen."
+            );
+        }
+
         return requestRepository.findByManagerId(managerId).stream()
                 .map(requestMapper::toDto)
                 .toList();
     }
 
+    // ============================================================
+    // GET REQUESTS FOR EMPLOYEE
+    // ============================================================
     @Override
     @Transactional(readOnly = true)
     public List<RequestDto> getRequestsForEmployee(UUID employeeId) {
+
+        // optional Security:
+        UUID currentId = getCurrentUserId();
+        if (!currentId.equals(employeeId)) {
+            throw new CustomAccessDeniedException(
+                    "Du darfst nur deine eigenen Requests sehen."
+            );
+        }
+
         return requestRepository.findByEmployeeId(employeeId).stream()
                 .map(requestMapper::toDto)
                 .toList();
     }
 
+    // ============================================================
+    // GET BY ID
+    // ============================================================
     @Override
     @Transactional(readOnly = true)
     public RequestDto getById(UUID id) {
@@ -81,27 +126,50 @@ public class RequestServiceImple implements RequestService {
         );
     }
 
+    // ============================================================
+    // UPDATE STATUS  (Only employee should approve/reject)
+    // ============================================================
     @Override
     @Transactional
     public RequestDto updateStatus(UUID requestId, RequestStatus status) {
+
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Request not found"));
 
+        UUID currentUser = getCurrentUserId();
+
+        // 🔒 Nur der Employee darf seinen Request annehmen / ablehnen
+        if (!currentUser.equals(request.getEmployee().getId())) {
+            throw new CustomAccessDeniedException(
+                    "Nur der Employee darf den Request aktualisieren."
+            );
+        }
+
         request.setStatus(status);
 
+        // ==========================================================
+        // APPROVED: Employee endgültig mit Manager verknüpfen
+        // ==========================================================
         if (status == RequestStatus.APPROVED) {
+
             Employee employee = request.getEmployee();
-            if (employee.getManager() != null && !employee.getManager().getId().equals(request.getManager().getId())) {
+
+            // Falls zu einem anderen Manager zugeordnet
+            if (employee.getManager() != null &&
+                    !employee.getManager().getId().equals(request.getManager().getId())) {
                 throw new IllegalStateException("Employee already assigned to another manager");
             }
+
             employee.setManager(request.getManager());
             employeeRepository.save(employee);
         }
 
         Request saved = requestRepository.save(request);
         RequestDto result = requestMapper.toDto(saved);
-        // Publish WS event on status change
+
+        // 🔔 WS Event senden
         requestEventPublisher.publishUpdated(result);
+
         return result;
     }
 }

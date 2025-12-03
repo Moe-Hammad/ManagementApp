@@ -15,11 +15,15 @@ public class RequestEventPublisher {
     private final SimpMessagingTemplate messagingTemplate;
 
     public void publishCreated(RequestDto dto) {
-        messagingTemplate.convertAndSend("/topic/requests", new RequestEvent("request_created", dto));
+        var event = new RequestEvent("request_created", dto);
+        messagingTemplate.convertAndSendToUser(dto.getManagerId().toString(), "/queue/requests", event);
+        messagingTemplate.convertAndSendToUser(dto.getEmployeeId().toString(), "/queue/requests", event);
     }
 
     public void publishUpdated(RequestDto dto) {
-        messagingTemplate.convertAndSend("/topic/requests", new RequestEvent("request_updated", dto));
+        var event = new RequestEvent("request_updated", dto);
+        messagingTemplate.convertAndSendToUser(dto.getManagerId().toString(), "/queue/requests", event);
+        messagingTemplate.convertAndSendToUser(dto.getEmployeeId().toString(), "/queue/requests", event);
     }
 
     public record RequestEvent(String type, RequestDto payload) {}
