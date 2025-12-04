@@ -6,12 +6,7 @@ import { useAppDispatch, useAppSelector } from "./useRedux";
 export function useChatPartner(room: ChatRoom | undefined) {
   const dispatch = useAppDispatch();
   const currentUserId = useAppSelector((s) => s.auth.user?.id);
-
-  if (!room || !currentUserId)
-    return { partner: undefined, partnerId: undefined };
-
-  const partnerId = room.memberIds.find((id) => id !== currentUserId);
-
+  const partnerId = room?.memberIds.find((id) => id !== currentUserId);
   const partner = useAppSelector((s) => selectUserById(s, partnerId));
 
   useEffect(() => {

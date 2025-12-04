@@ -1,15 +1,5 @@
-import { useChatPartner } from "@/src/hooks/useChatPartner";
-import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
-import {
-  addMessage,
-  fetchMessagesForChat,
-  sendChatMessage,
-} from "@/src/redux/chatSlice";
-import { subscribeUserMessages } from "@/src/services/wsClient";
-import { ChatMessage } from "@/src/types/resources";
-import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -18,11 +8,10 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useChatView } from "../hooks/useChatView";
 import ChatHeader from "./ChatHeader";
 import MessageBubble from "./MessageBubble";
 import MessageInput from "./MessageInput";
-
-const EMPTY_MESSAGES: ChatMessage[] = [];
 
 export default function ChatScreen({
   styles,
@@ -33,76 +22,20 @@ export default function ChatScreen({
 }) {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const dispatch = useAppDispatch();
   const router = useRouter();
 
-  const token = useAppSelector((s) => s.auth.token?.token);
-  const user = useAppSelector((s) => s.auth.user);
-  const rooms = useAppSelector((s) => s.chat.rooms);
-  const messages = useAppSelector(
-    (s) => (id ? s.chat.messages[id] : undefined) ?? EMPTY_MESSAGES
+  const { room, user, messages, sending, handleSend } = useChatView(
+    id as string
   );
-  const sending = useAppSelector((s) => s.chat.sending);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const keyboardOffset =
-    Platform.OS === "ios" ? insets.top + 56 : insets.top + 24;
+    Platform.OS === "ios" ? insets.top + 12 : insets.top + 24;
   const bottomInset = insets.bottom || 0;
-
-  // ChatRoom finden
-  const room = rooms.find((r) => r.id === id);
-
-  // Partner (falls DIRECT-Chat)
-  const { partner } = useChatPartner(room);
-
-  useEffect(() => {
-    if (token && id) {
-      dispatch(fetchMessagesForChat({ chatId: id, token }));
-    }
-  }, [token, id, dispatch]);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (token && id) {
-        dispatch(fetchMessagesForChat({ chatId: id, token }));
-      }
-    }, [token, id, dispatch])
-  );
 
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
-
-  useEffect(() => {
-    if (!token || !user?.id) return;
-
-    const sub = subscribeUserMessages(
-      token,
-      user.id,
-      (payload) => {
-        const msg = payload as ChatMessage;
-        if (msg?.chatId === id) {
-          dispatch(addMessage(msg));
-        }
-      },
-      () => {}
-    );
-
-    return () => sub.disconnect();
-  }, [token, user?.id, id, dispatch]);
-
-  useEffect(() => {
-    if (!token || !id) return;
-    const interval = setInterval(() => {
-      dispatch(fetchMessagesForChat({ chatId: id, token }));
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [token, id, dispatch]);
-
-  const handleSend = (text: string) => {
-    if (!text.trim()) return;
-    dispatch(sendChatMessage({ chatId: id, text, token: token! }));
-  };
 
   if (!room) {
     return (
@@ -133,7 +66,7 @@ export default function ChatScreen({
           contentContainerStyle={[
             styles.chatMessagesContent,
             {
-              paddingBottom: bottomInset + 8,
+              paddingBottom: bottomInset + 4,
               flexGrow: 1,
               justifyContent: "flex-end",
             },
