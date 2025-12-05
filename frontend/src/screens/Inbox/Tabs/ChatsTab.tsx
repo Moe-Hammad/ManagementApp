@@ -1,8 +1,9 @@
 import { useOpenDirectChat } from "@/src/hooks/useOpenDirectChat";
 import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
-import { fetchChatRooms } from "@/src/redux/chatSlice";
+import { fetchChatRooms, setRooms } from "@/src/redux/chatSlice";
 import EmployeePicker from "@/src/screens/Inbox/components/EmployeePicker";
 import { Manager, UserRole } from "@/src/types/resources";
+import { loadChatRooms } from "@/src/services/chatCache";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -25,6 +26,7 @@ export default function ChatsTab({
 
   const openDirectChat = useOpenDirectChat();
   const [pickerVisible, setPickerVisible] = useState(false);
+  const [hasTimedOut, setHasTimedOut] = useState(false);
 
   const isManager = user?.role === UserRole.MANAGER;
   const employees = useMemo(
@@ -32,9 +34,29 @@ export default function ChatsTab({
     [isManager, user]
   );
 
+  // Load cached rooms immediately so the UI works offline.
+  useEffect(() => {
+    (async () => {
+      const cached = await loadChatRooms();
+      if (cached.length) {
+        dispatch(setRooms(cached));
+      }
+    })();
+  }, [dispatch]);
+
   useEffect(() => {
     if (token) dispatch(fetchChatRooms({ token }));
-  }, [token]);
+  }, [token, dispatch]);
+
+  // Stop showing the loader if it spins too long (e.g. offline/timeout).
+  useEffect(() => {
+    if (!loading || rooms.length > 0) {
+      setHasTimedOut(false);
+      return;
+    }
+    const timer = setTimeout(() => setHasTimedOut(true), 8000);
+    return () => clearTimeout(timer);
+  }, [loading, rooms.length]);
 
   const handleOpenChat = (roomId: string) => {
     router.push(`/Inbox/chat/${roomId}`);
@@ -67,10 +89,22 @@ export default function ChatsTab({
         )}
       </View>
 
-      {loading ? (
+      {loading && rooms.length === 0 && !hasTimedOut ? (
         <Text style={[styles.text, styles.requestsNote]}>
           Chats werden geladen...
         </Text>
+      ) : hasTimedOut && rooms.length === 0 ? (
+        <View>
+          <Text style={[styles.text, styles.requestsNote]}>
+            Keine Chats geladen. Prüfe die Verbindung und versuche es erneut.
+          </Text>
+          <Pressable
+            style={styles.chatsNewButton}
+            onPress={() => token && dispatch(fetchChatRooms({ token }))}
+          >
+            <Text style={styles.chatsNewButtonText}>Erneut laden</Text>
+          </Pressable>
+        </View>
       ) : (
         <ChatList
           chats={rooms}

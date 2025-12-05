@@ -5,6 +5,8 @@ import {
   fetchChatRooms,
   fetchMessagesForChat,
   sendChatMessage,
+  setRooms,
+  setMessagesForChat,
 } from "@/src/redux/chatSlice";
 import { subscribeUserMessages } from "@/src/services/wsClient";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
@@ -12,6 +14,12 @@ import { DarkColors, LightColors } from "@/src/theme/colors";
 import { makeStyles } from "@/src/theme/styles";
 import { ChatMessage, ChatRoom, UserRole } from "@/src/types/resources";
 import { useEffect, useMemo, useState } from "react";
+import {
+  loadChatMessages,
+  loadChatRooms,
+  saveChatMessages,
+  saveChatRooms,
+} from "@/src/services/chatCache";
 
 /**
  * useChat
@@ -102,7 +110,13 @@ export function useChat() {
       userId,
       (payload) => {
         const msg = payload as ChatMessage;
-        if (msg?.chatId) dispatch(addMessage(msg));
+        if (msg?.chatId) {
+          dispatch(addMessage(msg));
+          const current = messagesByChat[msg.chatId] || [];
+          const exists = current.some((m) => m.id === msg.id);
+          const merged = exists ? current : [...current, msg];
+          saveChatMessages(msg.chatId, merged);
+        }
       },
       () => console.log("WS Error (messages)")
     );
@@ -113,13 +127,33 @@ export function useChat() {
   // ==== Chat-Räume laden =====================================================
   useEffect(() => {
     if (!token) return;
-    dispatch(fetchChatRooms({ token }));
+    (async () => {
+      const cached = await loadChatRooms();
+      if (cached.length) {
+        dispatch(setRooms(cached));
+      }
+      dispatch(fetchChatRooms({ token }))
+        .unwrap()
+        .then((rooms) => saveChatRooms(rooms))
+        .catch(() => {});
+    })();
   }, [token, dispatch]);
 
   // ==== Nachrichten laden bei Chat-Auswahl ===================================
   useEffect(() => {
     if (!token || !selectedChatId) return;
-    dispatch(fetchMessagesForChat({ chatId: selectedChatId, token }));
+    (async () => {
+      const cached = await loadChatMessages(selectedChatId);
+      if (cached.length) {
+        dispatch(
+          setMessagesForChat({ chatId: selectedChatId, messages: cached })
+        );
+      }
+      dispatch(fetchMessagesForChat({ chatId: selectedChatId, token }))
+        .unwrap()
+        .then((res) => saveChatMessages(res.chatId, res.messages))
+        .catch(() => {});
+    })();
   }, [selectedChatId, token, dispatch]);
 
   // ==== Actions ===============================================================

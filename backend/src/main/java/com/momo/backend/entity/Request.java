@@ -29,7 +29,7 @@ public class Request {
     private Manager manager;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "employee_id", nullable = false, unique = true)
+    @JoinColumn(name = "employee_id", nullable = false)
     private Employee employee;
 
     @Enumerated(EnumType.STRING)

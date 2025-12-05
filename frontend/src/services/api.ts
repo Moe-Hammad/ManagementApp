@@ -11,6 +11,7 @@ import {
   TaskAssignment,
   AssignmentStatus,
   Employee,
+  UserRole,
 } from "../types/resources";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
@@ -373,6 +374,27 @@ export async function assignEmployeeToTask(
         errorBody || ""
       }`.trim()
     );
+  }
+
+  return response.json();
+}
+
+export async function fetchAssignmentsForEmployee(
+  employeeId: string,
+  token: string
+): Promise<TaskAssignment[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/task-assignments/employee/${employeeId}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeader(token),
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Assignments fetch failed (${response.status})`);
   }
 
   return response.json();

@@ -50,7 +50,7 @@ public class DataLoader {
             Employee empAssigned = new Employee();
             empAssigned.setFirstName("Anna");
             empAssigned.setLastName("Assigned");
-            empAssigned.setEmail("employee_assigned@mail.com");
+            empAssigned.setEmail("emp1_1@mail.com");
             empAssigned.setHourlyRate(18.5);
             empAssigned.setAvailability(true);
             empAssigned.setPassword("pass123");
@@ -62,7 +62,7 @@ public class DataLoader {
             Employee empPending = new Employee();
             empPending.setFirstName("Elias");
             empPending.setLastName("Pending");
-            empPending.setEmail("employee_pending@mail.com");
+            empPending.setEmail("emp1_2@mail.com");
             empPending.setHourlyRate(17.0);
             empPending.setAvailability(true);
             empPending.setPassword("pass123");
@@ -73,7 +73,7 @@ public class DataLoader {
             Employee empApproved = new Employee();
             empApproved.setFirstName("Ben");
             empApproved.setLastName("Approved");
-            empApproved.setEmail("employee_approved@mail.com");
+            empApproved.setEmail("emp1_3@mail.com");
             empApproved.setHourlyRate(19.0);
             empApproved.setAvailability(true);
             empApproved.setPassword("pass123");

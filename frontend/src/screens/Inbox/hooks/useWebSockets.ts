@@ -1,9 +1,11 @@
 import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
 import { addMessage } from "@/src/redux/chatSlice";
 import { upsertRequest } from "@/src/redux/requestSlice";
+import { upsertAssignment } from "@/src/redux/assignmentSlice";
 import {
   subscribeUserMessages,
   subscribeUserRequests,
+  subscribeUserAssignments,
 } from "@/src/services/wsClient";
 import { ChatMessage } from "@/src/types/resources";
 import { useEffect, useState } from "react";
@@ -44,6 +46,9 @@ export function useWebSockets() {
   >("idle");
 
   const [wsRequestsStatus, setWsRequestsStatus] = useState<
+    "idle" | "connected" | "error"
+  >("idle");
+  const [wsAssignmentsStatus, setWsAssignmentsStatus] = useState<
     "idle" | "connected" | "error"
   >("idle");
 
@@ -89,8 +94,31 @@ export function useWebSockets() {
     };
   }, [token, dispatch]);
 
+  // ==== Assignments WebSocket ===============================================
+  useEffect(() => {
+    if (!token) return;
+
+    const ws = subscribeUserAssignments(
+      token,
+      (payload) => {
+        const dto = payload?.payload ?? payload;
+        if (dto) {
+          dispatch(upsertAssignment(dto));
+        }
+        setWsAssignmentsStatus("connected");
+      },
+      () => setWsAssignmentsStatus("error")
+    );
+
+    return () => {
+      ws.disconnect();
+      setWsAssignmentsStatus("idle");
+    };
+  }, [token, dispatch]);
+
   return {
     wsMessagesStatus,
     wsRequestsStatus,
+    wsAssignmentsStatus,
   };
 }

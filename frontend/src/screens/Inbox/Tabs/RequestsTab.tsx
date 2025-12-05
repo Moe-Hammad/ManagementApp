@@ -2,15 +2,16 @@ import { useOpenDirectChat } from "@/src/hooks/useOpenDirectChat";
 import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
 import { fetchUserById } from "@/src/redux/userSlice";
 import {
+  AssignmentStatus,
   Employee,
   Manager,
   RequestItem,
   RequestStatus,
+  TaskAssignment,
   UserRole,
 } from "@/src/types/resources";
 import { useEffect } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { TaskAssignment, AssignmentStatus } from "@/src/types/resources";
 
 export default function RequestsTab({
   styles,
@@ -31,16 +32,14 @@ export default function RequestsTab({
 }) {
   const dispatch = useAppDispatch();
   const openDirectChat = useOpenDirectChat();
-
   const isManager = user.role === UserRole.MANAGER;
   const isEmployee = user.role === UserRole.EMPLOYEE;
+  const userMap = useAppSelector((s) => s.users.userMap);
+  const token = useAppSelector((s) => s.auth.token?.token);
 
   const employeeMap = isManager
     ? Object.fromEntries((user as Manager).employees.map((e) => [e.id, e]))
     : {};
-
-  const userMap = useAppSelector((s) => s.users.userMap);
-  const token = useAppSelector((s) => s.auth.token?.token);
 
   // Manager-Daten vorladen (nur für Employees)
   useEffect(() => {
@@ -128,6 +127,17 @@ export default function RequestsTab({
                     </Text>
                   )}
 
+                  {req.message && (
+                    <Text
+                      style={[
+                        styles.requestsNote,
+                        { color: palette.text, marginTop: 4 },
+                      ]}
+                    >
+                      {req.message}
+                    </Text>
+                  )}
+
                   <Text
                     style={[
                       styles.requestsNote,
@@ -177,9 +187,7 @@ export default function RequestsTab({
                 ? palette.secondary
                 : palette.warning;
 
-            const displayName = isManager
-              ? as.employeeId
-              : as.managerId;
+            const displayName = isManager ? as.employeeId : as.managerId;
 
             return (
               <View key={as.id} style={styles.requestItem}>

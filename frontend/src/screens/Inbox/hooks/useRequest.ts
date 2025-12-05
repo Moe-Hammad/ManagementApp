@@ -15,7 +15,9 @@ import { makeStyles } from "@/src/theme/styles";
 import { upsertAssignment } from "@/src/redux/assignmentSlice";
 import { subscribeUserAssignments } from "@/src/services/wsClient";
 import { RequestStatus, UserRole } from "@/src/types/resources";
-import { useEffect, useMemo, useState } from "react";
+import { fetchAssignmentsForEmployee } from "@/src/services/api";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 
 /**
  * useRequests
@@ -101,6 +103,19 @@ export function useRequests() {
     };
   }, [token, dispatch]);
 
+  // ==== Initial Assignments laden (Employee) ================================
+  useEffect(() => {
+    if (!token || role !== UserRole.EMPLOYEE || !userId) return;
+    (async () => {
+      try {
+        const data = await fetchAssignmentsForEmployee(userId, token);
+        data.forEach((dto) => dispatch(upsertAssignment(dto)));
+      } catch (err) {
+        // ignore errors silently
+      }
+    })();
+  }, [token, role, userId, dispatch]);
+
   // ==== WS: Live-Updates fr Assignments ====================================
   useEffect(() => {
     if (!token) return;
@@ -129,6 +144,19 @@ export function useRequests() {
 
     dispatch(fetchRequests({ userId, role, token }));
   }, [token, userId, role, dispatch]);
+
+  // Refresh on screen focus to ensure latest state without navigation hacks
+  useFocusEffect(
+    useCallback(() => {
+      if (!token || !userId || !role) return;
+      dispatch(fetchRequests({ userId, role, token }));
+      if (role === UserRole.EMPLOYEE) {
+        fetchAssignmentsForEmployee(userId, token)
+          .then((list) => list.forEach((dto) => dispatch(upsertAssignment(dto))))
+          .catch(() => {});
+      }
+    }, [token, userId, role, dispatch])
+  );
 
   // ==== Unassigned Employees (Manager only) =================================
   useEffect(() => {

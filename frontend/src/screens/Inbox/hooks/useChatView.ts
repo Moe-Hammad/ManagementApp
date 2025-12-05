@@ -9,6 +9,8 @@ import { subscribeUserMessages } from "@/src/services/wsClient";
 import { ChatMessage, ChatRoom } from "@/src/types/resources";
 import { useCallback, useEffect, useMemo } from "react";
 
+const EMPTY_MESSAGES: ChatMessage[] = [];
+
 /**
  * useChatView
  * --------------------------------------
@@ -26,7 +28,10 @@ export function useChatView(chatId?: string) {
   const rooms = useAppSelector((s) => s.chat.rooms);
   const sending = useAppSelector((s) => s.chat.sending);
   const messages = useAppSelector(
-    (s) => (chatId ? s.chat.messages[chatId] : undefined) ?? []
+    (s) => {
+      if (!chatId) return EMPTY_MESSAGES;
+      return s.chat.messages[chatId] ?? EMPTY_MESSAGES;
+    }
   );
 
   // Raum + Partner

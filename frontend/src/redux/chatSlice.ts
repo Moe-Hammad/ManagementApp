@@ -15,6 +15,7 @@ type ChatState = {
   loadingMessages: Record<string, boolean>;
   sending: boolean;
   error: string | null;
+  unreadCounts: Record<string, number>;
 };
 
 const initialState: ChatState = {
@@ -24,6 +25,7 @@ const initialState: ChatState = {
   loadingMessages: {},
   sending: false,
   error: null,
+  unreadCounts: {},
 };
 
 export const fetchChatRooms = createAsyncThunk<ChatRoom[], { token: string }>(
@@ -87,6 +89,28 @@ const chatSlice = createSlice({
         ? current
         : [...current, action.payload];
     },
+    bumpUnread(state, action: PayloadAction<string>) {
+      const chatId = action.payload;
+      state.unreadCounts[chatId] = (state.unreadCounts[chatId] || 0) + 1;
+    },
+    resetUnread(state, action: PayloadAction<string>) {
+      const chatId = action.payload;
+      state.unreadCounts[chatId] = 0;
+    },
+    moveRoomToTop(state, action: PayloadAction<string>) {
+      const chatId = action.payload;
+      const idx = state.rooms.findIndex((r) => r.id === chatId);
+      if (idx > 0) {
+        const [room] = state.rooms.splice(idx, 1);
+        state.rooms.unshift(room);
+      }
+    },
+    setMessagesForChat(
+      state,
+      action: PayloadAction<{ chatId: string; messages: ChatMessage[] }>
+    ) {
+      state.messages[action.payload.chatId] = action.payload.messages;
+    },
     setRooms(state, action: PayloadAction<ChatRoom[]>) {
       state.rooms = action.payload;
     },
@@ -145,5 +169,6 @@ const chatSlice = createSlice({
   },
 });
 
-export const { upsertRoom, addMessage, setRooms } = chatSlice.actions;
+export const { upsertRoom, addMessage, setRooms, setMessagesForChat } =
+  chatSlice.actions;
 export default chatSlice.reducer;

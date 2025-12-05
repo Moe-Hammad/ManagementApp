@@ -14,6 +14,8 @@ public interface RequestRepository extends JpaRepository<Request, UUID> {
 
     List<Request> findByEmployeeId(UUID employeeId);
 
+    boolean existsByManagerIdAndEmployeeId(UUID managerId, UUID employeeId);
+
     @Query("SELECT r FROM Request r WHERE r.employee.manager IS NULL AND r.status = :status")
     List<Request> findPendingForUnassigned(RequestStatus status);
 }
