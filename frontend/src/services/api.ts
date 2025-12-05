@@ -2,10 +2,15 @@ import { Buffer } from "buffer";
 import {
   ChatMessage,
   ChatRoom,
+  CalendarEvent,
   LoginResponse,
   RegisterRequest,
   RequestItem,
   RequestStatus,
+  Task,
+  TaskAssignment,
+  AssignmentStatus,
+  Employee,
 } from "../types/resources";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
@@ -69,7 +74,8 @@ export async function register(
   if (!response.ok) {
     const errorBody = await response.json();
     throw new Error(
-      (errorBody as any).error || "Server Fehler, versuchen Sie es spaeter nochmal."
+      (errorBody as any).error ||
+        "Server Fehler, versuchen Sie es spaeter nochmal."
     );
   }
 
@@ -249,7 +255,9 @@ export async function createDirectChatApi(
   if (!response.ok) {
     const errorBody = await response.text();
     throw new Error(
-      `Direct chat create failed (${response.status}) - ${errorBody || ""}`.trim()
+      `Direct chat create failed (${response.status}) - ${
+        errorBody || ""
+      }`.trim()
     );
   }
 
@@ -275,6 +283,121 @@ export async function sendChatMessageApi(
     throw new Error(
       `Message send failed (${response.status}) - ${errorBody || ""}`.trim()
     );
+  }
+
+  return response.json();
+}
+
+// ============================
+// Calendar
+// ============================
+
+export async function fetchMyCalendarEvents(
+  token: string
+): Promise<CalendarEvent[]> {
+  const response = await fetch(`${API_BASE_URL}/api/calendar/me`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(token),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Calendar fetch failed (${response.status})`);
+  }
+
+  return response.json();
+}
+
+export async function fetchManagerCalendarEvents(
+  token: string
+): Promise<CalendarEvent[]> {
+  const response = await fetch(`${API_BASE_URL}/api/calendar/manager`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(token),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Calendar fetch failed (${response.status})`);
+  }
+
+  return response.json();
+}
+
+// ============================
+// Tasks & Assignments
+// ============================
+
+export async function createTaskApi(
+  payload: Omit<Task, "id" | "managerId">,
+  token: string
+): Promise<Task> {
+  const response = await fetch(`${API_BASE_URL}/api/tasks`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(token),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Task create failed (${response.status}) - ${errorBody || ""}`.trim()
+    );
+  }
+
+  return response.json();
+}
+
+export async function assignEmployeeToTask(
+  payload: { taskId: string; employeeId: string; status?: AssignmentStatus },
+  token: string
+): Promise<TaskAssignment> {
+  const response = await fetch(`${API_BASE_URL}/api/task-assignments`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(token),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Assignment create failed (${response.status}) - ${
+        errorBody || ""
+      }`.trim()
+    );
+  }
+
+  return response.json();
+}
+
+// ============================
+// Employees
+// ============================
+
+export async function listEmployeesUnderManager(
+  managerId: string,
+  token: string
+): Promise<Employee[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/managers/${managerId}/employees`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeader(token),
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Employees fetch failed (${response.status})`);
   }
 
   return response.json();

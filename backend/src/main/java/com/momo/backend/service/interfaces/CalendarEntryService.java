@@ -1,6 +1,7 @@
 package com.momo.backend.service.interfaces;
 
 import com.momo.backend.dto.CalendarEntryDto;
+import com.momo.backend.dto.CalendarEventDto;
 import com.momo.backend.entity.enums.CalendarEntryType;
 
 import java.util.List;
@@ -14,4 +15,8 @@ public interface CalendarEntryService {
     List<CalendarEntryDto> getEntriesByType(CalendarEntryType type);
     CalendarEntryDto updateEntry(UUID id, CalendarEntryDto dto);
     void deleteEntry(UUID id);
+
+    List<CalendarEventDto> getEventsForCurrentEmployee();
+
+    List<CalendarEventDto> getEventsForCurrentManager();
 }

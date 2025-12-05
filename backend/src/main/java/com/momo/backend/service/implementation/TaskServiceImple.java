@@ -7,6 +7,7 @@ import com.momo.backend.exception.CustomAccessDeniedException;
 import com.momo.backend.exception.ResourceNotFoundException;
 import com.momo.backend.mapper.TaskMapper;
 import com.momo.backend.repository.ManagerRepository;
+import com.momo.backend.repository.CalendarEntryRepository;
 import com.momo.backend.repository.TaskRepository;
 import com.momo.backend.service.base.AbstractSecuredService;
 import com.momo.backend.service.interfaces.TaskService;
@@ -24,8 +25,8 @@ import java.util.UUID;
  * Verwaltet Aufgaben, die von Managern erstellt werden.
  *
  * Security:
- * - Nur Manager dürfen Tasks erstellen.
- * - Manager dürfen nur ihre eigenen Tasks lesen / updaten / löschen.
+ * - Nur Manager duerfen Tasks erstellen.
+ * - Manager duerfen nur ihre eigenen Tasks lesen / updaten / loeschen.
  */
 @Service
 @RequiredArgsConstructor
@@ -33,6 +34,7 @@ public class TaskServiceImple extends AbstractSecuredService implements TaskServ
 
     private final TaskRepository taskRepository;
     private final ManagerRepository managerRepository;
+    private final CalendarEntryRepository calendarEntryRepository;
     private final TaskMapper taskMapper;
 
     // ============================================================
@@ -41,7 +43,7 @@ public class TaskServiceImple extends AbstractSecuredService implements TaskServ
     @Override
     @Transactional
     public TaskDto createTask(TaskDto dto) {
-        // 🔒 Nur Manager dürfen Tasks erstellen
+        // Nur Manager duerfen Tasks erstellen
         UUID managerId = requireManagerAndGetId();
         validate(dto);
 
@@ -64,7 +66,7 @@ public class TaskServiceImple extends AbstractSecuredService implements TaskServ
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 
-        // 🔒 Nur der verantwortliche Manager darf die Details sehen
+        // Nur der verantwortliche Manager darf die Details sehen
         UUID currentManager = requireManagerAndGetId();
         if (!task.getManager().getId().equals(currentManager)) {
             throw new CustomAccessDeniedException("Du darfst nur deine eigenen Tasks sehen.");
@@ -79,7 +81,7 @@ public class TaskServiceImple extends AbstractSecuredService implements TaskServ
     @Override
     @Transactional(readOnly = true)
     public List<TaskDto> getTasksByManager(UUID managerId) {
-        // 🔒 Sicherstellen, dass Manager eingeloggt ist
+        // Sicherstellen, dass Manager eingeloggt ist
         UUID currentManager = requireManagerAndGetId();
 
         if (!currentManager.equals(managerId)) {
@@ -107,12 +109,19 @@ public class TaskServiceImple extends AbstractSecuredService implements TaskServ
 
         validate(dto);
 
+        var oldStart = task.getStart();
+        var oldEnd = task.getEnd();
+
         // DTO in bestehendes Entity mappen
         taskMapper.updateFromDto(dto, task);
-        // sicherstellen, dass Manager nicht überschrieben wird
+        // sicherstellen, dass Manager nicht ueberschrieben wird
         task.setManager(task.getManager());
 
         Task saved = taskRepository.save(task);
+        if ((oldStart != null && !oldStart.equals(saved.getStart()))
+                || (oldEnd != null && !oldEnd.equals(saved.getEnd()))) {
+            syncCalendarEntries(saved);
+        }
         return taskMapper.toDto(saved);
     }
 
@@ -127,13 +136,15 @@ public class TaskServiceImple extends AbstractSecuredService implements TaskServ
 
         UUID currentManager = requireManagerAndGetId();
         if (!task.getManager().getId().equals(currentManager)) {
-            throw new CustomAccessDeniedException("Du darfst nur deine eigenen Tasks löschen.");
+            throw new CustomAccessDeniedException("Du darfst nur deine eigenen Tasks loeschen.");
         }
+
+        calendarEntryRepository.findByTaskId(id)
+                .forEach(calendarEntryRepository::delete);
 
         taskRepository.delete(task);
     }
 
-    // ============================================================
     // VALIDATION
     // ============================================================
     private void validate(TaskDto dto) {
@@ -143,5 +154,13 @@ public class TaskServiceImple extends AbstractSecuredService implements TaskServ
         if (!StringUtils.hasText(dto.getLocation())) {
             throw new IllegalArgumentException("Location must not be empty");
         }
+    }
+
+    private void syncCalendarEntries(Task task) {
+        calendarEntryRepository.findByTaskId(task.getId()).forEach(entry -> {
+            entry.setStart(task.getStart());
+            entry.setEnd(task.getEnd());
+            calendarEntryRepository.save(entry);
+        });
     }
 }

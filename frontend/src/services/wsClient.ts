@@ -55,6 +55,8 @@ class WebSocketManager {
         "accept-version": "1.2",
         host: wsUrl,
         Authorization: `Bearer ${token}`,
+        // Client/Server Heartbeat: alle 15 Sekunden
+        "heart-beat": "15000,15000",
       });
 
       // Heartbeat starten
@@ -151,8 +153,9 @@ class WebSocketManager {
     if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
 
     this.heartbeatInterval = setInterval(() => {
-      if (this.connected) {
-        this.sendFrame("PING", {});
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        // STOMP Heartbeat: einfaches LF senden (kein eigenes PING-Kommando!)
+        this.ws.send("\n");
       }
     }, 15000);
   }

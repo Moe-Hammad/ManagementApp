@@ -606,5 +606,76 @@ export const makeStyles = (isDark: boolean) => {
       color: "#fff",
       fontWeight: "700",
     },
+
+    // Calendar
+    calendarWrapper: {
+      flex: 1,
+      paddingHorizontal: 12,
+    },
+    calendarCard: {
+      backgroundColor: C.card,
+      borderRadius: 16,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: C.border,
+    },
+    calendarMonthHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 8,
+    },
+    calendarWeekRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    calendarDayGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      marginTop: 6,
+    },
+    calendarDayCell: {
+      width: "14.28%",
+      padding: 6,
+      alignItems: "center",
+    },
+    calendarDayNumber: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    calendarDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      marginTop: 4,
+    },
+    calendarTimeline: {
+      borderWidth: 1,
+      borderRadius: 12,
+      padding: 8,
+    },
+    calendarEventRow: {
+      flexDirection: "row",
+      marginBottom: 8,
+    },
+    calendarEventCard: {
+      flex: 1,
+      padding: 10,
+      borderRadius: 10,
+      borderWidth: 1,
+    },
+    calendarRoleLabel: {
+      marginBottom: 12,
+    },
+    calendarEmptyText: {
+      opacity: 0.7,
+    },
+    calendarErrorText: {
+      color: "red",
+    },
+
   });
 };

@@ -1,15 +1,18 @@
 package com.momo.backend.service.implementation;
 
 import com.momo.backend.dto.TaskAssignmentDto;
+import com.momo.backend.entity.CalendarEntry;
 import com.momo.backend.entity.Employee;
 import com.momo.backend.entity.Task;
 import com.momo.backend.entity.TaskAssignment;
 import com.momo.backend.entity.enums.AssignmentStatus;
+import com.momo.backend.entity.enums.CalendarEntryType;
 import com.momo.backend.exception.CustomAccessDeniedException;
 import com.momo.backend.exception.ResourceNotFoundException;
 import com.momo.backend.mapper.TaskAssignmentMapper;
 import com.momo.backend.repository.EmployeeRepository;
 import com.momo.backend.repository.TaskAssignmentRepository;
+import com.momo.backend.repository.CalendarEntryRepository;
 import com.momo.backend.repository.TaskRepository;
 import com.momo.backend.service.base.AbstractSecuredService;
 import com.momo.backend.service.interfaces.TaskAssignmentService;
@@ -35,11 +38,12 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
     private final TaskAssignmentRepository assignmentRepository;
     private final TaskRepository taskRepository;
     private final EmployeeRepository employeeRepository;
+    private final CalendarEntryRepository calendarEntryRepository;
     private final ChatService chatService;
     private final TaskAssignmentMapper taskAssignmentMapper;
 
     // ============================================================
-    // CREATE ASSIGNMENT — ONLY MANAGER
+    // CREATE ASSIGNMENT - ONLY MANAGER
     // ============================================================
     @Override
     @Transactional
@@ -50,7 +54,7 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
         Task task = taskRepository.findById(dto.getTaskId())
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 
-        // 🔒 Manager darf NUR seine eigenen Tasks zuweisen
+        // Manager darf NUR seine eigenen Tasks zuweisen
         if (!task.getManager().getId().equals(managerId)) {
             throw new CustomAccessDeniedException("Du darfst nur deine eigenen Tasks zuweisen.");
         }
@@ -63,12 +67,19 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
         assignment.setEmployee(employee);
         assignment.setStatus(dto.getStatus() != null ? dto.getStatus() : AssignmentStatus.PENDING);
 
-        return taskAssignmentMapper.toDto(assignmentRepository.save(assignment));
+        TaskAssignment saved = assignmentRepository.save(assignment);
+
+        if (saved.getStatus() == AssignmentStatus.ACCEPTED) {
+            upsertTaskCalendarEntry(saved);
+            chatService.addMemberToTaskChat(saved.getTask().getId(), saved.getEmployee().getId());
+        }
+
+        return taskAssignmentMapper.toDto(saved);
     }
 
 
     // ============================================================
-    // GET SINGLE ASSIGNMENT — MANAGER OR EMPLOYEE
+    // GET SINGLE ASSIGNMENT - MANAGER OR EMPLOYEE
     // ============================================================
     @Override
     @Transactional(readOnly = true)
@@ -89,7 +100,7 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
 
 
     // ============================================================
-    // GET ASSIGNMENTS FOR TASK — ONLY MANAGER
+    // GET ASSIGNMENTS FOR TASK - ONLY MANAGER
     // ============================================================
     @Override
     @Transactional(readOnly = true)
@@ -111,7 +122,7 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
 
 
     // ============================================================
-    // GET ASSIGNMENTS FOR EMPLOYEE — ONLY OWN ASSIGNMENTS
+    // GET ASSIGNMENTS FOR EMPLOYEE - ONLY OWN ASSIGNMENTS
     // ============================================================
     @Override
     @Transactional(readOnly = true)
@@ -130,7 +141,7 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
 
 
     // ============================================================
-    // UPDATE STATUS — ONLY EMPLOYEE
+    // UPDATE STATUS - ONLY EMPLOYEE
     // ============================================================
     @Override
     @Transactional
@@ -142,9 +153,9 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
         UUID current = getCurrentUserId();
         UUID employeeId = assignment.getEmployee().getId();
 
-        // 🔒 Nur der Mitarbeiter selbst darf den Status ändern
+        // Nur der Mitarbeiter selbst darf den Status aendern
         if (!current.equals(employeeId)) {
-            throw new CustomAccessDeniedException("Nur der Employee darf seinen Assignment-Status ändern.");
+            throw new CustomAccessDeniedException("Nur der Employee darf seinen Assignment-Status aendern.");
         }
 
         assignment.setStatus(status);
@@ -154,6 +165,9 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
 
         if (status == AssignmentStatus.ACCEPTED) {
             chatService.addMemberToTaskChat(saved.getTask().getId(), saved.getEmployee().getId());
+            upsertTaskCalendarEntry(saved);
+        } else {
+            removeTaskCalendarEntry(saved);
         }
 
         return taskAssignmentMapper.toDto(saved);
@@ -161,7 +175,7 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
 
 
     // ============================================================
-    // DELETE ASSIGNMENT — ONLY MANAGER
+    // DELETE ASSIGNMENT - ONLY MANAGER
     // ============================================================
     @Override
     @Transactional
@@ -173,9 +187,34 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
                 .orElseThrow(() -> new ResourceNotFoundException("Assignment not found"));
 
         if (!assignment.getTask().getManager().getId().equals(managerId)) {
-            throw new CustomAccessDeniedException("Du darfst nur deine eigenen Assignments löschen.");
+            throw new CustomAccessDeniedException("Du darfst nur deine eigenen Assignments loeschen.");
         }
 
+        removeTaskCalendarEntry(assignment);
         assignmentRepository.delete(assignment);
+    }
+
+    private void upsertTaskCalendarEntry(TaskAssignment assignment) {
+        Task task = assignment.getTask();
+        UUID taskId = task.getId();
+        UUID employeeId = assignment.getEmployee().getId();
+
+        CalendarEntry entry = calendarEntryRepository.findByTaskIdAndEmployeeId(taskId, employeeId)
+                .orElseGet(CalendarEntry::new);
+
+        entry.setTask(task);
+        entry.setEmployee(assignment.getEmployee());
+        entry.setType(CalendarEntryType.TASK);
+        entry.setStart(task.getStart());
+        entry.setEnd(task.getEnd());
+
+        calendarEntryRepository.save(entry);
+    }
+
+    private void removeTaskCalendarEntry(TaskAssignment assignment) {
+        UUID taskId = assignment.getTask().getId();
+        UUID employeeId = assignment.getEmployee().getId();
+        calendarEntryRepository.findByTaskIdAndEmployeeId(taskId, employeeId)
+                .ifPresent(calendarEntryRepository::delete);
     }
 }

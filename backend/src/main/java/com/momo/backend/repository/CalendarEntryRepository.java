@@ -15,4 +15,8 @@ public interface CalendarEntryRepository extends JpaRepository<CalendarEntry, UU
 
     List<CalendarEntry> findByType(CalendarEntryType type);
 
+    List<CalendarEntry> findByTaskId(UUID taskId);
+
+    java.util.Optional<CalendarEntry> findByTaskIdAndEmployeeId(UUID taskId, UUID employeeId);
+
 }
