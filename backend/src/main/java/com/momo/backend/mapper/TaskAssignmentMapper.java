@@ -11,6 +11,7 @@ public interface TaskAssignmentMapper {
 
     @Mapping(target = "taskId", source = "task.id")
     @Mapping(target = "employeeId", source = "employee.id")
+    @Mapping(target = "managerId", source = "task.manager.id")
     TaskAssignmentDto toDto(TaskAssignment assignment);
 
     @Mapping(target = "task", ignore = true)

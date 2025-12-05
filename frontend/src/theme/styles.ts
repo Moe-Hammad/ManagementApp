@@ -677,5 +677,40 @@ export const makeStyles = (isDark: boolean) => {
       color: "red",
     },
 
+    // Create Task
+    createHeader: {
+      marginBottom: 12,
+    },
+    createSection: {
+      marginBottom: 12,
+    },
+    createDateInput: {
+      justifyContent: "center",
+    },
+    createPickerRow: {
+      flexDirection: "row",
+      gap: 16,
+      marginBottom: 12,
+    },
+    createPickerColumn: {
+      flex: 1,
+    },
+    createTimeLabel: {
+      marginBottom: 6,
+      color: C.text,
+    },
+    createEmployeeRow: {
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+    },
+    createEmployeeSquare: {
+      width: 14,
+      height: 14,
+      borderRadius: 2,
+    },
+
   });
 };

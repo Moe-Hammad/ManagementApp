@@ -1,6 +1,25 @@
+import { useAppSelector } from "@/src/hooks/useRedux";
+import {
+  assignEmployeeToTask,
+  createTaskApi,
+  fetchManagerCalendarEvents,
+  listEmployeesUnderManager,
+} from "@/src/services/api";
+import { useThemeMode } from "@/src/theme/ThemeProvider";
+import { DarkColors, LightColors } from "@/src/theme/colors";
+import { makeStyles } from "@/src/theme/styles";
+import {
+  AssignmentStatus,
+  CalendarEvent,
+  Employee,
+  Task,
+  UserRole,
+} from "@/src/types/resources";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -8,24 +27,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAppSelector } from "@/src/hooks/useRedux";
-import { useThemeMode } from "@/src/theme/ThemeProvider";
-import { makeStyles } from "@/src/theme/styles";
-import { DarkColors, LightColors } from "@/src/theme/colors";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import {
-  createTaskApi,
-  assignEmployeeToTask,
-  fetchManagerCalendarEvents,
-  listEmployeesUnderManager,
-} from "@/src/services/api";
-import {
-  Task,
-  AssignmentStatus,
-  UserRole,
-  Employee,
-  CalendarEvent,
-} from "@/src/types/resources";
 
 export default function Create() {
   const token = useAppSelector((s) => s.auth.token?.token);
@@ -44,11 +45,12 @@ export default function Create() {
   const [startTime, setStartTime] = useState("08:00");
   const [endTime, setEndTime] = useState("17:00");
   const [responseDeadline, setResponseDeadline] = useState("");
-  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
-  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [activeTimePicker, setActiveTimePicker] = useState<
+    "start" | "end" | null
+  >(null);
 
   const [createdTask, setCreatedTask] = useState<Task | null>(null);
-  const [employeeId, setEmployeeId] = useState("");
+  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [assigning, setAssigning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -62,7 +64,11 @@ export default function Create() {
 
   const monthDays = useMemo(() => {
     const start = new Date(dateAnchor.getFullYear(), dateAnchor.getMonth(), 1);
-    const end = new Date(dateAnchor.getFullYear(), dateAnchor.getMonth() + 1, 0);
+    const end = new Date(
+      dateAnchor.getFullYear(),
+      dateAnchor.getMonth() + 1,
+      0
+    );
     const daysInMonth = end.getDate();
     const startWeekday = (start.getDay() + 6) % 7;
     const cells: (Date | null)[] = [];
@@ -89,7 +95,9 @@ export default function Create() {
         if (ev.employeeId !== emp.id) return false;
         const evStart = new Date(ev.start).getTime();
         const evEnd = new Date(ev.end).getTime();
-        return evStart < endDateTime.getTime() && evEnd > startDateTime.getTime();
+        return (
+          evStart < endDateTime.getTime() && evEnd > startDateTime.getTime()
+        );
       });
       return !busy;
     });
@@ -100,7 +108,7 @@ export default function Create() {
       <SafeAreaView style={[styles.screen, { paddingHorizontal: 16 }]}>
         <Text style={styles.title}>Create Task</Text>
         <Text style={{ color: palette.secondary }}>
-          Nur Manager k&ouml;nnen Tasks anlegen.
+          Nur Manager können Tasks anlegen.
         </Text>
       </SafeAreaView>
     );
@@ -147,7 +155,10 @@ export default function Create() {
       setCreatedTask(task);
       Alert.alert("Erfolg", "Task wurde erstellt.");
     } catch (err: any) {
-      Alert.alert("Fehler", err.message || "Task konnte nicht erstellt werden.");
+      Alert.alert(
+        "Fehler",
+        err.message || "Task konnte nicht erstellt werden."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -155,25 +166,29 @@ export default function Create() {
 
   const handleAssign = async () => {
     if (!token || !createdTask) return;
-    if (!employeeId) {
-      Alert.alert("Fehlende Felder", "Bitte einen Mitarbeiter waehlen.");
+    if (selectedEmployees.length === 0) {
+      Alert.alert("Fehlende Felder", "Bitte mindestens einen Mitarbeiter waehlen.");
       return;
     }
     try {
       setAssigning(true);
-      await assignEmployeeToTask(
-        {
-          taskId: createdTask.id,
-          employeeId,
-          status: AssignmentStatus.PENDING,
-        },
-        token
+      await Promise.all(
+        selectedEmployees.map((empId) =>
+          assignEmployeeToTask(
+            {
+              taskId: createdTask.id,
+              employeeId: empId,
+              status: AssignmentStatus.PENDING,
+            },
+            token
+          )
+        )
       );
       Alert.alert(
         "Anfrage gesendet",
-        "Der Mitarbeiter erh&auml;lt eine Anfrage und kann annehmen."
+        "Die Mitarbeiter erhalten eine Anfrage und koennen annehmen."
       );
-      setEmployeeId("");
+      setSelectedEmployees([]);
     } catch (err: any) {
       Alert.alert(
         "Fehler",
@@ -187,7 +202,7 @@ export default function Create() {
   return (
     <SafeAreaView style={[styles.screen, { paddingHorizontal: 16 }]}>
       <ScrollView>
-        <Text style={[styles.title, { marginBottom: 12 }]}>Task anlegen</Text>
+        <Text style={[styles.title, styles.createHeader]}>Task anlegen</Text>
 
         <TextInput
           style={styles.input}
@@ -236,7 +251,11 @@ export default function Create() {
               <Pressable
                 onPress={() =>
                   setDateAnchor(
-                    new Date(dateAnchor.getFullYear(), dateAnchor.getMonth() - 1, 1)
+                    new Date(
+                      dateAnchor.getFullYear(),
+                      dateAnchor.getMonth() - 1,
+                      1
+                    )
                   )
                 }
               >
@@ -248,7 +267,11 @@ export default function Create() {
               <Pressable
                 onPress={() =>
                   setDateAnchor(
-                    new Date(dateAnchor.getFullYear(), dateAnchor.getMonth() + 1, 1)
+                    new Date(
+                      dateAnchor.getFullYear(),
+                      dateAnchor.getMonth() + 1,
+                      1
+                    )
                   )
                 }
               >
@@ -303,74 +326,89 @@ export default function Create() {
           </View>
         )}
 
-        <View style={{ flexDirection: "row", gap: 16, marginBottom: 12 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: palette.text, marginBottom: 6 }}>Startzeit</Text>
+        <View style={styles.createPickerRow}>
+          <View style={styles.createPickerColumn}>
+            <Text style={styles.createTimeLabel}>Startzeit</Text>
             <Pressable
               style={[
                 styles.input,
-                { justifyContent: "center", backgroundColor: palette.surface },
+                styles.createDateInput,
+                { backgroundColor: palette.surface },
               ]}
-              onPress={() => setShowStartTimePicker(true)}
+              onPress={() =>
+                setActiveTimePicker((prev) =>
+                  prev === "start" ? null : "start"
+                )
+              }
             >
               <Text style={{ color: palette.text }}>{startTime}</Text>
             </Pressable>
-            {showStartTimePicker && (
-              <DateTimePicker
-                mode="time"
-                display="spinner"
-                value={combineDateTime(selectedDate, startTime)}
-                onChange={(event, date) => {
-                  setShowStartTimePicker(false);
-                  if (date) {
-                    const hh = String(date.getHours()).padStart(2, "0");
-                    const mm = String(date.getMinutes()).padStart(2, "0");
-                    setStartTime(`${hh}:${mm}`);
-                  }
-                }}
-              />
-            )}
           </View>
 
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: palette.text, marginBottom: 6 }}>Endzeit</Text>
+          <View style={styles.createPickerColumn}>
+            <Text style={styles.createTimeLabel}>Endzeit</Text>
             <Pressable
               style={[
                 styles.input,
-                { justifyContent: "center", backgroundColor: palette.surface },
+                styles.createDateInput,
+                { backgroundColor: palette.surface },
               ]}
-              onPress={() => setShowEndTimePicker(true)}
+              onPress={() =>
+                setActiveTimePicker((prev) => (prev === "end" ? null : "end"))
+              }
             >
               <Text style={{ color: palette.text }}>{endTime}</Text>
             </Pressable>
-            {showEndTimePicker && (
-              <DateTimePicker
-                mode="time"
-                display="spinner"
-                value={combineDateTime(selectedDate, endTime)}
-                onChange={(event, date) => {
-                  setShowEndTimePicker(false);
-                  if (date) {
-                    const hh = String(date.getHours()).padStart(2, "0");
-                    const mm = String(date.getMinutes()).padStart(2, "0");
-                    setEndTime(`${hh}:${mm}`);
-                  }
-                }}
-              />
-            )}
           </View>
         </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Antwort-Deadline (optional, ISO)"
-          placeholderTextColor={palette.secondary}
-          value={responseDeadline}
-          onChangeText={setResponseDeadline}
-        />
+        {activeTimePicker && (
+          <DateTimePicker
+            mode="time"
+            display="spinner"
+            value={combineDateTime(
+              selectedDate,
+              activeTimePicker === "start" ? startTime : endTime
+            )}
+            onChange={(event, date) => {
+              if (event.type === "dismissed") {
+                setActiveTimePicker(null);
+                return;
+              }
+              if (date) {
+                const hh = String(date.getHours()).padStart(2, "0");
+                const mm = String(date.getMinutes()).padStart(2, "0");
+                if (activeTimePicker === "start") {
+                  setStartTime(`${hh}:${mm}`);
+                } else {
+                  setEndTime(`${hh}:${mm}`);
+                }
+              }
+              if (Platform.OS === "android") {
+                setActiveTimePicker(null);
+              }
+            }}
+          />
+        )}
+
+        <View style={styles.createSection}>
+          <Text style={styles.createTimeLabel}>
+            Antwort-Deadline (optional, ISO)
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Antwort-Deadline (optional, ISO)"
+            placeholderTextColor={palette.secondary}
+            value={responseDeadline}
+            onChangeText={setResponseDeadline}
+          />
+        </View>
 
         <Pressable
-          style={[styles.button, { marginTop: 8, opacity: submitting ? 0.7 : 1 }]}
+          style={[
+            styles.button,
+            { marginTop: 8, opacity: submitting ? 0.7 : 1 },
+          ]}
           onPress={handleCreateTask}
           disabled={submitting}
         >
@@ -381,12 +419,15 @@ export default function Create() {
 
         {createdTask && (
           <View style={[styles.card, { marginTop: 20 }]}>
-            <Text style={[styles.title, { fontSize: 20 }]}>Mitarbeiter zuweisen</Text>
+            <Text style={[styles.title, { fontSize: 20 }]}>
+              Mitarbeiter zuweisen
+            </Text>
             <Text style={{ color: palette.secondary, marginBottom: 10 }}>
               Task: {createdTask.company} - {createdTask.location}
             </Text>
-            <Text style={{ color: palette.text, marginBottom: 6 }}>
-              Verfuegbare Arbeiter:
+            <Text style={styles.createTimeLabel}>
+              Verfuegbare Arbeiter ({selectedEmployees.length}/
+              {Math.max(1, Number(requiredEmployees) || 1)}):
             </Text>
             <ScrollView style={{ maxHeight: 180, marginBottom: 8 }}>
               {availableEmployees.length === 0 ? (
@@ -395,12 +436,36 @@ export default function Create() {
                 </Text>
               ) : (
                 availableEmployees.map((emp, idx) => {
-                  const colors = ["#4C8BFF", "#8e44ad", "#16a085", "#e67e22", "#e74c3c"];
+                  const colors = [
+                    "#4C8BFF",
+                    "#8e44ad",
+                    "#16a085",
+                    "#e67e22",
+                    "#e74c3c",
+                  ];
                   const color = colors[idx % colors.length];
+                  const selected = selectedEmployees.includes(emp.id);
                   return (
                     <Pressable
                       key={emp.id}
-                      onPress={() => setEmployeeId(emp.id)}
+                      onPress={() => {
+                        const limit = Math.max(
+                          1,
+                          Number(requiredEmployees) || 1
+                        );
+                        if (selected) {
+                          setSelectedEmployees((prev) =>
+                            prev.filter((id) => id !== emp.id)
+                          );
+                        } else if (selectedEmployees.length < limit) {
+                          setSelectedEmployees((prev) => [...prev, emp.id]);
+                        } else {
+                          Alert.alert(
+                            "Limit erreicht",
+                            `Maximal ${limit} Mitarbeiter fuer diesen Task auswaehlbar.`
+                          );
+                        }
+                      }}
                       style={{
                         paddingVertical: 10,
                         borderBottomWidth: 1,
@@ -409,7 +474,7 @@ export default function Create() {
                         alignItems: "center",
                         gap: 10,
                         backgroundColor:
-                          employeeId === emp.id ? `${palette.primary}11` : "transparent",
+                          selected ? `${palette.primary}11` : "transparent",
                       }}
                     >
                       <View
@@ -417,7 +482,9 @@ export default function Create() {
                           width: 14,
                           height: 14,
                           borderRadius: 2,
-                          backgroundColor: color,
+                          borderWidth: 1,
+                          borderColor: palette.border,
+                          backgroundColor: selected ? color : "transparent",
                         }}
                       />
                       <Text style={{ color: palette.text }}>
@@ -434,7 +501,7 @@ export default function Create() {
                 { marginTop: 8, opacity: assigning ? 0.7 : 1 },
               ]}
               onPress={handleAssign}
-              disabled={assigning || !employeeId}
+              disabled={assigning || selectedEmployees.length === 0}
             >
               <Text style={styles.buttonText}>
                 {assigning ? "Sende Anfrage..." : "Employee anfragen"}

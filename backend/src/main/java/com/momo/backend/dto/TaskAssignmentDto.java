@@ -13,6 +13,7 @@ public class TaskAssignmentDto {
     private UUID id;
     private UUID taskId;
     private UUID employeeId;
+    private UUID managerId;
     private AssignmentStatus status;
     private LocalDateTime respondedAt;
 }

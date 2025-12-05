@@ -29,6 +29,11 @@ export default function RequestsScreen() {
           <RequestsTab
             styles={requestsState.styles}
             wsStatus={requestsState.wsStatus}
+            assignments={requestsState.assignments}
+            requests={requestsState.requests}
+            user={requestsState.user as any}
+            onAccept={(id) => requestActions.acceptRequest(id)}
+            onReject={(id) => requestActions.rejectRequest(id)}
           />
         )}
 

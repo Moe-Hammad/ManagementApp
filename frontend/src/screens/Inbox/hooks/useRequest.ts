@@ -12,6 +12,8 @@ import { subscribeUserRequests } from "@/src/services/wsClient";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
 import { DarkColors, LightColors } from "@/src/theme/colors";
 import { makeStyles } from "@/src/theme/styles";
+import { upsertAssignment } from "@/src/redux/assignmentSlice";
+import { subscribeUserAssignments } from "@/src/services/wsClient";
 import { RequestStatus, UserRole } from "@/src/types/resources";
 import { useEffect, useMemo, useState } from "react";
 
@@ -61,6 +63,10 @@ export function useRequests() {
   const [wsStatus, setWsStatus] = useState<"idle" | "connected" | "error">(
     "idle"
   );
+  const [wsAssignmentsStatus, setWsAssignmentsStatus] = useState<
+    "idle" | "connected" | "error"
+  >("idle");
+  const assignments = useAppSelector((s) => s.assignments.items);
 
   const refreshUser = () => {
     if (!token) return;
@@ -92,6 +98,28 @@ export function useRequests() {
     return () => {
       sub.disconnect();
       setWsStatus("idle");
+    };
+  }, [token, dispatch]);
+
+  // ==== WS: Live-Updates fr Assignments ====================================
+  useEffect(() => {
+    if (!token) return;
+
+    const sub = subscribeUserAssignments(
+      token,
+      (payload) => {
+        const dto = payload?.payload ?? payload;
+        if (dto) {
+          dispatch(upsertAssignment(dto));
+          setWsAssignmentsStatus("connected");
+        }
+      },
+      () => setWsAssignmentsStatus("error")
+    );
+
+    return () => {
+      sub.disconnect();
+      setWsAssignmentsStatus("idle");
     };
   }, [token, dispatch]);
 
@@ -186,12 +214,14 @@ export function useRequests() {
       palette,
       isManager,
       wsStatus,
+      wsAssignmentsStatus,
       unassigned,
       requests,
       pendingRequests,
       employeeSearch,
       approvedEmployeeIds,
       user,
+      assignments,
     },
     actions: {
       setEmployeeSearch,

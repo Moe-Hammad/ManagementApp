@@ -10,12 +10,14 @@ import {
 } from "@/src/types/resources";
 import { useEffect } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { TaskAssignment, AssignmentStatus } from "@/src/types/resources";
 
 export default function RequestsTab({
   styles,
   palette,
   requests,
   user,
+  assignments = [],
   onAccept,
   onReject,
 }: {
@@ -23,6 +25,7 @@ export default function RequestsTab({
   palette: any;
   requests: RequestItem[];
   user: Manager | Employee;
+  assignments?: TaskAssignment[];
   onAccept: (id: string) => void;
   onReject: (id: string) => void;
 }) {
@@ -152,6 +155,48 @@ export default function RequestsTab({
                     </Pressable>
                   </View>
                 )}
+              </View>
+            );
+          })
+        )}
+
+        <View style={{ height: 16 }} />
+        <Text style={styles.widgetTitle}>Assignments</Text>
+        {assignments.length === 0 ? (
+          <Text style={[styles.text, styles.requestsNote]}>
+            Keine Assignments vorhanden.
+          </Text>
+        ) : (
+          assignments.map((as) => {
+            const statusColor =
+              as.status === AssignmentStatus.ACCEPTED
+                ? palette.success
+                : as.status === AssignmentStatus.DECLINED
+                ? palette.danger
+                : as.status === AssignmentStatus.EXPIRED
+                ? palette.secondary
+                : palette.warning;
+
+            const displayName = isManager
+              ? as.employeeId
+              : as.managerId;
+
+            return (
+              <View key={as.id} style={styles.requestItem}>
+                <View style={styles.requestInfo}>
+                  <Text style={styles.text}>
+                    Assignment:{" "}
+                    <Text style={{ fontWeight: "700" }}>{displayName}</Text>
+                  </Text>
+                  <Text
+                    style={[
+                      styles.requestsNote,
+                      { color: statusColor, marginTop: 4 },
+                    ]}
+                  >
+                    {as.status}
+                  </Text>
+                </View>
               </View>
             );
           })

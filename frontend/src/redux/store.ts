@@ -3,6 +3,7 @@ import authReducer from "./authSlice";
 import chatReducer from "./chatSlice";
 import requestsReducer from "./requestSlice";
 import userReducer from "./userSlice";
+import assignmentReducer from "./assignmentSlice";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     requests: requestsReducer,
     chat: chatReducer,
     users: userReducer,
+    assignments: assignmentReducer,
   },
 });
 

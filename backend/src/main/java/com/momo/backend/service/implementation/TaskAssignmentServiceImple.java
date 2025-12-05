@@ -18,6 +18,7 @@ import com.momo.backend.service.base.AbstractSecuredService;
 import com.momo.backend.service.interfaces.TaskAssignmentService;
 import com.momo.backend.service.interfaces.ChatService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +42,7 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
     private final CalendarEntryRepository calendarEntryRepository;
     private final ChatService chatService;
     private final TaskAssignmentMapper taskAssignmentMapper;
+    private final SimpMessagingTemplate messagingTemplate;
 
     // ============================================================
     // CREATE ASSIGNMENT - ONLY MANAGER
@@ -73,6 +75,7 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
             upsertTaskCalendarEntry(saved);
             chatService.addMemberToTaskChat(saved.getTask().getId(), saved.getEmployee().getId());
         }
+        publishAssignmentEvent(saved);
 
         return taskAssignmentMapper.toDto(saved);
     }
@@ -169,6 +172,7 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
         } else {
             removeTaskCalendarEntry(saved);
         }
+        publishAssignmentEvent(saved);
 
         return taskAssignmentMapper.toDto(saved);
     }
@@ -192,6 +196,7 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
 
         removeTaskCalendarEntry(assignment);
         assignmentRepository.delete(assignment);
+        publishAssignmentEvent(assignment);
     }
 
     private void upsertTaskCalendarEntry(TaskAssignment assignment) {
@@ -216,5 +221,11 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
         UUID employeeId = assignment.getEmployee().getId();
         calendarEntryRepository.findByTaskIdAndEmployeeId(taskId, employeeId)
                 .ifPresent(calendarEntryRepository::delete);
+    }
+
+    private void publishAssignmentEvent(TaskAssignment assignment) {
+        var dto = taskAssignmentMapper.toDto(assignment);
+        messagingTemplate.convertAndSendToUser(dto.getEmployeeId().toString(), "/queue/assignments", dto);
+        messagingTemplate.convertAndSendToUser(assignment.getTask().getManager().getId().toString(), "/queue/assignments", dto);
     }
 }

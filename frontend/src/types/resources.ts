@@ -111,6 +111,7 @@ export type TaskAssignment = {
   id: string;
   taskId: string;
   employeeId: string;
+  managerId: string;
   status: AssignmentStatus;
   respondedAt?: string | null;
 };

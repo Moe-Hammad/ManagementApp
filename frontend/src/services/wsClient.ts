@@ -254,4 +254,21 @@ export function subscribeUserRequests(
   }
 }
 
+export function subscribeUserAssignments(
+  token: string,
+  onMessage: (payload: any) => void,
+  onError?: () => void
+) {
+  try {
+    ensureConnected(token);
+    const sub = manager.subscribe(`/user/queue/assignments`, onMessage);
+    return {
+      disconnect: () => sub.unsubscribe(),
+    };
+  } catch (err) {
+    onError?.();
+    return { disconnect: () => {} };
+  }
+}
+
 export const wsClient = WebSocketManager.getInstance();
