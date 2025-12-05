@@ -59,9 +59,9 @@ export default function TabsLayout() {
         />
 
         <Tabs.Screen
-          name="create"
+          name="taskhub"
           options={{
-            title: "Erstellen",
+            title: "Task",
             tabBarIcon: ({ color }) =>
               showManagerTab ? (
                 <MaterialCommunityIcons

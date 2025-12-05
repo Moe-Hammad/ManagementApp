@@ -711,6 +711,72 @@ export const makeStyles = (isDark: boolean) => {
       height: 14,
       borderRadius: 2,
     },
+    taskHubGrid: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      gap: 10,
+      marginBottom: 16,
+    },
+    taskHubCard: {
+      flex: 1,
+      padding: 12,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: C.border,
+      backgroundColor: C.card,
+    },
+    taskHubCardTitle: {
+      color: C.secondary,
+      fontSize: 12,
+      marginBottom: 6,
+    },
+    taskHubCardValue: {
+      color: C.text,
+      fontSize: 20,
+      fontWeight: "700",
+    },
+    taskHubButton: {
+      backgroundColor: C.primary,
+      paddingVertical: 14,
+      borderRadius: 12,
+      alignItems: "center",
+      marginBottom: 10,
+      ...shadow(C.primary, 3, 10, 0.4),
+    },
+    taskHubButtonSecondary: {
+      backgroundColor: C.card,
+      paddingVertical: 14,
+      borderRadius: 12,
+      alignItems: "center",
+      marginBottom: 16,
+      borderWidth: 1,
+      borderColor: C.border,
+    },
+    taskHubButtonTextPrimary: {
+      color: "#fff",
+      fontWeight: "700",
+    },
+    taskHubButtonTextSecondary: {
+      color: C.text,
+      fontWeight: "700",
+    },
+    breadcrumbsContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      marginBottom: 10,
+    },
+    breadcrumbsLink: {
+      color: C.primary,
+      fontWeight: "600",
+    },
+    breadcrumbsSeparator: {
+      color: C.secondary,
+    },
+    breadcrumbsCurrent: {
+      color: C.text,
+      fontWeight: "700",
+    },
 
   });
 };

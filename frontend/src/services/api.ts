@@ -354,6 +354,27 @@ export async function createTaskApi(
   return response.json();
 }
 
+export async function fetchTasksForManager(
+  managerId: string,
+  token: string
+): Promise<Task[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/tasks/manager/${managerId}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeader(token),
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Tasks fetch failed (${response.status})`);
+  }
+
+  return response.json();
+}
+
 export async function assignEmployeeToTask(
   payload: { taskId: string; employeeId: string; status?: AssignmentStatus },
   token: string
@@ -374,6 +395,27 @@ export async function assignEmployeeToTask(
         errorBody || ""
       }`.trim()
     );
+  }
+
+  return response.json();
+}
+
+export async function fetchAssignmentsForTask(
+  taskId: string,
+  token: string
+): Promise<TaskAssignment[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/task-assignments/task/${taskId}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeader(token),
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Assignments fetch failed (${response.status})`);
   }
 
   return response.json();
