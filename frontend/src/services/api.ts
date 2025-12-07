@@ -442,6 +442,34 @@ export async function fetchAssignmentsForEmployee(
   return response.json();
 }
 
+export async function updateAssignmentStatusApi(
+  assignmentId: string,
+  status: AssignmentStatus,
+  token: string
+): Promise<TaskAssignment> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/task-assignments/${assignmentId}/status?status=${status}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeader(token),
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Assignment update failed (${response.status}) - ${
+        errorBody || ""
+      }`.trim()
+    );
+  }
+
+  return response.json();
+}
+
 // ============================
 // Employees
 // ============================

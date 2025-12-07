@@ -10,7 +10,7 @@ import { Pressable, Text, View } from "react-native";
 
 export default function InboxScreen() {
   const { requestsState, actions } = useRequests();
-  const { assignments } = useAssignments();
+  const { assignments, acceptAssignment, declineAssignment } = useAssignments();
   const { activeTab, setActiveTab, tabs } = useInboxTabs();
 
   const {
@@ -76,11 +76,13 @@ export default function InboxScreen() {
             styles={styles}
             palette={palette}
             requests={requests}
-            user={user as Manager | Employee}
-            assignments={assignments}
-            onAccept={acceptRequest}
-            onReject={rejectRequest}
-          />
+          user={user as Manager | Employee}
+          assignments={assignments}
+          onAccept={acceptRequest}
+          onReject={rejectRequest}
+          onAcceptAssignment={acceptAssignment}
+          onRejectAssignment={declineAssignment}
+        />
         ) : isChats ? (
           <ChatsTab styles={styles} palette={palette} />
         ) : (

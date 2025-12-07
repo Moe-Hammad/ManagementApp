@@ -73,7 +73,9 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
 
         if (saved.getStatus() == AssignmentStatus.ACCEPTED) {
             upsertTaskCalendarEntry(saved);
-            chatService.addMemberToTaskChat(saved.getTask().getId(), saved.getEmployee().getId());
+            if (isGroupTask(saved.getTask())) {
+                ensureTaskChatMembership(saved);
+            }
         }
         publishAssignmentEvent(saved);
 
@@ -167,7 +169,9 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
         TaskAssignment saved = assignmentRepository.save(assignment);
 
         if (status == AssignmentStatus.ACCEPTED) {
-            chatService.addMemberToTaskChat(saved.getTask().getId(), saved.getEmployee().getId());
+            if (isGroupTask(saved.getTask())) {
+                ensureTaskChatMembership(saved);
+            }
             upsertTaskCalendarEntry(saved);
         } else {
             removeTaskCalendarEntry(saved);
@@ -227,5 +231,24 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
         var dto = taskAssignmentMapper.toDto(assignment);
         messagingTemplate.convertAndSendToUser(dto.getEmployeeId().toString(), "/queue/assignments", dto);
         messagingTemplate.convertAndSendToUser(assignment.getTask().getManager().getId().toString(), "/queue/assignments", dto);
+    }
+
+    private boolean isGroupTask(Task task) {
+        return task.getRequiredEmployees() > 1;
+    }
+
+    /**
+     * Ensure task chat exists and add employee as member. If chat is missing, create it and retry.
+     */
+    private void ensureTaskChatMembership(TaskAssignment assignment) {
+        Task task = assignment.getTask();
+        UUID taskId = task.getId();
+        UUID employeeId = assignment.getEmployee().getId();
+        try {
+            chatService.addMemberToTaskChat(taskId, employeeId);
+        } catch (ResourceNotFoundException ex) {
+            chatService.createTaskGroup(task, task.getManager());
+            chatService.addMemberToTaskChat(taskId, employeeId);
+        }
     }
 }

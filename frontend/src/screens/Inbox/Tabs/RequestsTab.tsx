@@ -1,4 +1,3 @@
-import { useOpenDirectChat } from "@/src/hooks/useOpenDirectChat";
 import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
 import { fetchUserById } from "@/src/redux/userSlice";
 import {
@@ -21,6 +20,8 @@ export default function RequestsTab({
   assignments = [],
   onAccept,
   onReject,
+  onAcceptAssignment,
+  onRejectAssignment,
 }: {
   styles: any;
   palette: any;
@@ -29,9 +30,10 @@ export default function RequestsTab({
   assignments?: TaskAssignment[];
   onAccept: (id: string) => void;
   onReject: (id: string) => void;
+  onAcceptAssignment?: (id: string) => void;
+  onRejectAssignment?: (id: string) => void;
 }) {
   const dispatch = useAppDispatch();
-  const openDirectChat = useOpenDirectChat();
   const isManager = user.role === UserRole.MANAGER;
   const isEmployee = user.role === UserRole.EMPLOYEE;
   const userMap = useAppSelector((s) => s.users.userMap);
@@ -45,13 +47,18 @@ export default function RequestsTab({
   useEffect(() => {
     if (!isEmployee || !token) return;
 
-    const managerIds = Array.from(new Set(requests.map((r) => r.managerId)));
+    const managerIds = Array.from(
+      new Set([
+        ...requests.map((r) => r.managerId),
+        ...assignments.map((a) => a.managerId),
+      ])
+    );
     managerIds.forEach((id) => {
       if (!userMap[id]) {
         dispatch(fetchUserById(id));
       }
     });
-  }, [isEmployee, requests, userMap, dispatch, token]);
+  }, [isEmployee, requests, assignments, userMap, dispatch, token]);
 
   // Employee-Daten vorladen (nur für Manager, z. B. pending Requests)
   useEffect(() => {
@@ -59,21 +66,17 @@ export default function RequestsTab({
 
     const missing = Array.from(
       new Set(
-        requests
-          .map((r) => r.employeeId)
-          .filter((id) => id && !employeeMap[id] && !userMap[id])
+        [
+          ...requests.map((r) => r.employeeId),
+          ...assignments.map((a) => a.employeeId),
+        ].filter((id) => id && !employeeMap[id] && !userMap[id])
       )
     );
 
     missing.forEach((id) => {
       dispatch(fetchUserById(id));
     });
-  }, [isManager, requests, employeeMap, userMap, dispatch, token]);
-
-  const handleAccept = async (requestId: string, managerId: string) => {
-    onAccept(requestId);
-    await openDirectChat(managerId);
-  };
+  }, [isManager, requests, assignments, employeeMap, userMap, dispatch, token]);
 
   return (
     <View style={[styles.widget, styles.requestsBodyCard]}>
@@ -152,9 +155,9 @@ export default function RequestsTab({
                   <View style={styles.requestActions}>
                     <Pressable
                       style={styles.requestActionApprove}
-                      onPress={() => handleAccept(req.id, req.managerId)}
+                      onPress={() => onAccept(req.id)}
                     >
-                      <Text style={styles.requestActionText}>✔</Text>
+                      <Text style={styles.requestActionText}>✓</Text>
                     </Pressable>
 
                     <Pressable
@@ -187,7 +190,12 @@ export default function RequestsTab({
                 ? palette.secondary
                 : palette.warning;
 
-            const displayName = isManager ? as.employeeId : as.managerId;
+            const displayName = (() => {
+              const id = isManager ? as.employeeId : as.managerId;
+              const cached = userMap[id];
+              if (cached) return `${cached.firstName} ${cached.lastName}`;
+              return id;
+            })();
 
             return (
               <View key={as.id} style={styles.requestItem}>
@@ -205,6 +213,24 @@ export default function RequestsTab({
                     {as.status}
                   </Text>
                 </View>
+
+                {isEmployee && as.status === AssignmentStatus.PENDING && (
+                  <View style={styles.requestActions}>
+                    <Pressable
+                      style={styles.requestActionApprove}
+                      onPress={() => onAcceptAssignment?.(as.id)}
+                    >
+                      <Text style={styles.requestActionText}>✓</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={styles.requestActionReject}
+                      onPress={() => onRejectAssignment?.(as.id)}
+                    >
+                      <Text style={styles.requestActionText}>✕</Text>
+                    </Pressable>
+                  </View>
+                )}
               </View>
             );
           })
