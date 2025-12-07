@@ -4,6 +4,10 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### PW ###
+application.properties
+.env
+
 ### STS ###
 .apt_generated
 .classpath
