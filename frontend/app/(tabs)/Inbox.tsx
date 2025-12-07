@@ -1,6 +1,7 @@
 import ScreenController from "@/src/components/core/ScreenController";
 import { useInboxTabs } from "@/src/screens/Inbox/hooks/useInboxTabs";
 import { useRequests } from "@/src/screens/Inbox/hooks/useRequest";
+import { useAssignments } from "@/src/screens/Inbox/hooks/useAssignments";
 import ChatsTab from "@/src/screens/Inbox/Tabs/ChatsTab";
 import RequestsTab from "@/src/screens/Inbox/Tabs/RequestsTab";
 import SearchTab from "@/src/screens/Inbox/Tabs/SearchTab";
@@ -9,6 +10,7 @@ import { Pressable, Text, View } from "react-native";
 
 export default function InboxScreen() {
   const { requestsState, actions } = useRequests();
+  const { assignments } = useAssignments();
   const { activeTab, setActiveTab, tabs } = useInboxTabs();
 
   const {
@@ -75,6 +77,7 @@ export default function InboxScreen() {
             palette={palette}
             requests={requests}
             user={user as Manager | Employee}
+            assignments={assignments}
             onAccept={acceptRequest}
             onReject={rejectRequest}
           />

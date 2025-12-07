@@ -1,5 +1,8 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { Dispatch, SetStateAction, useMemo, useState } from "react";
+import { useState } from "react";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import UnifiedPicker from "@/src/components/ui/UnifiedPicker";
 import {
   Platform,
   Pressable,
@@ -9,8 +12,6 @@ import {
   View,
 } from "react-native";
 
-type MonthCell = Date | null;
-
 export type TaskCreateFormProps = {
   company: string;
   street: string;
@@ -18,13 +19,10 @@ export type TaskCreateFormProps = {
   postalCode: string;
   requiredEmployees: string;
   selectedDate: Date;
-  monthLabel: string;
-  monthDays: MonthCell[];
   startTime: string;
   endTime: string;
   responseDeadline: string;
-  activeTimePicker: "start" | "end" | null;
-  showDatePicker: boolean;
+  responseDeadlineTime: string;
   palette: any;
   styles: any;
   submitting: boolean;
@@ -40,14 +38,11 @@ export type TaskCreateFormProps = {
   setPostalCode: (v: string) => void;
   setRequiredEmployees: (v: string) => void;
   setSelectedDate: (d: Date) => void;
-  setShowDatePicker: (v: boolean) => void;
-  setActiveTimePicker: Dispatch<SetStateAction<"start" | "end" | null>>;
   setStartTime: (v: string) => void;
   setEndTime: (v: string) => void;
   setResponseDeadline: (v: string) => void;
+  setResponseDeadlineTime: (v: string) => void;
   setCreateSelectedEmployees: (fn: (prev: string[]) => string[]) => void;
-  onPrevMonth: () => void;
-  onNextMonth: () => void;
   onSubmit: () => void;
   combineDateTime: (date: Date, time: string) => Date;
 };
@@ -59,13 +54,10 @@ export default function TaskCreateForm({
   postalCode,
   requiredEmployees,
   selectedDate,
-  monthLabel,
-  monthDays,
   startTime,
   endTime,
   responseDeadline,
-  activeTimePicker,
-  showDatePicker,
+  responseDeadlineTime,
   palette,
   styles,
   submitting,
@@ -77,26 +69,50 @@ export default function TaskCreateForm({
   setPostalCode,
   setRequiredEmployees,
   setSelectedDate,
-  setShowDatePicker,
-  setActiveTimePicker,
   setStartTime,
   setEndTime,
   setResponseDeadline,
+  setResponseDeadlineTime,
   setCreateSelectedEmployees,
-  onPrevMonth,
-  onNextMonth,
   onSubmit,
   combineDateTime,
 }: TaskCreateFormProps) {
   const limit = Math.max(1, Number(requiredEmployees) || 1);
-  const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
-  const deadlineDate = useMemo(
-    () =>
-      responseDeadline
-        ? new Date(responseDeadline)
-        : combineDateTime(selectedDate, endTime),
-    [responseDeadline, selectedDate, endTime, combineDateTime]
+  const [activeTimeField, setActiveTimeField] = useState<"start" | "end" | null>(
+    null
   );
+
+  const startDateObj = combineDateTime(selectedDate, startTime);
+  const endDateObj = combineDateTime(selectedDate, endTime);
+  const deadlineDateObj = combineDateTime(
+    responseDeadline ? new Date(responseDeadline) : selectedDate,
+    responseDeadlineTime || endTime
+  );
+  const isAndroid = Platform.OS === "android";
+  const timePickerValue =
+    activeTimeField === "start" ? startDateObj : endDateObj;
+
+  const formatTime = (date: Date) =>
+    date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  const toggleTimePicker = (field: "start" | "end") => {
+    setActiveTimeField((prev) => (prev === field ? null : field));
+  };
+
+  const handleTimeChange = (
+    _event: DateTimePickerEvent,
+    selectedDate?: Date
+  ) => {
+    if (selectedDate && activeTimeField) {
+      const hh = String(selectedDate.getHours()).padStart(2, "0");
+      const mm = String(selectedDate.getMinutes()).padStart(2, "0");
+      if (activeTimeField === "start") setStartTime(`${hh}:${mm}`);
+      if (activeTimeField === "end") setEndTime(`${hh}:${mm}`);
+    }
+    if (isAndroid) {
+      setActiveTimeField(null);
+    }
+  };
 
   return (
     <View
@@ -113,6 +129,7 @@ export default function TaskCreateForm({
         <Text style={[styles.title, styles.createHeader]}>Task erstellen</Text>
       </View>
 
+      {/* INPUT FELDER */}
       <TextInput
         style={styles.input}
         placeholder="Firma"
@@ -127,6 +144,7 @@ export default function TaskCreateForm({
         value={street}
         onChangeText={setStreet}
       />
+
       <View style={{ flexDirection: "row", gap: 12 }}>
         <TextInput
           style={[styles.input, { flex: 1 }]}
@@ -134,7 +152,6 @@ export default function TaskCreateForm({
           placeholderTextColor={palette.secondary}
           value={houseNumber}
           onChangeText={setHouseNumber}
-          keyboardType="default"
         />
         <TextInput
           style={[styles.input, { flex: 1 }]}
@@ -145,6 +162,7 @@ export default function TaskCreateForm({
           keyboardType="numeric"
         />
       </View>
+
       <TextInput
         style={styles.input}
         placeholder="Benoetigte Mitarbeiter (Zahl)"
@@ -154,179 +172,89 @@ export default function TaskCreateForm({
         keyboardType="numeric"
       />
 
-      <Pressable
-        style={[
-          styles.input,
-          { justifyContent: "center", backgroundColor: palette.surface },
-        ]}
-        onPress={() => setShowDatePicker(!showDatePicker)}
-      >
-        <Text style={{ color: palette.text }}>
-          Datum: {selectedDate.toLocaleDateString()}
-        </Text>
-      </Pressable>
-      {showDatePicker && (
-        <View style={[styles.card, { marginBottom: 8 }]}>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 8,
-            }}
-          >
-            <Pressable onPress={onPrevMonth}>
-              <Text style={{ color: palette.primary }}>{"<"}</Text>
-            </Pressable>
-            <Text style={{ color: palette.text, fontWeight: "700" }}>
-              {monthLabel}
-            </Text>
-            <Pressable onPress={onNextMonth}>
-              <Text style={{ color: palette.primary }}>{">"}</Text>
-            </Pressable>
-          </View>
-          <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-            {monthDays.map((d, idx) =>
-              d ? (
-                <Pressable
-                  key={idx}
-                  style={{
-                    width: "14.28%",
-                    padding: 6,
-                    alignItems: "center",
-                  }}
-                  onPress={() => {
-                    setSelectedDate(d);
-                    setShowDatePicker(false);
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 16,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      backgroundColor:
-                        d.toDateString() === selectedDate.toDateString()
-                          ? palette.primary
-                          : "transparent",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color:
-                          d.toDateString() === selectedDate.toDateString()
-                            ? "#fff"
-                            : palette.text,
-                      }}
-                    >
-                      {d.getDate()}
-                    </Text>
-                  </View>
-                </Pressable>
-              ) : (
-                <View key={idx} style={{ width: "14.28%", padding: 6 }} />
-              )
-            )}
-          </View>
-        </View>
-      )}
+      {/* DATUM mit UnifiedPicker */}
+      <UnifiedPicker
+        label="Datum"
+        mode="date"
+        value={selectedDate}
+        onChange={(date) => setSelectedDate(date)}
+        palette={palette}
+        styles={styles}
+      />
 
+      {/* Zeitfelder mit einem gemeinsamen Picker */}
       <View style={[styles.createPickerRow, { alignItems: "flex-start" }]}>
         <View style={styles.createPickerColumn}>
           <Text style={styles.createTimeLabel}>Startzeit</Text>
           <Pressable
+            onPress={() => toggleTimePicker("start")}
             style={[
               styles.input,
               styles.createDateInput,
-              { backgroundColor: palette.surface },
+              {
+                backgroundColor: palette.surface,
+                borderColor:
+                  activeTimeField === "start" ? palette.primary : palette.border,
+                borderWidth: activeTimeField === "start" ? 2 : 1,
+              },
             ]}
-            onPress={() =>
-              setActiveTimePicker((prev) => (prev === "start" ? null : "start"))
-            }
           >
-            <Text style={{ color: palette.text }}>{startTime}</Text>
+            <Text style={{ color: palette.text }}>{formatTime(startDateObj)}</Text>
           </Pressable>
         </View>
 
         <View style={styles.createPickerColumn}>
           <Text style={styles.createTimeLabel}>Endzeit</Text>
           <Pressable
+            onPress={() => toggleTimePicker("end")}
             style={[
               styles.input,
               styles.createDateInput,
-              { backgroundColor: palette.surface },
+              {
+                backgroundColor: palette.surface,
+                borderColor:
+                  activeTimeField === "end" ? palette.primary : palette.border,
+                borderWidth: activeTimeField === "end" ? 2 : 1,
+              },
             ]}
-            onPress={() =>
-              setActiveTimePicker((prev) => (prev === "end" ? null : "end"))
-            }
           >
-            <Text style={{ color: palette.text }}>{endTime}</Text>
+            <Text style={{ color: palette.text }}>{formatTime(endDateObj)}</Text>
           </Pressable>
         </View>
-
       </View>
-
-      {activeTimePicker && (
-        <DateTimePicker
-          mode="time"
-          display="spinner"
-          value={combineDateTime(
-            selectedDate,
-            activeTimePicker === "start" ? startTime : endTime
-          )}
-          onChange={(event, date) => {
-            if (event.type === "dismissed") {
-              setActiveTimePicker(null);
-              return;
-            }
-            if (date) {
-              const hh = String(date.getHours()).padStart(2, "0");
-              const mm = String(date.getMinutes()).padStart(2, "0");
-              if (activeTimePicker === "start") {
-                setStartTime(`${hh}:${mm}`);
-              } else {
-                setEndTime(`${hh}:${mm}`);
-              }
-            }
-            if (Platform.OS === "android") {
-              setActiveTimePicker(null);
-            }
-          }}
-        />
+      {activeTimeField && (
+        <View style={{ marginTop: 6 }}>
+          <DateTimePicker
+            mode="time"
+            display={isAndroid ? "default" : "spinner"}
+            value={timePickerValue}
+            onChange={handleTimeChange}
+          />
+        </View>
       )}
 
+      {/* DEADLINE mit UnifiedPicker */}
       <View style={[styles.createSection, { marginTop: 12 }]}>
-        <Text style={styles.createTimeLabel}>Antwort-Deadline</Text>
-        <Pressable
-          style={[
-            styles.input,
-            styles.createDateInput,
-            { backgroundColor: palette.surface },
-          ]}
-          onPress={() => setShowDeadlinePicker((v) => !v)}
-        >
-          <Text style={{ color: palette.text }}>
-            {deadlineDate.toLocaleString()}
-          </Text>
-        </Pressable>
-        {showDeadlinePicker && (
-          <DateTimePicker
-            mode="datetime"
-            display="spinner"
-            value={deadlineDate}
-            onChange={(event, date) => {
-              if (event?.type === "dismissed") return;
-              if (date) {
-                setResponseDeadline(date.toISOString());
-                if (Platform.OS === "android") {
-                  setShowDeadlinePicker(false);
-                }
-              }
-            }}
-          />
-        )}
+        <UnifiedPicker
+          label="Antwort Deadline (Datum)"
+          mode="date"
+          value={deadlineDateObj}
+          onChange={(d) => setResponseDeadline(d.toISOString())}
+          palette={palette}
+          styles={styles}
+        />
+        <UnifiedPicker
+          label="Antwort Deadline (Zeit)"
+          mode="time"
+          value={deadlineDateObj}
+          onChange={(d) => {
+            const hh = String(d.getHours()).padStart(2, "0");
+            const mm = String(d.getMinutes()).padStart(2, "0");
+            setResponseDeadlineTime(`${hh}:${mm}`);
+          }}
+          palette={palette}
+          styles={styles}
+        />
       </View>
 
       <Text style={[styles.createTimeLabel, { marginBottom: 6 }]}>

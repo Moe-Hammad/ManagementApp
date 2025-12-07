@@ -20,8 +20,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type MonthCell = Date | null;
-
 export default function TaskCreateScreen() {
   const token = useAppSelector((s) => s.auth.token?.token);
   const role = useAppSelector((s) => s.auth.user?.role);
@@ -37,15 +35,11 @@ export default function TaskCreateScreen() {
   const [houseNumber, setHouseNumber] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [requiredEmployees, setRequiredEmployees] = useState("1");
-  const [dateAnchor, setDateAnchor] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [startTime, setStartTime] = useState("08:00");
   const [endTime, setEndTime] = useState("17:00");
   const [responseDeadline, setResponseDeadline] = useState("");
-  const [activeTimePicker, setActiveTimePicker] = useState<
-    "start" | "end" | null
-  >(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [responseDeadlineTime, setResponseDeadlineTime] = useState("17:00");
   const [submitting, setSubmitting] = useState(false);
 
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -53,28 +47,6 @@ export default function TaskCreateScreen() {
   const [createSelectedEmployees, setCreateSelectedEmployees] = useState<
     string[]
   >([]);
-
-  const monthLabel = dateAnchor.toLocaleDateString(undefined, {
-    month: "long",
-    year: "numeric",
-  });
-
-  const monthDays: MonthCell[] = useMemo(() => {
-    const start = new Date(dateAnchor.getFullYear(), dateAnchor.getMonth(), 1);
-    const end = new Date(
-      dateAnchor.getFullYear(),
-      dateAnchor.getMonth() + 1,
-      0
-    );
-    const daysInMonth = end.getDate();
-    const startWeekday = (start.getDay() + 6) % 7;
-    const cells: MonthCell[] = [];
-    for (let i = 0; i < startWeekday; i++) cells.push(null);
-    for (let d = 1; d <= daysInMonth; d++) {
-      cells.push(new Date(dateAnchor.getFullYear(), dateAnchor.getMonth(), d));
-    }
-    return cells;
-  }, [dateAnchor]);
 
   const combineDateTime = (date: Date, timeStr: string) => {
     return new Date(`${date.toISOString().slice(0, 10)}T${timeStr}:00`);
@@ -217,13 +189,10 @@ export default function TaskCreateScreen() {
           postalCode={postalCode}
           requiredEmployees={requiredEmployees}
           selectedDate={selectedDate}
-          monthLabel={monthLabel}
-          monthDays={monthDays}
           startTime={startTime}
           endTime={endTime}
           responseDeadline={responseDeadline}
-          activeTimePicker={activeTimePicker}
-          showDatePicker={showDatePicker}
+          responseDeadlineTime={responseDeadlineTime}
           palette={palette}
           styles={styles}
           submitting={submitting}
@@ -235,22 +204,11 @@ export default function TaskCreateScreen() {
           setPostalCode={setPostalCode}
           setRequiredEmployees={setRequiredEmployees}
           setSelectedDate={setSelectedDate}
-          setShowDatePicker={setShowDatePicker}
-          setActiveTimePicker={setActiveTimePicker}
           setStartTime={setStartTime}
           setEndTime={setEndTime}
           setResponseDeadline={setResponseDeadline}
+          setResponseDeadlineTime={setResponseDeadlineTime}
           setCreateSelectedEmployees={setCreateSelectedEmployees}
-          onPrevMonth={() =>
-            setDateAnchor(
-              new Date(dateAnchor.getFullYear(), dateAnchor.getMonth() - 1, 1)
-            )
-          }
-          onNextMonth={() =>
-            setDateAnchor(
-              new Date(dateAnchor.getFullYear(), dateAnchor.getMonth() + 1, 1)
-            )
-          }
           onSubmit={handleCreateTask}
           combineDateTime={combineDateTime}
         />
