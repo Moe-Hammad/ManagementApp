@@ -1,16 +1,12 @@
 package com.momo.backend.dto;
 
 import com.momo.backend.entity.enums.LeaveStatus;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class LeaveRequestDto {

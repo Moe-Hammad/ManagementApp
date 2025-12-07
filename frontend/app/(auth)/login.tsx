@@ -1,9 +1,9 @@
-import ScreenController from "@/src/components/util/ScreenController";
-import Spinner from "@/src/components/util/Spinner";
+import ScreenController from "@/src/components/core/ScreenController";
+import Spinner from "@/src/components/core/Spinner";
 import { useAppDispatch } from "@/src/hooks/useRedux";
 import { setCredentials } from "@/src/redux/authSlice";
+import { fetchCurrentUser } from "@/src/redux/fetchCurrentUser";
 import { login } from "@/src/services/api";
-import { fetchCurrentUser } from "@/src/services/thunks/fetchCurrentUser";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
 import { makeStyles } from "@/src/theme/styles";
 import { LoginResponse } from "@/src/types/resources";

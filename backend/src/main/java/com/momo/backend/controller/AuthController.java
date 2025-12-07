@@ -6,6 +6,7 @@ import com.momo.backend.dto.Login.RegisterRequest;
 import com.momo.backend.dto.UserDto;
 import com.momo.backend.service.interfaces.AuthService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -41,7 +42,11 @@ public class AuthController {
             @RequestHeader(value = "Authorization", required = true) String authHeader) {
 
         LoginRequest request = authService.decode(authHeader);
-        return ResponseEntity.ok(authService.login(request));
+        LoginResponse response = authService.login(request);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + response.token())
+                .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.AUTHORIZATION)
+                .body(response);
     }
 
 
@@ -57,8 +62,11 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Ungültige Rolle oder fehlende Pflichtfelder")
     })
     public ResponseEntity<LoginResponse> register(@RequestBody RegisterRequest request) {
+        LoginResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(authService.register(request));
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + response.token())
+                .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.AUTHORIZATION)
+                .body(response);
     }
 
     @GetMapping("/me")

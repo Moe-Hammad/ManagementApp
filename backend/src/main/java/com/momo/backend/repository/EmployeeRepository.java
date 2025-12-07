@@ -16,4 +16,16 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
     @Query("SELECT l FROM LeaveRequest l WHERE l.employee.manager.id = :managerId")
     List<LeaveRequest> findLeaveRequestsByManagerId(UUID managerId);
 
+    List<Employee> findByManagerIsNull();
+
+    @Query("""
+            SELECT e FROM Employee e
+            WHERE e.manager IS NULL AND (
+                LOWER(e.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR
+                LOWER(e.lastName) LIKE LOWER(CONCAT('%', :query, '%')) OR
+                LOWER(e.email) LIKE LOWER(CONCAT('%', :query, '%'))
+            )
+            """)
+    List<Employee> searchUnassigned(String query);
+
 }

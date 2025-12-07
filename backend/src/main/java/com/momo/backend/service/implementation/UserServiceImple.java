@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class UserServiceImple implements UserService {
@@ -38,5 +40,20 @@ public class UserServiceImple implements UserService {
 
         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unknown user role");
     }
+
+    @Override
+    public UserDto getUserById(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (user instanceof Manager manager) {
+            return userMapper.managerToUserDto(manager);
+        }
+        if (user instanceof Employee employee) {
+            return userMapper.employeeToUserDto(employee);
+        }
+        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unknown user role");
+    }
+
 
 }

@@ -30,6 +30,9 @@ public class Task {
     private String location;
 
     @Column(nullable = false)
+    private String company;
+
+    @Column(nullable = false)
     private int requiredEmployees;
 
     @Column(nullable = false,name = "start_time")

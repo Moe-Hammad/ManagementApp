@@ -49,6 +49,15 @@ public class EmployeeController {
         return new ResponseEntity<>(employeeDtoList, HttpStatus.OK);
     }
 
+    @GetMapping("/unassigned")
+    @Operation(summary = "Alle Employees ohne Manager abrufen (optional Suche)")
+    public ResponseEntity<List<EmployeeDto>> getUnassignedEmployees(
+            @RequestParam(value = "query", required = false) String query
+    ){
+        List<EmployeeDto> employeeDtoList = employeeService.getUnassignedEmployees(query);
+        return new ResponseEntity<>(employeeDtoList, HttpStatus.OK);
+    }
+
     // Build and Update Employees Rest API
 
     @PutMapping("{id}")

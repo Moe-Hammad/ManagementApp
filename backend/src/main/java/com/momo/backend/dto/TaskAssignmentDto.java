@@ -1,22 +1,19 @@
 package com.momo.backend.dto;
 
 import com.momo.backend.entity.enums.AssignmentStatus;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class TaskAssignmentDto {
     private UUID id;
     private UUID taskId;
     private UUID employeeId;
+    private UUID managerId;
     private AssignmentStatus status;
     private LocalDateTime respondedAt;
 }

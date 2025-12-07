@@ -1,9 +1,9 @@
-import ScreenController from "@/src/components/util/ScreenController";
-import Spinner from "@/src/components/util/Spinner";
+import ScreenController from "@/src/components/core/ScreenController";
+import Spinner from "@/src/components/core/Spinner";
 import { useAppDispatch } from "@/src/hooks/useRedux";
 import { setCredentials } from "@/src/redux/authSlice";
+import { fetchCurrentUser } from "@/src/redux/fetchCurrentUser";
 import { login as apiLogin, register as apiRegister } from "@/src/services/api";
-import { fetchCurrentUser } from "@/src/services/thunks/fetchCurrentUser";
 import { makeStyles } from "@/src/theme/styles";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
 import { UserRole } from "@/src/types/resources";
@@ -247,7 +247,7 @@ export default function Register() {
               />
               {errors.hourlyRate && (
                 <Text style={styles.errorUnderText}>
-                  Bitte gib einen g&uuml;ltigen Stundenlohn ein.
+                  Bitte gib einen gültigen Stundenlohn ein.
                 </Text>
               )}
             </>
