@@ -7,6 +7,7 @@ import {
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { ChatMessage, ChatRoom } from "../types/resources";
 import { RootState } from "./store";
+import { clearToken } from "./authSlice";
 
 type ChatState = {
   rooms: ChatRoom[];
@@ -73,6 +74,7 @@ const chatSlice = createSlice({
   name: "chat",
   initialState,
   reducers: {
+    clearChatState: () => initialState,
     upsertRoom(state, action: PayloadAction<ChatRoom>) {
       const idx = state.rooms.findIndex((r) => r.id === action.payload.id);
       if (idx >= 0) {
@@ -165,10 +167,16 @@ const chatSlice = createSlice({
         state.sending = false;
         state.error =
           action.error.message || "Nachricht konnte nicht gesendet werden.";
-      });
+      })
+      .addCase(clearToken, () => initialState);
   },
 });
 
-export const { upsertRoom, addMessage, setRooms, setMessagesForChat } =
-  chatSlice.actions;
+export const {
+  clearChatState,
+  upsertRoom,
+  addMessage,
+  setRooms,
+  setMessagesForChat,
+} = chatSlice.actions;
 export default chatSlice.reducer;

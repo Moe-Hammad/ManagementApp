@@ -6,6 +6,7 @@ import { fetchCurrentUser } from "@/src/redux/fetchCurrentUser";
 import { login as apiLogin, register as apiRegister } from "@/src/services/api";
 import { makeStyles } from "@/src/theme/styles";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
+import { DarkColors, LightColors } from "@/src/theme/colors";
 import { UserRole } from "@/src/types/resources";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -14,6 +15,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 export default function Register() {
   const { isDark } = useThemeMode();
   const styles = makeStyles(isDark);
+  const palette = isDark ? DarkColors : LightColors;
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -111,6 +113,7 @@ export default function Register() {
             }}
             placeholder="Max"
             autoCapitalize="words"
+            placeholderTextColor={palette.secondary}
           />
 
           {/* Last Name */}
@@ -126,6 +129,7 @@ export default function Register() {
             }}
             placeholder="Mustermann"
             autoCapitalize="words"
+            placeholderTextColor={palette.secondary}
           />
 
           {/* Email */}
@@ -141,6 +145,7 @@ export default function Register() {
             }}
             placeholder="email@mail.com"
             autoCapitalize="none"
+            placeholderTextColor={palette.secondary}
           />
           {errors.email && (
             <Text style={styles.errorUnderText}>
@@ -161,6 +166,7 @@ export default function Register() {
               setErrors((prev) => ({ ...prev, password: false }));
             }}
             placeholder="*******"
+            placeholderTextColor={palette.secondary}
           />
 
           {/* Confirm Password */}
@@ -176,6 +182,7 @@ export default function Register() {
               setErrors((prev) => ({ ...prev, confirm: false }));
             }}
             placeholder="*******"
+            placeholderTextColor={palette.secondary}
           />
 
           {errors.confirm && (

@@ -2,6 +2,7 @@
 import { User } from "@/src/types/resources";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "./store";
+import { clearToken } from "./authSlice";
 
 const API = process.env.EXPO_PUBLIC_BACKEND_URL;
 
@@ -47,7 +48,9 @@ const initialState: UsersState = {
 export const userSlice = createSlice({
   name: "users",
   initialState,
-  reducers: {},
+  reducers: {
+    clearUsers: () => initialState,
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchUserById.pending, (state) => {
@@ -64,11 +67,13 @@ export const userSlice = createSlice({
       .addCase(fetchUserById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Unknown error";
-      });
+      })
+      .addCase(clearToken, () => initialState);
   },
 });
 
 export default userSlice.reducer;
+export const { clearUsers } = userSlice.actions;
 
 // ===== Selector =====
 export const selectUserById = (state: RootState, id?: string) =>

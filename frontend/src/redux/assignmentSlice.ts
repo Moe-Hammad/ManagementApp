@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AssignmentStatus, TaskAssignment } from "../types/resources";
 import { RootState } from "./store";
+import { clearToken } from "./authSlice";
 
 type AssignmentState = {
   items: TaskAssignment[];
@@ -25,6 +26,9 @@ const assignmentSlice = createSlice({
     clearAssignments(state) {
       state.items = [];
     },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(clearToken, () => initialState);
   },
 });
 

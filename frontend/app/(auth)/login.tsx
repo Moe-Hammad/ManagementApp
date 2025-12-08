@@ -5,6 +5,7 @@ import { setCredentials } from "@/src/redux/authSlice";
 import { fetchCurrentUser } from "@/src/redux/fetchCurrentUser";
 import { login } from "@/src/services/api";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
+import { DarkColors, LightColors } from "@/src/theme/colors";
 import { makeStyles } from "@/src/theme/styles";
 import { LoginResponse } from "@/src/types/resources";
 import { router } from "expo-router";
@@ -12,8 +13,10 @@ import { useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
 export default function LoginScreen() {
-  const { isDark } = useThemeMode();
+  const { isDark, toggleTheme } = useThemeMode();
   const styles = makeStyles(isDark);
+  // Palette for placeholder visibility on Android dark mode
+  const palette = isDark ? DarkColors : LightColors;
 
   const dispatch = useAppDispatch();
   const [email, setEmail] = useState("");
@@ -55,42 +58,58 @@ export default function LoginScreen() {
 
   return (
     <ScreenController scroll={true}>
-      <View style={styles.centerWrapper}>
-        <View style={styles.cardWrapper}>
-          <Text style={styles.title}> Willkommen </Text>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            placeholder="myemail@mail.com"
-          />
-          <Text style={styles.label}>Passwort</Text>
-          <TextInput
-            style={styles.input}
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Password"
-          />
-
-          {error && <Text style={styles.error}>{error}</Text>}
-          {loading ? (
-            <Spinner />
-          ) : (
-            <Pressable style={styles.button} onPress={handleLogin}>
-              <Text style={styles.buttonText}>Login</Text>
-            </Pressable>
-          )}
+      <View style={{ flex: 1 }}>
+        <View style={styles.themeToggleContainer}>
           <Pressable
-            onPress={handleRegister}
-            style={{ alignSelf: "center", marginTop: 14 }}
+            accessibilityRole="button"
+            accessibilityLabel="Theme wechseln"
+            style={styles.themeToggleButton}
+            onPress={toggleTheme}
           >
-            <Text style={styles.link}>
-              Noch kein Konto? Jetzt registrieren.
+            <Text style={styles.themeToggleIcon}>
+              {isDark ? "☀️" : "🌙"}
             </Text>
           </Pressable>
+        </View>
+        <View style={styles.centerWrapper}>
+          <View style={styles.cardWrapper}>
+            <Text style={styles.title}> Willkommen </Text>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              placeholder="myemail@mail.com"
+              placeholderTextColor={palette.secondary}
+            />
+            <Text style={styles.label}>Passwort</Text>
+            <TextInput
+              style={styles.input}
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Password"
+              placeholderTextColor={palette.secondary}
+            />
+
+            {error && <Text style={styles.error}>{error}</Text>}
+            {loading ? (
+              <Spinner />
+            ) : (
+              <Pressable style={styles.button} onPress={handleLogin}>
+                <Text style={styles.buttonText}>Login</Text>
+              </Pressable>
+            )}
+            <Pressable
+              onPress={handleRegister}
+              style={{ alignSelf: "center", marginTop: 14 }}
+            >
+              <Text style={styles.link}>
+                Noch kein Konto? Jetzt registrieren.
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </ScreenController>
