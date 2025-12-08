@@ -8,6 +8,7 @@ import {
 } from "@/src/services/api";
 import { RequestItem, RequestStatus, UserRole } from "@/src/types/resources";
 import { RootState } from "./store";
+import { clearToken } from "./authSlice";
 
 type RequestsState = {
   items: RequestItem[];
@@ -58,6 +59,7 @@ const requestsSlice = createSlice({
   name: "requests",
   initialState,
   reducers: {
+    clearRequests: () => initialState,
     upsertRequest(state, action: PayloadAction<RequestItem>) {
       const idx = state.items.findIndex((r) => r.id === action.payload.id);
       if (idx >= 0) {
@@ -92,11 +94,12 @@ const requestsSlice = createSlice({
       })
       .addCase(fetchUnassigned.fulfilled, (state, action) => {
         state.unassigned = action.payload;
-      });
+      })
+      .addCase(clearToken, () => initialState);
   },
 });
 
-export const { upsertRequest } = requestsSlice.actions;
+export const { clearRequests, upsertRequest } = requestsSlice.actions;
 export const selectRequests = (state: RootState) => state.requests.items;
 export const selectRequestsLoading = (state: RootState) => state.requests.loading;
 export const selectUnassigned = (state: RootState) => state.requests.unassigned;

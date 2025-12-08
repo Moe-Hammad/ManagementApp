@@ -188,6 +188,32 @@ class WebSocketManager {
   }
 
   /**
+   * Verbindung hart schließen und geplante Reconnects stoppen (z. B. Logout)
+   */
+  public disconnect() {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = undefined;
+    }
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = undefined;
+    }
+    if (this.ws) {
+      this.ws.onclose = null;
+      this.ws.onerror = null;
+      this.ws.onmessage = null;
+      this.ws.close();
+    }
+
+    this.ws = null;
+    this.connected = false;
+    this.token = null;
+    this.subscriptions.clear();
+    this.reconnectAttempts = 0;
+  }
+
+  /**
    * STOMP Frame parser
    */
   private parseFrame(raw: string) {
@@ -272,3 +298,6 @@ export function subscribeUserAssignments(
 }
 
 export const wsClient = WebSocketManager.getInstance();
+export const disconnectWebSocket = () => {
+  manager.disconnect();
+};

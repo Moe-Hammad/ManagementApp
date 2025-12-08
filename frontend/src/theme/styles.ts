@@ -164,6 +164,30 @@ export const makeStyles = (isDark: boolean) => {
       gap: 16,
     },
 
+    themeToggleContainer: {
+      position: "absolute",
+      top: 16,
+      right: 16,
+      zIndex: 20,
+    },
+
+    themeToggleButton: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: isDark ? "#1f2937" : "#e5e7eb",
+      borderWidth: 1,
+      borderColor: isDark ? "#333" : "#ddd",
+      ...shadow(isDark ? "#000000" : "#000000", 4, 10, 0.25),
+    },
+
+    themeToggleIcon: {
+      fontSize: 18,
+      color: isDark ? "#facc15" : "#111827",
+    },
+
     col: {
       flex: 1,
     },
