@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -29,13 +30,26 @@ export default function ChatScreen({
   );
 
   const scrollViewRef = useRef<ScrollView>(null);
-  const keyboardOffset =
-    Platform.OS === "ios" ? insets.top + 12 : insets.top + 24;
+  const keyboardOffset = Platform.OS === "ios" ? 0 : 0;
   const bottomInset = insets.bottom || 0;
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
-  }, [messages]);
+  }, []);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener("keyboardDidShow", (e) => {
+      setKeyboardHeight(e.endCoordinates.height || 0);
+    });
+    const hideSub = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardHeight(0);
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   if (!room) {
     return (
@@ -54,10 +68,15 @@ export default function ChatScreen({
   return (
     <KeyboardAvoidingView
       style={styles.chatFullScreenContainer}
-      behavior={Platform.select({ ios: "padding", android: "height" })}
+      behavior={Platform.select({
+        ios: "height",
+        android: "height",
+      })}
       keyboardVerticalOffset={keyboardOffset}
     >
-      <ChatHeader room={room} styles={styles} />
+      <View style={styles.chatHeaderSticky}>
+        <ChatHeader room={room} styles={styles} />
+      </View>
 
       <View style={styles.chatBody}>
         <ScrollView
@@ -65,11 +84,7 @@ export default function ChatScreen({
           style={styles.chatMessagesContainer}
           contentContainerStyle={[
             styles.chatMessagesContent,
-            {
-              paddingBottom: bottomInset + 4,
-              flexGrow: 1,
-              justifyContent: "flex-end",
-            },
+            { paddingBottom: bottomInset + 8 },
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -98,7 +113,7 @@ export default function ChatScreen({
           sending={sending}
           styles={styles}
           palette={palette}
-          bottomInset={bottomInset}
+          bottomPadding={bottomInset + 8}
         />
       </View>
     </KeyboardAvoidingView>

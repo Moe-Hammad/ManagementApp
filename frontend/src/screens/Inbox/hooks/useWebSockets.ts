@@ -66,6 +66,8 @@ export function useWebSockets() {
       },
       () => setWsMessagesStatus("error")
     );
+    // Als verbunden markieren, sobald subscribed (nicht erst auf erste Nachricht warten)
+    setWsMessagesStatus("connected");
 
     return () => {
       ws.disconnect();
@@ -81,12 +83,17 @@ export function useWebSockets() {
       token,
       (payload) => {
         if (payload?.payload) {
+          console.log("[WS][REQUESTS] payload", payload);
+          alert(
+            `WS Request empfangen (Debug)\ndestination: /user/queue/requests\npayload.type: ${payload.type ?? "-"}`
+          );
           dispatch(upsertRequest(payload.payload));
         }
         setWsRequestsStatus("connected");
       },
       () => setWsRequestsStatus("error")
     );
+    setWsRequestsStatus("connected");
 
     return () => {
       ws.disconnect();
@@ -109,6 +116,7 @@ export function useWebSockets() {
       },
       () => setWsAssignmentsStatus("error")
     );
+    setWsAssignmentsStatus("connected");
 
     return () => {
       ws.disconnect();

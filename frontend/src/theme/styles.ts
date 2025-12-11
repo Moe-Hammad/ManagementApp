@@ -34,6 +34,10 @@ export const makeStyles = (isDark: boolean) => {
       alignItems: "center",
     },
 
+    body: {
+      backgroundColor: C.screenbackground,
+    },
+
     roleButtonActive: {
       backgroundColor: C.primary,
       borderColor: C.primary,
@@ -322,6 +326,69 @@ export const makeStyles = (isDark: boolean) => {
       borderColor: C.border,
       backgroundColor: C.surface,
     },
+    // Request modal
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 16,
+    },
+    modalCard: {
+      width: "100%",
+      borderRadius: 16,
+      backgroundColor: C.surface,
+      padding: 16,
+      gap: 10,
+      ...shadow(C.shadow, 6, 12, 0.25),
+    },
+    modalTitle: {
+      color: C.text,
+      fontSize: 18,
+      fontWeight: "700",
+      marginBottom: 4,
+    },
+    modalInput: {
+      minHeight: 80,
+      textAlignVertical: "top",
+    },
+    modalActionsRow: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      gap: 10,
+    },
+    modalCancelButton: {
+      backgroundColor: C.surface,
+    },
+    modalConfirmButton: {
+      backgroundColor: C.primary,
+      borderColor: C.primary,
+    },
+    wsStatusPill: {
+      flexDirection: "row",
+      alignItems: "center",
+      alignSelf: "flex-start",
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 12,
+      backgroundColor: C.surface,
+      borderWidth: 1,
+      borderColor: C.border,
+      marginBottom: 8,
+      gap: 8,
+    },
+    wsStatusDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: "red",
+    },
+    wsStatusText: {
+      color: C.text,
+      fontSize: 12,
+      fontWeight: "600",
+      maxWidth: "80%",
+    },
     chatFullScreenContainer: {
       flex: 1,
       width: "100%",
@@ -338,15 +405,18 @@ export const makeStyles = (isDark: boolean) => {
       borderBottomWidth: 1,
       borderColor: C.border,
     },
-
-    chatMessagesContainer: {
-      flex: 1,
+    chatHeaderSticky: {
+      backgroundColor: C.screenbackground,
+      zIndex: 10,
     },
+
     chatMessagesContent: {
       paddingHorizontal: 16,
       paddingTop: 12,
       paddingBottom: 12,
       flexGrow: 1,
+      flexDirection: "column",
+      justifyContent: "flex-end",
     },
     chatBody: {
       flex: 1,
@@ -386,9 +456,9 @@ export const makeStyles = (isDark: boolean) => {
 
     chatInputField: {
       flex: 1,
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      borderRadius: 25,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      borderRadius: 20,
       backgroundColor: C.card,
       borderWidth: 1,
       borderColor: C.border,
@@ -397,10 +467,10 @@ export const makeStyles = (isDark: boolean) => {
     },
 
     chatSendButton: {
-      paddingHorizontal: 16,
+      paddingHorizontal: 14,
       paddingVertical: 10,
       backgroundColor: C.primary,
-      borderRadius: 25,
+      borderRadius: 20,
     },
 
     chatSendText: {
@@ -607,11 +677,11 @@ export const makeStyles = (isDark: boolean) => {
       marginTop: 10,
       gap: 8,
     },
-
     // Chats Tab
     chatsContainer: {
       flex: 1,
       gap: 8,
+      marginTop: 16,
     },
     chatsHeaderRow: {
       flexDirection: "row",
@@ -801,6 +871,5 @@ export const makeStyles = (isDark: boolean) => {
       color: C.text,
       fontWeight: "700",
     },
-
   });
 };

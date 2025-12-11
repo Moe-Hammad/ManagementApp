@@ -21,12 +21,14 @@ interface ScreenProps {
   children: React.ReactNode;
   scroll?: boolean; // optional!
   style?: ViewStyle;
+  noPadding?: boolean;
 }
 
 export default function ScreenController({
   children,
   style,
   scroll = true,
+  noPadding = false,
 }: ScreenProps) {
   const { isDark } = useThemeMode();
   const styles = makeStyles(isDark);
@@ -80,7 +82,9 @@ export default function ScreenController({
     : {};
 
   return (
-    <SafeAreaView style={[{ flex: 1 }, styles.screen]}>
+    <SafeAreaView
+      style={[{ flex: 1 }, styles.screen, noPadding ? { padding: 0 } : null]}
+    >
       <Pressable
         style={{ flex: 1 }}
         onPress={Keyboard.dismiss}

@@ -18,6 +18,7 @@ import { RequestStatus, UserRole } from "@/src/types/resources";
 import { fetchAssignmentsForEmployee } from "@/src/services/api";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
+import { Alert } from "react-native";
 
 /**
  * useRequests
@@ -96,6 +97,7 @@ export function useRequests() {
       },
       () => setWsStatus("error")
     );
+    setWsStatus("connected");
 
     return () => {
       sub.disconnect();
@@ -184,15 +186,27 @@ export function useRequests() {
   }, [requests, userId]);
 
   // ==== Request senden (Manager → Employee) =================================
-  const sendRequest = async (employeeId: string) => {
+  const sendRequest = async (employeeId: string, message?: string) => {
     if (!isManager || !token || !userId) {
       alert("Nur Manager können Anfragen senden.");
       return;
     }
 
+    // Debug-Alert + Log: was wird gesendet, an wen?
+    Alert.alert(
+      "Request senden (Debug)",
+      `destination: /api/requests\nmanagerId: ${userId}\nemployeeId: ${employeeId}\nmessage: ${message ?? "-"}`
+    );
+    console.log("[Request][SEND]", {
+      destination: "/api/requests",
+      managerId: userId,
+      employeeId,
+      message,
+    });
+
     try {
       await dispatch(
-        createRequest({ employeeId, managerId: userId, token })
+        createRequest({ employeeId, managerId: userId, message, token })
       ).unwrap();
 
       refreshUser();

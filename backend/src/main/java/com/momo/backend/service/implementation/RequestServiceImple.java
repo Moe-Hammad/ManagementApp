@@ -58,10 +58,10 @@ public class RequestServiceImple extends AbstractSecuredService implements Reque
         }
 
         // Prevent duplicate requests to the same employee from the same manager
-        boolean alreadyRequested = requestRepository.existsByManagerIdAndEmployeeId(managerId, employee.getId());
-        if (alreadyRequested) {
-            throw new IllegalStateException("Request to this employee already exists.");
-        }
+//        boolean alreadyRequested = requestRepository.existsByManagerIdAndEmployeeId(managerId, employee.getId());
+//        if (alreadyRequested) {
+//            throw new IllegalStateException("Request to this employee already exists.");
+//        }
 
         Request request = new Request();
         request.setManager(manager);

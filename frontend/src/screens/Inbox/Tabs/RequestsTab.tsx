@@ -9,7 +9,7 @@ import {
   TaskAssignment,
   UserRole,
 } from "@/src/types/resources";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 export default function RequestsTab({
@@ -78,17 +78,27 @@ export default function RequestsTab({
     });
   }, [isManager, requests, assignments, employeeMap, userMap, dispatch, token]);
 
+  const uniqueRequests = useMemo(
+    () => Array.from(new Map(requests.map((r) => [r.id, r])).values()),
+    [requests]
+  );
+
+  const uniqueAssignments = useMemo(
+    () => Array.from(new Map(assignments.map((a) => [a.id, a])).values()),
+    [assignments]
+  );
+
   return (
     <View style={[styles.widget, styles.requestsBodyCard]}>
       <Text style={styles.widgetTitle}>Requests</Text>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {requests.length === 0 ? (
+        {uniqueRequests.length === 0 ? (
           <Text style={[styles.text, styles.requestsNote]}>
             Keine Requests vorhanden.
           </Text>
         ) : (
-          requests.map((req) => {
+          uniqueRequests.map((req) => {
             let displayName = "";
 
             if (isManager) {
@@ -175,12 +185,12 @@ export default function RequestsTab({
 
         <View style={{ height: 16 }} />
         <Text style={styles.widgetTitle}>Assignments</Text>
-        {assignments.length === 0 ? (
+        {uniqueAssignments.length === 0 ? (
           <Text style={[styles.text, styles.requestsNote]}>
             Keine Assignments vorhanden.
           </Text>
         ) : (
-          assignments.map((as) => {
+          uniqueAssignments.map((as) => {
             const statusColor =
               as.status === AssignmentStatus.ACCEPTED
                 ? palette.success
