@@ -1050,6 +1050,12 @@ export const makeStyles = (isDark: boolean) => {
     createHeader: {
       marginBottom: 12,
     },
+    taskCreateContent: {
+      paddingHorizontal: 16,
+      paddingTop: 0,
+      paddingBottom: 32,
+      gap: 12,
+    },
     createSection: {
       marginBottom: 12,
     },

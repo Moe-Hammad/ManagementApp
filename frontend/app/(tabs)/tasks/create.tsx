@@ -165,18 +165,20 @@ export default function TaskCreateScreen() {
 
   if (role !== UserRole.MANAGER) {
     return (
-      <SafeAreaView style={[styles.screen, { paddingHorizontal: 16 }]}>
+      <SafeAreaView style={styles.taskHubSafeArea}>
+        <ScrollView contentContainerStyle={styles.taskCreateContent}>
         <Text style={styles.title}>Task erstellen</Text>
         <Text style={{ color: palette.secondary }}>
           Nur Manager können Tasks anlegen.
         </Text>
+        </ScrollView>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[{ paddingTop: 2 }]}>
-      <ScrollView>
+    <SafeAreaView style={styles.taskHubSafeArea}>
+      <ScrollView contentContainerStyle={styles.taskCreateContent}>
         <TaskCreateForm
           company={company}
           street={street}
