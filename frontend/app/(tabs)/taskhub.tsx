@@ -1,5 +1,4 @@
 import { useAppSelector } from "@/src/hooks/useRedux";
-import OpenTasksList from "@/src/screens/Tasks/OpenTasksList";
 import TaskDashboard from "@/src/screens/Tasks/TaskDashboard";
 import {
   assignEmployeeToTask,
@@ -19,12 +18,14 @@ import {
   TaskAssignment,
   UserRole,
 } from "@/src/types/resources";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type AssignmentMap = Record<string, TaskAssignment[]>;
+type StatusFilter = "ALL" | "OPEN" | "RUNNING" | "DONE";
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, {
@@ -45,7 +46,7 @@ const formatTimeRange = (startIso: string, endIso: string) => {
 const overlaps = (startA: number, endA: number, startB: number, endB: number) =>
   startA < endB && endA > startB;
 
-export default function CreateHub() {
+export default function TaskHub() {
   const token = useAppSelector((s) => s.auth.token?.token);
   const role = useAppSelector((s) => s.auth.user?.role);
   const managerId = useAppSelector((s) => s.auth.user?.id);
@@ -55,7 +56,11 @@ export default function CreateHub() {
   const palette = isDark ? DarkColors : LightColors;
   const router = useRouter();
 
-  const [showOpenTasksList, setShowOpenTasksList] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [userFilter, setUserFilter] = useState<string>("ALL");
+  const [showStatus, setShowStatus] = useState(true);
+  const [showEmployees, setShowEmployees] = useState(true);
+  const [showTasks, setShowTasks] = useState(true);
 
   // --- Data state -----------------------------------------------------------
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -107,28 +112,53 @@ export default function CreateHub() {
     [activeAssignments]
   );
 
-  const unassignedTasks = useMemo(
-    () => tasks.filter((t) => openSlotsForTask(t) > 0),
-    [tasks, openSlotsForTask]
+  const now = Date.now();
+  const deriveStatus = useCallback(
+    (task: Task): Exclude<StatusFilter, "ALL"> => {
+      const end = new Date(task.end).getTime();
+      const start = new Date(task.start).getTime();
+      if (end < now) return "DONE";
+      if (start <= now && now <= end) return "RUNNING";
+      return openSlotsForTask(task) > 0 ? "OPEN" : "RUNNING";
+    },
+    [now, openSlotsForTask]
   );
 
-  const now = Date.now();
   const finishedCount = useMemo(
-    () => tasks.filter((t) => new Date(t.end).getTime() < now).length,
-    [tasks, now]
+    () => tasks.filter((t) => deriveStatus(t) === "DONE").length,
+    [tasks, deriveStatus]
   );
   const runningCount = useMemo(
-    () =>
-      tasks.filter((t) => {
-        const s = new Date(t.start).getTime();
-        const e = new Date(t.end).getTime();
-        return s <= now && now <= e;
-      }).length,
-    [tasks, now]
+    () => tasks.filter((t) => deriveStatus(t) === "RUNNING").length,
+    [tasks, deriveStatus]
   );
   const openCount = useMemo(
-    () => unassignedTasks.length,
-    [unassignedTasks.length]
+    () => tasks.filter((t) => deriveStatus(t) === "OPEN").length,
+    [tasks, deriveStatus]
+  );
+
+  const users = useMemo(
+    () => [
+      { id: "ALL", name: "Alle" },
+      ...employees.map((e) => ({
+        id: e.id,
+        name: `${e.firstName} ${e.lastName}`,
+      })),
+    ],
+    [employees]
+  );
+
+  const filteredTasks = useMemo(
+    () =>
+      tasks.filter((task) => {
+        const status = deriveStatus(task);
+        const statusMatch = statusFilter === "ALL" || status === statusFilter;
+        const userMatch =
+          userFilter === "ALL" ||
+          activeAssignments(task.id).some((a) => a.employeeId === userFilter);
+        return statusMatch && userMatch;
+      }),
+    [tasks, deriveStatus, statusFilter, userFilter, activeAssignments]
   );
 
   const availableEmployeesForTask = useCallback(
@@ -144,9 +174,9 @@ export default function CreateHub() {
   // Guards -------------------------------------------------------------------
   if (role !== UserRole.MANAGER) {
     return (
-      <SafeAreaView style={[styles.screen, { paddingHorizontal: 16 }]}>
+      <SafeAreaView style={styles.taskHubSafeArea}>
         <Text style={styles.title}>Create Task</Text>
-        <Text style={{ color: palette.secondary }}>
+        <Text style={styles.taskHubNotice}>
           Nur Manager können Tasks anlegen.
         </Text>
       </SafeAreaView>
@@ -164,7 +194,7 @@ export default function CreateHub() {
         ]);
         setEmployees(emps);
         setEvents(evs);
-      } catch (err) {
+      } catch {
         // ignore; form handles errors on submit
       }
     })();
@@ -229,7 +259,7 @@ export default function CreateHub() {
     } catch (err: any) {
       Alert.alert(
         "Fehler",
-        err.message || "Employee konnte nicht zugewiesen werden."
+        err?.message || "Employee konnte nicht zugewiesen werden."
       );
     } finally {
       setAssigningTaskId(null);
@@ -238,44 +268,64 @@ export default function CreateHub() {
 
   const renderTaskCard = (task: Task, index: number) => {
     const active = activeAssignments(task.id);
+    const doneAssignments =
+      (assignmentsByTask[task.id] || []).filter(
+        (a) => a.status === AssignmentStatus.ACCEPTED
+      ) || [];
     const openSlots = openSlotsForTask(task);
     const isExpanded = selectedTaskId === task.id;
     const employeesForTask = availableEmployeesForTask(task);
+    const status = deriveStatus(task);
+    const isDone = status === "DONE";
 
     return (
       <Pressable
         key={task.id}
         style={[
           styles.card,
-          {
-            marginBottom: 12,
-            borderColor: isExpanded ? palette.primary : palette.border,
-          },
+          styles.taskCardContainer,
+          isExpanded ? styles.taskCardExpanded : styles.taskCardCollapsed,
+          isDone ? styles.taskCardDone : null,
         ]}
-        onPress={() =>
-          setSelectedTaskId((prev) => (prev === task.id ? null : task.id))
-        }
+        onPress={() => {
+          if (isDone) return;
+          setSelectedTaskId((prev) => (prev === task.id ? null : task.id));
+        }}
       >
-        <Text style={[styles.title, { fontSize: 18 }]}>
-          #{index + 1} {task.company}
-        </Text>
-        <Text style={{ color: palette.text, marginBottom: 4 }}>
-          {task.location}
-        </Text>
-        <Text style={{ color: palette.secondary }}>
+        <View style={styles.taskCardHeader}>
+          <Text style={[styles.title, styles.taskCardTitle]}>
+            #{index + 1} {task.company}
+          </Text>
+          <Text
+            style={[
+              styles.taskCardStatus,
+              status === "DONE"
+                ? styles.taskCardStatusDone
+                : status === "RUNNING"
+                ? styles.taskCardStatusRunning
+                : styles.taskCardStatusOpen,
+            ]}
+          >
+            {status === "OPEN"
+              ? "Offen"
+              : status === "RUNNING"
+              ? "Laufend"
+              : "Fertig"}
+          </Text>
+        </View>
+        <Text style={styles.taskCardLocation}>{task.location}</Text>
+        <Text style={styles.taskCardMeta}>
           {formatDate(task.start)} | {formatTimeRange(task.start, task.end)}
         </Text>
-        <Text style={{ color: palette.secondary, marginTop: 6 }}>
+        <Text style={[styles.taskCardMeta, styles.taskCardMetaSpacer]}>
           Bedarf: {task.requiredEmployees} · Zugewiesen: {active.length} ·
           Offen: {openSlots}
         </Text>
 
-        {isExpanded && (
-          <View style={{ marginTop: 10 }}>
-            <Text style={[styles.createTimeLabel, { marginBottom: 6 }]}>
-              Mitarbeiter wählen
-            </Text>
-            <ScrollView style={{ maxHeight: 220, marginBottom: 10 }}>
+        {isExpanded && !isDone && (
+          <View style={styles.taskAssignContainer}>
+            <Text style={styles.taskAssignLabel}>Mitarbeiter wählen</Text>
+            <ScrollView style={styles.taskAssignScroll}>
               {employeesForTask.map(({ emp, busy, colorIndex }) => {
                 const selected = selectedTaskEmployees.includes(emp.id);
                 const colors = [
@@ -305,32 +355,25 @@ export default function CreateHub() {
                     }}
                     style={[
                       styles.createEmployeeRow,
-                      {
-                        borderColor: palette.border,
-                        backgroundColor: selected
-                          ? `${palette.primary}11`
-                          : "transparent",
-                        opacity: disabled ? 0.5 : 1,
-                      },
+                      styles.taskAssignRow,
+                      selected ? styles.taskAssignRowSelected : null,
+                      disabled ? styles.taskAssignRowDisabled : null,
                     ]}
                   >
                     <View
-                      style={[
-                        styles.createEmployeeSquare,
-                        {
-                          borderWidth: 1,
-                          borderColor: palette.border,
-                          backgroundColor: selected ? color : "transparent",
-                        },
-                      ]}
+                    style={[
+                      styles.createEmployeeSquare,
+                      styles.taskAssignSquare,
+                      selected ? { backgroundColor: color } : null,
+                    ]}
                     />
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: palette.text }}>
+                    <View style={styles.taskAssignRowTextWrap}>
+                      <Text style={styles.taskAssignName}>
                         {emp.firstName} {emp.lastName}
                       </Text>
                       {busy && (
-                        <Text style={{ color: "#e67e22", fontSize: 12 }}>
-                          ⚠️ Belegt:{" "}
+                        <Text style={styles.taskAssignBusy}>
+                          (!) Belegt:{" "}
                           {busy.company || busy.location || busy.type || "Job"}
                         </Text>
                       )}
@@ -342,14 +385,10 @@ export default function CreateHub() {
             <Pressable
               style={[
                 styles.button,
-                {
-                  opacity:
-                    assigningTaskId === task.id ||
-                    selectedTaskEmployees.length === 0 ||
-                    openSlots === 0
-                      ? 0.7
-                      : 1,
-                },
+                (assigningTaskId === task.id ||
+                  selectedTaskEmployees.length === 0 ||
+                  openSlots === 0) &&
+                  styles.buttonDisabled,
               ]}
               onPress={handleAssignSelected}
               disabled={
@@ -366,34 +405,170 @@ export default function CreateHub() {
             </Pressable>
           </View>
         )}
+
+        {isDone && doneAssignments.length > 0 && (
+          <View style={styles.doneAssignmentsContainer}>
+            <Text style={styles.taskAssignLabel}>Mitarbeiter</Text>
+            {doneAssignments.map((a) => {
+              const emp = employees.find((e) => e.id === a.employeeId);
+              return (
+                <View key={a.id} style={styles.doneAssignmentRow}>
+                  <Text style={styles.doneAssignmentName}>
+                    {emp ? `${emp.firstName} ${emp.lastName}` : a.employeeId}
+                  </Text>
+                  <Text style={styles.doneAssignmentStatus}>
+                    Status: {a.status}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
       </Pressable>
     );
   };
 
   return (
-    <SafeAreaView style={[styles.screen, { paddingHorizontal: 16 }]}>
+    <SafeAreaView style={styles.taskHubSafeArea}>
       <ScrollView>
         <TaskDashboard
           finishedCount={finishedCount}
           openCount={openCount}
           runningCount={runningCount}
-          showOpenTasksList={showOpenTasksList}
+          showOpenTasksList
           onCreatePress={() => router.push("/task-create")}
-          onToggleOpenTasks={() => setShowOpenTasksList((v) => !v)}
+          onToggleOpenTasks={() => {}}
           styles={styles}
         />
 
-        {/* Section: Unassigned Tasks */}
-        {showOpenTasksList && (
-          <OpenTasksList
-            tasksLoading={tasksLoading}
-            unassignedTasks={unassignedTasks}
-            renderTaskCard={renderTaskCard}
-            onRefresh={loadTasks}
-            styles={styles}
-            palette={palette}
-          />
-        )}
+        {/* Status Filter */}
+        <View style={[styles.widget, styles.widgetSpacingSm, styles.widgetGap]}>
+          <Pressable
+            style={styles.accordionHeader}
+            onPress={() => setShowStatus((v) => !v)}
+          >
+            <Text style={styles.widgetTitle}>Status</Text>
+            <MaterialCommunityIcons
+              name={showStatus ? "chevron-up" : "chevron-down"}
+              size={22}
+              color={palette.text}
+            />
+          </Pressable>
+          {showStatus && (
+          <View style={styles.statusFilterRow}>
+            {[
+              { key: "ALL", label: "Alle" },
+              { key: "OPEN", label: "Offen" },
+              { key: "RUNNING", label: "Laufend" },
+              { key: "DONE", label: "Fertig" },
+            ].map((item) => (
+              <Pressable
+                key={item.key}
+                onPress={() => setStatusFilter(item.key as StatusFilter)}
+                style={[
+                  styles.requestsSegmentTab,
+                  styles.statusFilterChip,
+                  statusFilter === item.key
+                    ? styles.requestsSegmentTabActive
+                    : styles.requestsSegmentTabInactive,
+                ]}
+              >
+                <Text
+                  style={
+                    statusFilter === item.key
+                      ? styles.requestsSegmentTextActive
+                      : styles.requestsSegmentText
+                  }
+                >
+                  {item.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+          )}
+        </View>
+
+        {/* Employee Filter */}
+        <View style={[styles.widget, styles.widgetSpacingSm, styles.widgetGap]}>
+          <Pressable
+            style={styles.accordionHeader}
+            onPress={() => setShowEmployees((v) => !v)}
+          >
+            <Text style={styles.widgetTitle}>Mitarbeiter</Text>
+            <MaterialCommunityIcons
+              name={showEmployees ? "chevron-up" : "chevron-down"}
+              size={22}
+              color={palette.text}
+            />
+          </Pressable>
+          {showEmployees && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.employeeFilterContent}
+            >
+              {users.map((user) => (
+                <Pressable
+                  key={user.id}
+                  onPress={() => setUserFilter(user.id)}
+                  style={[
+                    styles.requestsSegmentTab,
+                    styles.employeeFilterChip,
+                    userFilter === user.id
+                      ? styles.requestsSegmentTabActive
+                      : styles.requestsSegmentTabInactive,
+                  ]}
+                >
+                  <Text
+                    style={
+                      userFilter === user.id
+                        ? styles.requestsSegmentTextActive
+                        : styles.requestsSegmentText
+                    }
+                  >
+                    {user.name}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+
+        {/* Task Liste */}
+        <View style={[styles.card, styles.widgetSpacingSm, styles.taskListCard]}>
+          <Pressable
+            style={styles.accordionHeader}
+            onPress={() => setShowTasks((v) => !v)}
+          >
+            <Text style={styles.taskListTitle}>Tasks</Text>
+            <MaterialCommunityIcons
+              name={showTasks ? "chevron-up" : "chevron-down"}
+              size={22}
+              color={palette.text}
+            />
+          </Pressable>
+          {showTasks && (
+            <>
+              <View style={styles.requestsHeaderRow}>
+                <View />
+                <Pressable onPress={loadTasks}>
+                  <Text style={styles.taskListAction}>Aktualisieren</Text>
+                </Pressable>
+              </View>
+              {tasksLoading && filteredTasks.length === 0 ? (
+                <Text style={styles.taskListEmptyText}>
+                  Tasks werden geladen...
+                </Text>
+              ) : filteredTasks.length === 0 ? (
+                <Text style={styles.taskListEmptyText}>
+                  Keine Tasks für diesen Filter.
+                </Text>
+              ) : (
+                filteredTasks.map((t, idx) => renderTaskCard(t, idx))
+              )}
+            </>
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

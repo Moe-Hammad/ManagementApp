@@ -3,10 +3,10 @@ import { useThemeMode } from "@/src/theme/ThemeProvider";
 import { DarkColors, LightColors } from "@/src/theme/colors";
 import { UserRole } from "@/src/types/resources";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
-import React from "react";
+import { Href, Tabs, useRouter } from "expo-router";
 
 export default function TabsLayout() {
+  const router = useRouter();
   const { isDark } = useThemeMode();
   const colors = isDark ? DarkColors : LightColors;
   const role =
@@ -27,10 +27,23 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="calendar"
         options={{
-          title: "Kalender",
+          title: "Calendar",
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="calendar" size={26} color={color} />
           ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="taskhub"
+        options={{
+          title: "Task",
+          tabBarIcon: ({ color }) =>
+            showManagerTab ? (
+              <MaterialCommunityIcons name="plus-box" size={26} color={color} />
+            ) : null,
+          tabBarItemStyle: showManagerTab ? undefined : { display: "none" },
+          tabBarLabelStyle: showManagerTab ? undefined : { display: "none" },
         }}
       />
 
@@ -57,17 +70,23 @@ export default function TabsLayout() {
           ),
         }}
       />
-
       <Tabs.Screen
-        name="taskhub"
+        name="settings"
         options={{
-          title: "Task",
-          tabBarIcon: ({ color }) =>
-            showManagerTab ? (
-              <MaterialCommunityIcons name="plus-box" size={26} color={color} />
-            ) : null,
-          tabBarItemStyle: showManagerTab ? undefined : { display: "none" },
-          tabBarLabelStyle: showManagerTab ? undefined : { display: "none" },
+          title: "Settings",
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons
+              name="account-cog-outline"
+              size={26}
+              color={color}
+            />
+          ),
+        }}
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+            router.navigate("/settings" as Href);
+          },
         }}
       />
     </Tabs>

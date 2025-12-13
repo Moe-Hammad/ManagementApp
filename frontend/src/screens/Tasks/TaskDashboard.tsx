@@ -1,4 +1,4 @@
-import { Text, Pressable, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 export type TaskDashboardProps = {
   finishedCount: number;
@@ -6,7 +6,6 @@ export type TaskDashboardProps = {
   runningCount: number;
   showOpenTasksList: boolean;
   onCreatePress: () => void;
-  onToggleOpenTasks: () => void;
   styles: any;
 };
 
@@ -14,9 +13,7 @@ export default function TaskDashboard({
   finishedCount,
   openCount,
   runningCount,
-  showOpenTasksList,
   onCreatePress,
-  onToggleOpenTasks,
   styles,
 }: TaskDashboardProps) {
   return (
@@ -38,15 +35,6 @@ export default function TaskDashboard({
 
       <Pressable style={styles.taskHubButton} onPress={onCreatePress}>
         <Text style={styles.taskHubButtonTextPrimary}>Task erstellen</Text>
-      </Pressable>
-
-      <Pressable
-        style={styles.taskHubButtonSecondary}
-        onPress={onToggleOpenTasks}
-      >
-        <Text style={styles.taskHubButtonTextSecondary}>
-          {showOpenTasksList ? "Offene Tasks verbergen" : "Offene Tasks ansehen"}
-        </Text>
       </Pressable>
     </>
   );

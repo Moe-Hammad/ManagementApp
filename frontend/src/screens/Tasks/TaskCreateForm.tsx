@@ -165,7 +165,7 @@ export default function TaskCreateForm({
 
       <TextInput
         style={styles.input}
-        placeholder="Benoetigte Mitarbeiter (Zahl)"
+        placeholder="Benötigte Mitarbeiter (Zahl)"
         placeholderTextColor={palette.secondary}
         value={requiredEmployees}
         onChangeText={setRequiredEmployees}

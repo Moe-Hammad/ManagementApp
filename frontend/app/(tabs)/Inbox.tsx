@@ -138,7 +138,7 @@ export default function InboxScreen() {
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Nachricht an Mitarbeiter</Text>
             <Text style={[styles.text, { marginBottom: 8 }]}>
-              Optional: Fuege eine Nachricht hinzu, die mit der Anfrage gesendet wird.
+              Optional: Füge eine Nachricht hinzu, die mit der Anfrage gesendet wird.
             </Text>
             <TextInput
               style={[styles.input, styles.modalInput]}

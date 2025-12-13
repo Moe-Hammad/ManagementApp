@@ -25,6 +25,9 @@ export const makeStyles = (isDark: boolean) => {
       padding: 20,
       backgroundColor: C.screenbackground,
     },
+    buttonDisabled: {
+      opacity: 0.7,
+    },
     roleButton: {
       flex: 1,
       paddingVertical: 12,
@@ -106,6 +109,148 @@ export const makeStyles = (isDark: boolean) => {
       borderColor: C.border,
       ...shadow(C.shadow, 6, 12, 0.3),
       backdropFilter: "blur(20px)", // iOS
+    },
+    taskHubSafeArea: {
+      flex: 1,
+      paddingHorizontal: 16,
+      backgroundColor: C.screenbackground,
+    },
+    taskHubNotice: {
+      color: C.secondary,
+    },
+
+    taskCardContainer: {
+      marginBottom: 12,
+    },
+    taskCardExpanded: {
+      borderColor: C.primary,
+    },
+    taskCardCollapsed: {
+      borderColor: C.border,
+    },
+    taskCardDone: {
+      opacity: 0.9,
+    },
+    taskCardHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    taskCardTitle: {
+      fontSize: 18,
+    },
+    taskCardStatus: {
+      fontWeight: "700",
+    },
+    taskCardStatusOpen: {
+      color: "#22c55e",
+    },
+    taskCardStatusRunning: {
+      color: C.primary,
+    },
+    taskCardStatusDone: {
+      color: C.secondary,
+    },
+    taskCardLocation: {
+      color: C.text,
+      marginBottom: 4,
+    },
+    taskCardMeta: {
+      color: C.secondary,
+    },
+    taskCardMetaSpacer: {
+      marginTop: 6,
+    },
+    taskAssignContainer: {
+      marginTop: 10,
+    },
+    taskAssignLabel: {
+      color: C.text,
+      fontSize: 14,
+      marginBottom: 6,
+    },
+    taskAssignScroll: {
+      maxHeight: 220,
+      marginBottom: 10,
+    },
+    taskAssignRow: {
+      borderColor: C.border,
+    },
+    taskAssignRowSelected: {
+      backgroundColor: `${C.primary}11`,
+    },
+    taskAssignRowDisabled: {
+      opacity: 0.5,
+    },
+    taskAssignSquare: {
+      borderWidth: 1,
+      borderColor: C.border,
+    },
+    taskAssignRowTextWrap: {
+      flex: 1,
+    },
+    taskAssignName: {
+      color: C.text,
+    },
+    taskAssignBusy: {
+      color: "#e67e22",
+      fontSize: 12,
+    },
+    doneAssignmentsContainer: {
+      marginTop: 10,
+    },
+    doneAssignmentRow: {
+      paddingVertical: 6,
+      borderBottomWidth: 1,
+      borderBottomColor: C.border,
+    },
+    doneAssignmentName: {
+      color: C.text,
+      fontWeight: "600",
+    },
+    doneAssignmentStatus: {
+      color: C.secondary,
+      fontSize: 12,
+    },
+    statusFilterRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    statusFilterChip: {
+      flex: 1,
+      marginHorizontal: 4,
+    },
+    employeeFilterContent: {
+      paddingVertical: 6,
+      paddingRight: 4,
+      gap: 10,
+    },
+    employeeFilterChip: {
+      marginRight: 0,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+    },
+    taskListCard: {
+      borderWidth: 0,
+      backgroundColor: C.surface,
+      padding: 12,
+      marginTop: 0,
+    },
+    taskListTitle: {
+      color: C.text,
+      fontWeight: "700",
+      fontSize: 18,
+    },
+    taskListAction: {
+      color: C.primary,
+    },
+    taskListEmptyText: {
+      color: C.secondary,
+    },
+    accordionHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
     },
 
     button: {
@@ -531,6 +676,50 @@ export const makeStyles = (isDark: boolean) => {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
+    },
+
+    // Settings / Account
+    profileHeaderRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    profileButtonRow: {
+      flexDirection: "row",
+      gap: 10,
+    },
+    profileActionButton: {
+      flex: 1,
+    },
+    profileCancelButton: {
+      backgroundColor: isDark ? "#374151" : "#e5e7eb",
+    },
+    profileCancelButtonText: {
+      color: isDark ? "#fff" : "#111827",
+    },
+    widgetSpacingSm: {
+      marginTop: 12,
+    },
+    widgetSpacingMd: {
+      marginTop: 16,
+    },
+    widgetGap: {
+      gap: 10,
+    },
+    textMuted: {
+      color: C.text,
+      opacity: 0.7,
+    },
+    dangerWidget: {
+      backgroundColor: "#ef4444",
+      borderColor: "#ef4444",
+    },
+    dangerWidgetTitle: {
+      color: "#fff",
+    },
+    dangerWidgetText: {
+      color: "#fff",
+      opacity: 0.8,
     },
 
     requestInfo: {

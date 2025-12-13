@@ -193,7 +193,7 @@ export function CalendarViewBase({
           <Text style={styles.calendarErrorText}>{error}</Text>
         ) : dayEvents.length === 0 ? (
           <Text style={[styles.calendarEmptyText, { color: palette.secondary }]}>
-            Keine Eintraege.
+            Keine Einträge.
           </Text>
         ) : (
           <ScrollView

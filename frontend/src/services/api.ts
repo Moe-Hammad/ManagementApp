@@ -12,6 +12,8 @@ import {
   AssignmentStatus,
   Employee,
   UserRole,
+  User,
+  Manager,
 } from "../types/resources";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
@@ -76,7 +78,7 @@ export async function register(
     const errorBody = await response.json();
     throw new Error(
       (errorBody as any).error ||
-        "Server Fehler, versuchen Sie es spaeter nochmal."
+        "Server Fehler, versuchen Sie es später nochmal."
     );
   }
 
@@ -493,4 +495,63 @@ export async function listEmployeesUnderManager(
   }
 
   return response.json();
+}
+
+// ============================
+// Account / Profile
+// ============================
+
+export async function updateUserProfile(
+  user: User,
+  payload: Pick<User, "firstName" | "lastName" | "email">,
+  token: string
+): Promise<User> {
+  const endpoint =
+    user.role === UserRole.MANAGER
+      ? `/api/managers/${user.id}`
+      : `/api/employees/${user.id}`;
+
+  const body =
+    user.role === UserRole.MANAGER
+      ? { ...(user as Manager), ...payload }
+      : { ...(user as Employee), ...payload };
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(token),
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Profile update failed (${response.status}) ${errorBody || ""}`.trim()
+    );
+  }
+
+  return response.json();
+}
+
+export async function deleteUserAccount(user: User, token: string): Promise<void> {
+  const endpoint =
+    user.role === UserRole.MANAGER
+      ? `/api/managers/${user.id}`
+      : `/api/employees/${user.id}`;
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method: "DELETE",
+    headers: {
+      ...authHeader(token),
+    },
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Account delete failed (${response.status}) ${errorBody || ""}`.trim()
+    );
+  }
 }
