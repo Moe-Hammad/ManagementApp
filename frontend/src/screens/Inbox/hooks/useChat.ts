@@ -5,21 +5,21 @@ import {
   fetchChatRooms,
   fetchMessagesForChat,
   sendChatMessage,
-  setRooms,
   setMessagesForChat,
+  setRooms,
 } from "@/src/redux/chatSlice";
-import { subscribeUserMessages } from "@/src/services/wsClient";
-import { useThemeMode } from "@/src/theme/ThemeProvider";
-import { DarkColors, LightColors } from "@/src/theme/colors";
-import { makeStyles } from "@/src/theme/styles";
-import { ChatMessage, ChatRoom, UserRole } from "@/src/types/resources";
-import { useEffect, useMemo, useState } from "react";
 import {
   loadChatMessages,
   loadChatRooms,
   saveChatMessages,
   saveChatRooms,
 } from "@/src/services/chatCache";
+import { subscribeUserMessages } from "@/src/services/wsClient";
+import { useThemeMode } from "@/src/theme/ThemeProvider";
+import { DarkColors, LightColors } from "@/src/theme/colors";
+import { makeStyles } from "@/src/theme/styles";
+import { ChatMessage, ChatRoom, UserRole } from "@/src/types/resources";
+import { useEffect, useMemo, useState } from "react";
 
 /**
  * useChat
@@ -107,7 +107,6 @@ export function useChat() {
 
     const sub = subscribeUserMessages(
       token,
-      userId,
       (payload) => {
         const msg = payload as ChatMessage;
         if (msg?.chatId) {
