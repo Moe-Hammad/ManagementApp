@@ -1,11 +1,12 @@
 import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
+import { upsertAssignment } from "@/src/redux/assignmentSlice";
 import { addMessage } from "@/src/redux/chatSlice";
 import { upsertRequest } from "@/src/redux/requestSlice";
-import { upsertAssignment } from "@/src/redux/assignmentSlice";
 import {
+  disconnectWebSocket,
+  subscribeUserAssignments,
   subscribeUserMessages,
   subscribeUserRequests,
-  subscribeUserAssignments,
 } from "@/src/services/wsClient";
 import { ChatMessage } from "@/src/types/resources";
 import { useEffect, useState } from "react";
@@ -40,6 +41,16 @@ export function useWebSockets() {
   const token = useAppSelector((s) => s.auth.token?.token);
   const userId = useAppSelector((s) => s.auth.user?.id);
 
+  useEffect(() => {
+    if (!token || !userId) {
+      // aktive Subscriptions/Manager disconnecten
+      disconnectWebSocket(); // o.ä. aus wsClient
+      setWsMessagesStatus("idle");
+      setWsRequestsStatus("idle");
+      setWsAssignmentsStatus("idle");
+    }
+  }, [token, userId]);
+
   // ==== Verbindungstatus für beide WebSockets ================================
   const [wsMessagesStatus, setWsMessagesStatus] = useState<
     "idle" | "connected" | "error"
@@ -58,7 +69,6 @@ export function useWebSockets() {
 
     const ws = subscribeUserMessages(
       token,
-      userId,
       (payload) => {
         const msg = payload as ChatMessage;
         if (msg?.chatId) dispatch(addMessage(msg));
@@ -84,9 +94,6 @@ export function useWebSockets() {
       (payload) => {
         if (payload?.payload) {
           console.log("[WS][REQUESTS] payload", payload);
-          alert(
-            `WS Request empfangen (Debug)\ndestination: /user/queue/requests\npayload.type: ${payload.type ?? "-"}`
-          );
           dispatch(upsertRequest(payload.payload));
         }
         setWsRequestsStatus("connected");

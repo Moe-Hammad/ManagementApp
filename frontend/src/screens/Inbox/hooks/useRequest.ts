@@ -18,7 +18,6 @@ import { RequestStatus, UserRole } from "@/src/types/resources";
 import { fetchAssignmentsForEmployee } from "@/src/services/api";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
-import { Alert } from "react-native";
 
 /**
  * useRequests
@@ -188,15 +187,11 @@ export function useRequests() {
   // ==== Request senden (Manager → Employee) =================================
   const sendRequest = async (employeeId: string, message?: string) => {
     if (!isManager || !token || !userId) {
-      alert("Nur Manager können Anfragen senden.");
+      console.warn("Nur Manager koennen Anfragen senden.");
       return;
     }
 
     // Debug-Alert + Log: was wird gesendet, an wen?
-    Alert.alert(
-      "Request senden (Debug)",
-      `destination: /api/requests\nmanagerId: ${userId}\nemployeeId: ${employeeId}\nmessage: ${message ?? "-"}`
-    );
     console.log("[Request][SEND]", {
       destination: "/api/requests",
       managerId: userId,
@@ -210,9 +205,8 @@ export function useRequests() {
       ).unwrap();
 
       refreshUser();
-      alert("Anfrage wurde gesendet.");
     } catch (err: any) {
-      alert(err.message || "Anfrage konnte nicht gesendet werden.");
+      console.warn(err.message || "Anfrage konnte nicht gesendet werden.");
     }
   };
 
@@ -229,7 +223,7 @@ export function useRequests() {
       ).unwrap();
       refreshUser();
     } catch (err: any) {
-      alert(err.message || "Request konnte nicht akzeptiert werden.");
+      console.warn(err.message || "Request konnte nicht akzeptiert werden.");
     }
   };
 
@@ -246,7 +240,7 @@ export function useRequests() {
       ).unwrap();
       refreshUser();
     } catch (err: any) {
-      alert(err.message || "Request konnte nicht abgelehnt werden.");
+      console.warn(err.message || "Request konnte nicht abgelehnt werden.");
     }
   };
 

@@ -179,7 +179,7 @@ export function useChat() {
 
       setMessageText("");
     } catch (err: any) {
-      alert(err.message || "Nachricht konnte nicht gesendet werden.");
+      console.warn(err.message || "Nachricht konnte nicht gesendet werden.");
     }
   };
 
@@ -193,7 +193,7 @@ export function useChat() {
 
       setSelectedChatId(chat.id);
     } catch (err: any) {
-      alert(err.message || "Chat konnte nicht erstellt werden.");
+      console.warn(err.message || "Chat konnte nicht erstellt werden.");
     }
   };
 

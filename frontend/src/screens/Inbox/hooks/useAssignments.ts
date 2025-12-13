@@ -30,7 +30,7 @@ export function useAssignments() {
       dispatch(upsertAssignment(updated));
       return updated;
     } catch (err: any) {
-      alert(err?.message || "Assignment konnte nicht aktualisiert werden.");
+      console.warn(err?.message || "Assignment konnte nicht aktualisiert werden.");
       throw err;
     }
   };

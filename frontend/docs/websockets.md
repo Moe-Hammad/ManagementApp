@@ -1,62 +1,163 @@
 # WebSocket-uebersicht
 
-Kurze Dokumentation der STOMP/WebSocket-Verbindungen in der App und wie das Frontend sie nutzt.
+Diese Seite erklaert, wie die STOMP-Verbindung zwischen Frontend (React Native/Expo) und Backend (Spring) funktioniert, welche Endpunkte/Queues genutzt werden und was bei Reconnect/Heartbeat passiert.
 
 ---
 
-## Grundprinzip (Frontend)
-- Eine globale Verbindung, verwaltet in `src/services/wsClient.ts` (STOMP ueber SockJS).
-- URL: `{EXPO_PUBLIC_BACKEND_URL}` (HTTP/HTTPS), Pfad `/ws` (SockJS handhabt `/ws/info` etc.).
-- Authentifizierung: JWT im Header `Authorization: Bearer <token>` beim STOMP `CONNECT`.
-- Heartbeat: Client sendet alle 15s (`heart-beat: "15000,15000"`).
-- Reconnect: Backoff (Start 5s); alle Subscriptions werden nach Reconnect neu registriert.
-- Subscriptions sind sauber entfernbar via `unsubscribe()`, die Verbindung kann komplett per `disconnectWebSocket()` beendet werden.
+## Architektur auf einen Blick
+- **Transport:** SockJS ueber HTTP/HTTPS nach `{EXPO_PUBLIC_BACKEND_URL}/ws` (SockJS bedient auch `/ws/info`).
+- **Protokoll:** STOMP 1.2, Heartbeats 15000/15000 ms.
+- **Auth:** JWT im STOMP `CONNECT` Header `Authorization: Bearer <token>`.
+- **Single Connection:** Eine globale STOMP-Session, verwaltet in `src/services/wsClient.ts`; mehrere Subscriptions haengen daran.
+
+## Ablauf im Frontend (wsClient)
+1) Erstes `subscribe*` ruft `ensureConnected(token)` -> baut die globale SockJS-Verbindung auf.
+2) STOMP-Handshake: Client sendet `CONNECT` mit JWT, Heartbeat-Angebot, akzeptierten Versionen.
+3) Nach `CONNECTED` werden alle bekannten Destinations resubscribed.
+4) Nachrichten (`MESSAGE`) werden als JSON geparst und an die Callbacks gegeben.
+5) Heartbeats: Alle 15s sendet der Client ein LF, der Broker antwortet ebenfalls -> Ping/Pong auf STOMP-Ebene.
+6) Reconnect: Bei Close/Error aktiviert der Client nach 5s erneut und subscribed alles neu.
+7) Cleanup: `disconnectWebSocket()` beendet Verbindung, Heartbeat und Subscriptions (z. B. bei Logout).
 
 ## Kanaele (Destinations)
 - `/user/queue/messages`  
-  Nutzt `subscribeUserMessages(token, userId, onMessage, onError?)`  
-  Zweck: Chat-Nachrichten in Echtzeit.
+  `subscribeUserMessages(token, userId, onMessage, onError?)`  
+  Echtzeit-Chatnachrichten fuer den eingeloggten User.
 
 - `/user/queue/requests`  
-  Nutzt `subscribeUserRequests(token, onMessage, onError?)`  
-  Zweck: Team-Requests live empfangen/aktualisieren.
+  `subscribeUserRequests(token, onMessage, onError?)`  
+  Live-Updates fuer Requests (Manager/Employee).
 
 - `/user/queue/assignments`  
-  Nutzt `subscribeUserAssignments(token, onMessage, onError?)`  
-  Zweck: Aufgaben-/Task-Zuweisungen live empfangen.
+  `subscribeUserAssignments(token, onMessage, onError?)`  
+  Live-Updates fuer Task-/Assignment-Zuweisungen.
 
-## Lebenszyklus im Frontend
-- Verbindung: Beim ersten Subscribe wird `ensureConnected(token)` aufgerufen -> baut die globale WS-Verbindung auf.
-- Subscriben: `manager.subscribe(destination, cb)` sendet STOMP `SUBSCRIBE`, sobald die Verbindung steht.
-- Nachrichten: Bei `MESSAGE` wird der Body als JSON geparst und an den Callback gereicht.
-- Reconnect: Bei `close`/`error` wird automatisch erneut verbunden; vorhandene Subscriptions werden mit denselben IDs resubscribed.
-- Unsubscribe: `subscription.unsubscribe()` sendet STOMP `UNSUBSCRIBE` (wenn verbunden) und entfernt den Callback.
-- Disconnect (Logout): `disconnectWebSocket()` beendet Verbindung, Heartbeat, Reconnect-Timeouts und leert die Subscriptions.
+## Backend (Spring)
+- Endpoint + Broker:
+```java
+@Configuration
+@EnableWebSocketMessageBroker
+@RequiredArgsConstructor
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+    private final WebSocketAuthChannelInterceptor authInterceptor;
 
-## Typischer Flow pro Feature
-- Chats  
-  - Hook/Screen ruft `subscribeUserMessages(...)` auf.  
-  - Bei neuen Nachrichten: Redux/State-Update.  
-  - Beim Verlassen/Unmount: `disconnect()` des zurueckgegebenen Sub-Objekts.
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry config) {
+        config.enableSimpleBroker("/topic", "/queue")
+              .setHeartbeatValue(new long[]{15000, 15000});
+        config.setApplicationDestinationPrefixes("/app");
+        config.setUserDestinationPrefix("/user");
+    }
 
-- Requests  
-  - Hook `useRequests` abonniert `subscribeUserRequests`.  
-  - Bei neuen/aktualisierten Requests -> `upsertRequest` in Redux.  
-  - Bei Logout/Unmount -> `disconnect()` des Sub-Objekts.
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
+    }
 
-- Assignments  
-  - Fuer Employees: `subscribeUserAssignments`.  
-  - Updates kommen ins Assignment-Redux (`upsertAssignment`).  
-  - Cleanup wie oben.
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(authInterceptor);
+    }
+}
+```
 
-## Backend (Kurz)
-- WS-Endpoint: `/ws` (Spring STOMP, mit SockJS).  
-- User-spezifische Queues mit Prefix `/user/queue/...` (Spring schickt automatisch an den authentifizierten User).  
-- Auth via JWT aus dem HTTP-Header bei STOMP `CONNECT`.  
-- Heartbeat-Intervalle werden vom Client angeboten; Server akzeptiert/antwortet gemaess STOMP-Standard.
+- Auth (CONNECT-Interceptor, Principal = `uid` aus JWT):
+```java
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
+    private final JwtTokenProvider jwtTokenProvider;
 
-## Troubleshooting / Hinweise
-- Kein Token -> keine Verbindung; Callback `onError` nutzen, um UI-Status anzupassen.
-- Bei 401/403 auf der WS-Strecke: Token pruefen/refreshen, dann erneut `connect`.
-- Reconnect-Backoff aktuell 5s fest; UI kann den Status (z. B. `wsStatus`) anzeigen.
-- Beim Hot-Reload oder App-Wechsel immer pruefen, ob `disconnectWebSocket()` gebraucht wird (z. B. nach Logout).
+    @Override
+    public Message<?> preSend(Message<?> message, MessageChannel channel) {
+        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+        if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
+            String token = resolveToken(accessor);
+            var claims = jwtTokenProvider.parseClaims(token);
+            String uid = claims.get("uid", String.class);
+            String role = claims.get("role", String.class);
+            UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken(uid, null,
+                            List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+            accessor.setUser(auth);
+            log.info("WS CONNECT principal={} role={}", uid, role);
+        }
+        return message;
+    }
+
+    private String resolveToken(StompHeaderAccessor accessor) {
+        List<String> authHeaders = accessor.getNativeHeader(HttpHeaders.AUTHORIZATION);
+        String header = (authHeaders != null && !authHeaders.isEmpty()) ? authHeaders.get(0) : null;
+        if (header != null && header.toLowerCase().startsWith("bearer ")) {
+            return header.substring(7).trim();
+        }
+        return null;
+    }
+}
+```
+
+- Senden an einen User (Principal muss `uid` sein):
+```java
+@Component
+@RequiredArgsConstructor
+public class RequestEventPublisher {
+    private final SimpMessagingTemplate messagingTemplate;
+
+    public void publishCreated(RequestDto dto) {
+        var event = new RequestEvent("request_created", dto);
+        messagingTemplate.convertAndSendToUser(dto.getManagerId().toString(), "/queue/requests", event);
+        messagingTemplate.convertAndSendToUser(dto.getEmployeeId().toString(), "/queue/requests", event);
+    }
+}
+```
+
+- Heartbeats: SimpleBroker sendet/erwartet 15000/15000 ms (siehe `setHeartbeatValue`).
+
+## Lebenszyklus je Feature
+- **Chats:** `subscribeUserMessages` -> Redux `addMessage` im Callback -> Unsubscribe beim Unmount.
+- **Requests:** `subscribeUserRequests` -> Redux `upsertRequest` -> Statusanzeigen ueber `wsStatus`.
+- **Assignments:** `subscribeUserAssignments` -> Redux `upsertAssignment` -> Statusanzeigen ueber `wsAssignmentsStatus`.
+
+## Frontend (React Native/Expo)
+- Client-Setup (SockJS + STOMP, eine globale Verbindung):
+```ts
+// src/services/wsClient.ts (Ausschnitt)
+const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL || "";
+const sockUrl = API_BASE_URL + "/ws";
+
+this.client = new Client({
+  webSocketFactory: () => new SockJS(sockUrl),
+  connectHeaders: { Authorization: `Bearer ${token}` },
+  reconnectDelay: 5000,
+  heartbeatIncoming: 15000,
+  heartbeatOutgoing: 15000,
+  onConnect: () => { this.connected = true; this.connecting = false; this.resubscribeAll(); },
+  onDisconnect: () => { this.connected = false; this.connecting = false; },
+  onWebSocketClose: () => { this.connected = false; this.connecting = false; },
+  onStompError: (frame) => { this.connected = false; this.connecting = false; console.warn(frame); },
+});
+```
+
+- Subscriben/Senden:
+```ts
+const sub = manager.subscribe("/user/queue/requests", (msg: IMessage) => {
+  const payload = JSON.parse(msg.body);
+  dispatch(upsertRequest(payload.payload ?? payload));
+});
+
+// Publish Beispiel
+manager.send("/app/some-endpoint", { foo: "bar" });
+```
+
+- Typische Nutzung:
+  - `subscribeUserMessages` / `subscribeUserRequests` / `subscribeUserAssignments` rufen intern `ensureConnected(token)` auf.
+  - Im Hook `useWebSockets` werden die Subscriptions beim Mount aufgebaut und beim Unmount `disconnect()`ed.
+
+## Troubleshooting
+- Kein CONNECT/CONNECTED im Backend-Log: STOMP-Subprotocol fehlt oder JWT nicht akzeptiert; Header `Authorization: Bearer <token>` pruefen.
+- Keine Lieferung an `/user/queue/...`: Principal muss dem String entsprechen, den `convertAndSendToUser` nutzt (hier: `uid` aus JWT).
+- Haeufige Reconnects: Netzwerk, falsche URL, oder Heartbeat-Mismatch; URL `{EXPO_PUBLIC_BACKEND_URL}/ws` (kein `ws://` bei SockJS) pruefen.
+- Doppelte Items im UI: Subscriptions liefern eventuell Duplikate; deduplizieren vor dem Rendern (siehe RequestsTab).

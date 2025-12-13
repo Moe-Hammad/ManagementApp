@@ -153,23 +153,22 @@ class WebSocketManager {
   }
 }
 
-const manager = WebSocketManager.getInstance();
+const wsInstance = WebSocketManager.getInstance();
 
 const ensureConnected = (token: string) => {
-  if (!manager.isConnected()) {
-    manager.connect(token);
+  if (!wsInstance.isConnected()) {
+    wsInstance.connect(token);
   }
 };
 
 export function subscribeUserMessages(
   token: string,
-  userId: string,
   onMessage: (payload: any) => void,
   onError?: () => void
 ) {
   try {
     ensureConnected(token);
-    const sub = manager.subscribe(`/user/queue/messages`, onMessage);
+    const sub = wsInstance.subscribe(`/user/queue/messages`, onMessage);
     return {
       disconnect: () => sub.unsubscribe(),
     };
@@ -186,7 +185,7 @@ export function subscribeUserRequests(
 ) {
   try {
     ensureConnected(token);
-    const sub = manager.subscribe(`/user/queue/requests`, onMessage);
+    const sub = wsInstance.subscribe(`/user/queue/requests`, onMessage);
     return {
       disconnect: () => sub.unsubscribe(),
     };
@@ -203,7 +202,7 @@ export function subscribeUserAssignments(
 ) {
   try {
     ensureConnected(token);
-    const sub = manager.subscribe(`/user/queue/assignments`, onMessage);
+    const sub = wsInstance.subscribe(`/user/queue/assignments`, onMessage);
     return {
       disconnect: () => sub.unsubscribe(),
     };
@@ -215,5 +214,5 @@ export function subscribeUserAssignments(
 
 export const wsClient = WebSocketManager.getInstance();
 export const disconnectWebSocket = () => {
-  manager.disconnect();
+  wsInstance.disconnect();
 };
