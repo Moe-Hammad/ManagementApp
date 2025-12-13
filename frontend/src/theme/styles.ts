@@ -118,9 +118,14 @@ export const makeStyles = (isDark: boolean) => {
     taskHubNotice: {
       color: C.secondary,
     },
+    taskScreenContent: {
+      flex: 1,
+      gap: 16,
+      paddingTop: 8,
+    },
 
     taskCardContainer: {
-      marginBottom: 12,
+      marginBottom: 14,
     },
     taskCardExpanded: {
       borderColor: C.primary,
@@ -160,6 +165,14 @@ export const makeStyles = (isDark: boolean) => {
     },
     taskCardMetaSpacer: {
       marginTop: 6,
+    },
+    taskCardSurface: {
+      backgroundColor: C.card,
+      borderRadius: 16,
+      padding: 14,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? "transparent" : C.border,
+      ...shadow(C.shadow, 3, 10, 0.25),
     },
     taskAssignContainer: {
       marginTop: 10,
@@ -215,6 +228,7 @@ export const makeStyles = (isDark: boolean) => {
     statusFilterRow: {
       flexDirection: "row",
       justifyContent: "space-between",
+      gap: 8,
     },
     statusFilterChip: {
       flex: 1,
@@ -223,18 +237,90 @@ export const makeStyles = (isDark: boolean) => {
     employeeFilterContent: {
       paddingVertical: 6,
       paddingRight: 4,
-      gap: 10,
+      gap: 12,
     },
     employeeFilterChip: {
       marginRight: 0,
       paddingHorizontal: 14,
       paddingVertical: 10,
     },
+    taskDashboardContainer: {
+      gap: 12,
+      marginBottom: 16,
+    },
+    taskKpiRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      gap: 8,
+    },
+    taskKpiCard: {
+      flex: 1,
+      borderRadius: 14,
+      paddingVertical: 12,
+      paddingHorizontal: 10,
+      backgroundColor: C.surface,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    taskKpiCardIdle: {
+      opacity: 0.9,
+    },
+    taskKpiCardActive: {
+      opacity: 1,
+      backgroundColor: isDark ? "#1f2937" : "#e5e7eb",
+    },
+    taskKpiValue: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: C.text,
+    },
+    taskKpiLabel: {
+      color: C.secondary,
+      marginTop: 2,
+      fontSize: 12,
+    },
+    taskPrimaryButton: {
+      backgroundColor: C.primary,
+      borderRadius: 12,
+      paddingVertical: 14,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    taskPrimaryButtonText: {
+      color: "#fff",
+      fontWeight: "700",
+      fontSize: 16,
+    },
     taskListCard: {
       borderWidth: 0,
       backgroundColor: C.surface,
       padding: 12,
       marginTop: 0,
+    },
+    taskFilterSection: {
+      gap: 8,
+    },
+    taskFilterSectionSpacing: {
+      marginTop: 14,
+    },
+    taskFilterTitle: {
+      color: C.text,
+      fontWeight: "700",
+      fontSize: 16,
+    },
+    taskListScroll: {
+      flex: 1,
+      marginTop: 12,
+    },
+    taskListContent: {
+      paddingBottom: 24,
+      gap: 12,
+    },
+    taskListHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 6,
     },
     taskListTitle: {
       color: C.text,

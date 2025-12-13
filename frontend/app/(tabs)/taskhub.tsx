@@ -1,27 +1,22 @@
 import { useAppSelector } from "@/src/hooks/useRedux";
 import TaskDashboard from "@/src/screens/Tasks/TaskDashboard";
 import {
-  assignEmployeeToTask,
   fetchAssignmentsForTask,
-  fetchManagerCalendarEvents,
   fetchTasksForManager,
   listEmployeesUnderManager,
 } from "@/src/services/api";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
-import { DarkColors, LightColors } from "@/src/theme/colors";
 import { makeStyles } from "@/src/theme/styles";
 import {
   AssignmentStatus,
-  CalendarEvent,
   Employee,
   Task,
   TaskAssignment,
   UserRole,
 } from "@/src/types/resources";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type AssignmentMap = Record<string, TaskAssignment[]>;
@@ -43,9 +38,6 @@ const formatTimeRange = (startIso: string, endIso: string) => {
   )}:${pad(end.getMinutes())}`;
 };
 
-const overlaps = (startA: number, endA: number, startB: number, endB: number) =>
-  startA < endB && endA > startB;
-
 export default function TaskHub() {
   const token = useAppSelector((s) => s.auth.token?.token);
   const role = useAppSelector((s) => s.auth.user?.role);
@@ -53,49 +45,16 @@ export default function TaskHub() {
 
   const { isDark } = useThemeMode();
   const styles = makeStyles(isDark);
-  const palette = isDark ? DarkColors : LightColors;
   const router = useRouter();
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [userFilter, setUserFilter] = useState<string>("ALL");
-  const [showStatus, setShowStatus] = useState(true);
-  const [showEmployees, setShowEmployees] = useState(true);
-  const [showTasks, setShowTasks] = useState(true);
 
-  // --- Data state -----------------------------------------------------------
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [assignmentsByTask, setAssignmentsByTask] = useState<AssignmentMap>({});
   const [tasksLoading, setTasksLoading] = useState(false);
 
-  // --- Selection for assigning ---------------------------------------------
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [selectedTaskEmployees, setSelectedTaskEmployees] = useState<string[]>(
-    []
-  );
-  const [assigningTaskId, setAssigningTaskId] = useState<string | null>(null);
-
-  const busyEventFor = useCallback(
-    (employeeId: string, startIso: string, endIso: string) => {
-      const s = new Date(startIso).getTime();
-      const e = new Date(endIso).getTime();
-      return events.find((ev) => {
-        if (ev.employeeId !== employeeId) return false;
-        const es = new Date(ev.start).getTime();
-        const ee = new Date(ev.end).getTime();
-        return overlaps(es, ee, s, e);
-      });
-    },
-    [events]
-  );
-
-  const selectedTask = useMemo(
-    () => tasks.find((t) => t.id === selectedTaskId) || null,
-    [tasks, selectedTaskId]
-  );
-
-  // Helpers ------------------------------------------------------------------
   const activeAssignments = useCallback(
     (taskId: string) =>
       (assignmentsByTask[taskId] || []).filter(
@@ -112,16 +71,16 @@ export default function TaskHub() {
     [activeAssignments]
   );
 
-  const now = Date.now();
   const deriveStatus = useCallback(
     (task: Task): Exclude<StatusFilter, "ALL"> => {
+      const now = Date.now();
       const end = new Date(task.end).getTime();
       const start = new Date(task.start).getTime();
       if (end < now) return "DONE";
       if (start <= now && now <= end) return "RUNNING";
       return openSlotsForTask(task) > 0 ? "OPEN" : "RUNNING";
     },
-    [now, openSlotsForTask]
+    [openSlotsForTask]
   );
 
   const finishedCount = useMemo(
@@ -155,20 +114,12 @@ export default function TaskHub() {
         const statusMatch = statusFilter === "ALL" || status === statusFilter;
         const userMatch =
           userFilter === "ALL" ||
-          activeAssignments(task.id).some((a) => a.employeeId === userFilter);
+          (assignmentsByTask[task.id] || []).some(
+            (a) => a.employeeId === userFilter
+          );
         return statusMatch && userMatch;
       }),
-    [tasks, deriveStatus, statusFilter, userFilter, activeAssignments]
-  );
-
-  const availableEmployeesForTask = useCallback(
-    (task: Task) => {
-      return employees.map((emp, idx) => {
-        const busy = busyEventFor(emp.id, task.start, task.end);
-        return { emp, busy, colorIndex: idx };
-      });
-    },
-    [employees, busyEventFor]
+    [tasks, deriveStatus, statusFilter, userFilter, assignmentsByTask]
   );
 
   // Guards -------------------------------------------------------------------
@@ -188,14 +139,10 @@ export default function TaskHub() {
     if (!token || !managerId) return;
     (async () => {
       try {
-        const [emps, evs] = await Promise.all([
-          listEmployeesUnderManager(managerId, token),
-          fetchManagerCalendarEvents(token),
-        ]);
+        const emps = await listEmployeesUnderManager(managerId, token);
         setEmployees(emps);
-        setEvents(evs);
       } catch {
-        // ignore; form handles errors on submit
+        // ignore for now
       }
     })();
   }, [token, managerId]);
@@ -228,53 +175,10 @@ export default function TaskHub() {
     loadTasks();
   }, [loadTasks]);
 
-  useEffect(() => {
-    setSelectedTaskEmployees([]);
-  }, [selectedTaskId]);
-
-  // Actions ------------------------------------------------------------------
-  const handleAssignSelected = async () => {
-    if (!token || !selectedTask || selectedTaskEmployees.length === 0) return;
-    try {
-      setAssigningTaskId(selectedTask.id);
-      await Promise.all(
-        selectedTaskEmployees.map((empId) =>
-          assignEmployeeToTask(
-            {
-              taskId: selectedTask.id,
-              employeeId: empId,
-              status: AssignmentStatus.PENDING,
-            },
-            token
-          )
-        )
-      );
-      Alert.alert(
-        "Anfrage gesendet",
-        "Die ausgewählten Mitarbeiter erhalten eine Anfrage."
-      );
-      setSelectedTaskEmployees([]);
-      setSelectedTaskId(null);
-      loadTasks();
-    } catch (err: any) {
-      Alert.alert(
-        "Fehler",
-        err?.message || "Employee konnte nicht zugewiesen werden."
-      );
-    } finally {
-      setAssigningTaskId(null);
-    }
-  };
-
   const renderTaskCard = (task: Task, index: number) => {
     const active = activeAssignments(task.id);
-    const doneAssignments =
-      (assignmentsByTask[task.id] || []).filter(
-        (a) => a.status === AssignmentStatus.ACCEPTED
-      ) || [];
+    const assignments = assignmentsByTask[task.id] || [];
     const openSlots = openSlotsForTask(task);
-    const isExpanded = selectedTaskId === task.id;
-    const employeesForTask = availableEmployeesForTask(task);
     const status = deriveStatus(task);
     const isDone = status === "DONE";
 
@@ -282,15 +186,11 @@ export default function TaskHub() {
       <Pressable
         key={task.id}
         style={[
-          styles.card,
+          styles.taskCardSurface,
           styles.taskCardContainer,
-          isExpanded ? styles.taskCardExpanded : styles.taskCardCollapsed,
-          isDone ? styles.taskCardDone : null,
+          isDone ? styles.taskCardDone : styles.taskCardCollapsed,
         ]}
-        onPress={() => {
-          if (isDone) return;
-          setSelectedTaskId((prev) => (prev === task.id ? null : task.id));
-        }}
+        onPress={() => router.push(`/task/${task.id}`)}
       >
         <View style={styles.taskCardHeader}>
           <Text style={[styles.title, styles.taskCardTitle]}>
@@ -318,98 +218,16 @@ export default function TaskHub() {
           {formatDate(task.start)} | {formatTimeRange(task.start, task.end)}
         </Text>
         <Text style={[styles.taskCardMeta, styles.taskCardMetaSpacer]}>
-          Bedarf: {task.requiredEmployees} · Zugewiesen: {active.length} ·
-          Offen: {openSlots}
+          Bedarf: {task.requiredEmployees} | Zugewiesen: {active.length} | Offen:{" "}
+          {openSlots}
         </Text>
 
-        {isExpanded && !isDone && (
-          <View style={styles.taskAssignContainer}>
-            <Text style={styles.taskAssignLabel}>Mitarbeiter wählen</Text>
-            <ScrollView style={styles.taskAssignScroll}>
-              {employeesForTask.map(({ emp, busy, colorIndex }) => {
-                const selected = selectedTaskEmployees.includes(emp.id);
-                const colors = [
-                  "#4C8BFF",
-                  "#8e44ad",
-                  "#16a085",
-                  "#e67e22",
-                  "#e74c3c",
-                ];
-                const color = colors[colorIndex % colors.length];
-                const limitReached =
-                  selectedTaskEmployees.length >= openSlots && !selected;
-                const disabled = !!busy || limitReached || openSlots === 0;
-
-                return (
-                  <Pressable
-                    key={emp.id}
-                    disabled={disabled}
-                    onPress={() => {
-                      if (selected) {
-                        setSelectedTaskEmployees((prev) =>
-                          prev.filter((id) => id !== emp.id)
-                        );
-                      } else if (openSlots > 0 && !limitReached) {
-                        setSelectedTaskEmployees((prev) => [...prev, emp.id]);
-                      }
-                    }}
-                    style={[
-                      styles.createEmployeeRow,
-                      styles.taskAssignRow,
-                      selected ? styles.taskAssignRowSelected : null,
-                      disabled ? styles.taskAssignRowDisabled : null,
-                    ]}
-                  >
-                    <View
-                    style={[
-                      styles.createEmployeeSquare,
-                      styles.taskAssignSquare,
-                      selected ? { backgroundColor: color } : null,
-                    ]}
-                    />
-                    <View style={styles.taskAssignRowTextWrap}>
-                      <Text style={styles.taskAssignName}>
-                        {emp.firstName} {emp.lastName}
-                      </Text>
-                      {busy && (
-                        <Text style={styles.taskAssignBusy}>
-                          (!) Belegt:{" "}
-                          {busy.company || busy.location || busy.type || "Job"}
-                        </Text>
-                      )}
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-            <Pressable
-              style={[
-                styles.button,
-                (assigningTaskId === task.id ||
-                  selectedTaskEmployees.length === 0 ||
-                  openSlots === 0) &&
-                  styles.buttonDisabled,
-              ]}
-              onPress={handleAssignSelected}
-              disabled={
-                assigningTaskId === task.id ||
-                selectedTaskEmployees.length === 0 ||
-                openSlots === 0
-              }
-            >
-              <Text style={styles.buttonText}>
-                {assigningTaskId === task.id
-                  ? "Sende..."
-                  : "Mitarbeiter anfragen"}
-              </Text>
-            </Pressable>
-          </View>
-        )}
-
-        {isDone && doneAssignments.length > 0 && (
-          <View style={styles.doneAssignmentsContainer}>
-            <Text style={styles.taskAssignLabel}>Mitarbeiter</Text>
-            {doneAssignments.map((a) => {
+        <View style={styles.doneAssignmentsContainer}>
+          <Text style={styles.taskAssignLabel}>Mitarbeiter</Text>
+          {assignments.length === 0 ? (
+            <Text style={styles.taskAssignBusy}>Keine Zuweisungen</Text>
+          ) : (
+            assignments.map((a) => {
               const emp = employees.find((e) => e.id === a.employeeId);
               return (
                 <View key={a.id} style={styles.doneAssignmentRow}>
@@ -421,40 +239,28 @@ export default function TaskHub() {
                   </Text>
                 </View>
               );
-            })}
-          </View>
-        )}
+            })
+          )}
+        </View>
       </Pressable>
     );
   };
 
   return (
     <SafeAreaView style={styles.taskHubSafeArea}>
-      <ScrollView>
+      <View style={styles.taskScreenContent}>
         <TaskDashboard
           finishedCount={finishedCount}
           openCount={openCount}
           runningCount={runningCount}
-          showOpenTasksList
           onCreatePress={() => router.push("/task-create")}
-          onToggleOpenTasks={() => {}}
+          activeStatus={statusFilter}
+          onSelectStatus={(s) => setStatusFilter(s)}
           styles={styles}
         />
 
-        {/* Status Filter */}
-        <View style={[styles.widget, styles.widgetSpacingSm, styles.widgetGap]}>
-          <Pressable
-            style={styles.accordionHeader}
-            onPress={() => setShowStatus((v) => !v)}
-          >
-            <Text style={styles.widgetTitle}>Status</Text>
-            <MaterialCommunityIcons
-              name={showStatus ? "chevron-up" : "chevron-down"}
-              size={22}
-              color={palette.text}
-            />
-          </Pressable>
-          {showStatus && (
+        <View style={styles.taskFilterSection}>
+          <Text style={styles.taskFilterTitle}>Status</Text>
           <View style={styles.statusFilterRow}>
             {[
               { key: "ALL", label: "Alle" },
@@ -485,91 +291,63 @@ export default function TaskHub() {
               </Pressable>
             ))}
           </View>
-          )}
         </View>
 
-        {/* Employee Filter */}
-        <View style={[styles.widget, styles.widgetSpacingSm, styles.widgetGap]}>
-          <Pressable
-            style={styles.accordionHeader}
-            onPress={() => setShowEmployees((v) => !v)}
+        <View style={[styles.taskFilterSection, styles.taskFilterSectionSpacing]}>
+          <Text style={styles.taskFilterTitle}>Mitarbeiter</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.employeeFilterContent}
           >
-            <Text style={styles.widgetTitle}>Mitarbeiter</Text>
-            <MaterialCommunityIcons
-              name={showEmployees ? "chevron-up" : "chevron-down"}
-              size={22}
-              color={palette.text}
-            />
-          </Pressable>
-          {showEmployees && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.employeeFilterContent}
-            >
-              {users.map((user) => (
-                <Pressable
-                  key={user.id}
-                  onPress={() => setUserFilter(user.id)}
-                  style={[
-                    styles.requestsSegmentTab,
-                    styles.employeeFilterChip,
+            {users.map((user) => (
+              <Pressable
+                key={user.id}
+                onPress={() => setUserFilter(user.id)}
+                style={[
+                  styles.requestsSegmentTab,
+                  styles.employeeFilterChip,
+                  userFilter === user.id
+                    ? styles.requestsSegmentTabActive
+                    : styles.requestsSegmentTabInactive,
+                ]}
+              >
+                <Text
+                  style={
                     userFilter === user.id
-                      ? styles.requestsSegmentTabActive
-                      : styles.requestsSegmentTabInactive,
-                  ]}
+                      ? styles.requestsSegmentTextActive
+                      : styles.requestsSegmentText
+                  }
                 >
-                  <Text
-                    style={
-                      userFilter === user.id
-                        ? styles.requestsSegmentTextActive
-                        : styles.requestsSegmentText
-                    }
-                  >
-                    {user.name}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          )}
+                  {user.name}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
         </View>
 
-        {/* Task Liste */}
-        <View style={[styles.card, styles.widgetSpacingSm, styles.taskListCard]}>
-          <Pressable
-            style={styles.accordionHeader}
-            onPress={() => setShowTasks((v) => !v)}
-          >
+        <ScrollView
+          style={styles.taskListScroll}
+          contentContainerStyle={styles.taskListContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.taskListHeader}>
             <Text style={styles.taskListTitle}>Tasks</Text>
-            <MaterialCommunityIcons
-              name={showTasks ? "chevron-up" : "chevron-down"}
-              size={22}
-              color={palette.text}
-            />
-          </Pressable>
-          {showTasks && (
-            <>
-              <View style={styles.requestsHeaderRow}>
-                <View />
-                <Pressable onPress={loadTasks}>
-                  <Text style={styles.taskListAction}>Aktualisieren</Text>
-                </Pressable>
-              </View>
-              {tasksLoading && filteredTasks.length === 0 ? (
-                <Text style={styles.taskListEmptyText}>
-                  Tasks werden geladen...
-                </Text>
-              ) : filteredTasks.length === 0 ? (
-                <Text style={styles.taskListEmptyText}>
-                  Keine Tasks für diesen Filter.
-                </Text>
-              ) : (
-                filteredTasks.map((t, idx) => renderTaskCard(t, idx))
-              )}
-            </>
+            <Pressable onPress={loadTasks}>
+              <Text style={styles.taskListAction}>Aktualisieren</Text>
+            </Pressable>
+          </View>
+          {tasksLoading && filteredTasks.length === 0 ? (
+            <Text style={styles.taskListEmptyText}>Tasks werden geladen...</Text>
+          ) : filteredTasks.length === 0 ? (
+            <Text style={styles.taskListEmptyText}>
+              Keine Tasks für diesen Filter.
+            </Text>
+          ) : (
+            filteredTasks.map((t, idx) => renderTaskCard(t, idx))
           )}
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
