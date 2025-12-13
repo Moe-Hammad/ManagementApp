@@ -35,12 +35,12 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen
-        name="taskhub"
+        name="tasks"
         options={{
-          title: "Task",
+          title: "Tasks",
           tabBarIcon: ({ color }) =>
             showManagerTab ? (
-              <MaterialCommunityIcons name="plus-box" size={26} color={color} />
+              <MaterialCommunityIcons name="clipboard-text" size={26} color={color} />
             ) : null,
           tabBarItemStyle: showManagerTab ? undefined : { display: "none" },
           tabBarLabelStyle: showManagerTab ? undefined : { display: "none" },

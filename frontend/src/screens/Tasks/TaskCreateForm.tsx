@@ -1,8 +1,8 @@
-import { useState } from "react";
+import UnifiedPicker from "@/src/components/ui/UnifiedPicker";
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import UnifiedPicker from "@/src/components/ui/UnifiedPicker";
+import { useState } from "react";
 import {
   Platform,
   Pressable,
@@ -12,6 +12,31 @@ import {
   View,
 } from "react-native";
 
+/* ---------------------------------------------
+   Section Wrapper (pure UI, no logic)
+---------------------------------------------- */
+function FormSection({
+  title,
+  children,
+  subtle = false,
+  styles,
+}: {
+  title: string;
+  children: React.ReactNode;
+  subtle?: boolean;
+  styles: any;
+}) {
+  return (
+    <View style={[styles.widgetSpacingMd, subtle ? { opacity: 0.9 } : null]}>
+      <Text style={styles.widgetTitle}>{title}</Text>
+      <View style={styles.widgetSpacingSm}>{children}</View>
+    </View>
+  );
+}
+
+/* ---------------------------------------------
+   Types
+---------------------------------------------- */
 export type TaskCreateFormProps = {
   company: string;
   street: string;
@@ -47,6 +72,9 @@ export type TaskCreateFormProps = {
   combineDateTime: (date: Date, time: string) => Date;
 };
 
+/* ---------------------------------------------
+   Component
+---------------------------------------------- */
 export default function TaskCreateForm({
   company,
   street,
@@ -77,10 +105,13 @@ export default function TaskCreateForm({
   onSubmit,
   combineDateTime,
 }: TaskCreateFormProps) {
+  /* ---------------------------------------------
+     Derived values (unchanged)
+  ---------------------------------------------- */
   const limit = Math.max(1, Number(requiredEmployees) || 1);
-  const [activeTimeField, setActiveTimeField] = useState<"start" | "end" | null>(
-    null
-  );
+  const [activeTimeField, setActiveTimeField] = useState<
+    "start" | "end" | null
+  >(null);
 
   const startDateObj = combineDateTime(selectedDate, startTime);
   const endDateObj = combineDateTime(selectedDate, endTime);
@@ -88,6 +119,7 @@ export default function TaskCreateForm({
     responseDeadline ? new Date(responseDeadline) : selectedDate,
     responseDeadlineTime || endTime
   );
+
   const isAndroid = Platform.OS === "android";
   const timePickerValue =
     activeTimeField === "start" ? startDateObj : endDateObj;
@@ -109,134 +141,130 @@ export default function TaskCreateForm({
       if (activeTimeField === "start") setStartTime(`${hh}:${mm}`);
       if (activeTimeField === "end") setEndTime(`${hh}:${mm}`);
     }
-    if (isAndroid) {
-      setActiveTimeField(null);
-    }
+    if (isAndroid) setActiveTimeField(null);
   };
 
+  /* ---------------------------------------------
+     Render
+  ---------------------------------------------- */
   return (
-    <View
-      style={[styles.card, { marginBottom: 16, borderColor: palette.border }]}
-    >
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 12,
-        }}
-      >
-        <Text style={[styles.title, styles.createHeader]}>Task erstellen</Text>
-      </View>
-
-      {/* INPUT FELDER */}
-      <TextInput
-        style={styles.input}
-        placeholder="Firma"
-        placeholderTextColor={palette.secondary}
-        value={company}
-        onChangeText={setCompany}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Strasse"
-        placeholderTextColor={palette.secondary}
-        value={street}
-        onChangeText={setStreet}
-      />
-
-      <View style={{ flexDirection: "row", gap: 12 }}>
+    <View>
+      {/* Einsatzort */}
+      <FormSection title="Einsatzort" styles={styles}>
         <TextInput
-          style={[styles.input, { flex: 1 }]}
-          placeholder="Hausnummer"
+          style={styles.input}
+          placeholder="Firma"
           placeholderTextColor={palette.secondary}
-          value={houseNumber}
-          onChangeText={setHouseNumber}
+          value={company}
+          onChangeText={setCompany}
         />
         <TextInput
-          style={[styles.input, { flex: 1 }]}
-          placeholder="PLZ"
+          style={styles.input}
+          placeholder="Straße"
           placeholderTextColor={palette.secondary}
-          value={postalCode}
-          onChangeText={setPostalCode}
-          keyboardType="numeric"
+          value={street}
+          onChangeText={setStreet}
         />
-      </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Benötigte Mitarbeiter (Zahl)"
-        placeholderTextColor={palette.secondary}
-        value={requiredEmployees}
-        onChangeText={setRequiredEmployees}
-        keyboardType="numeric"
-      />
+        <View style={[styles.createPickerRow, { marginBottom: 0 }]}>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            placeholder="Hausnummer"
+            placeholderTextColor={palette.secondary}
+            value={houseNumber}
+            onChangeText={setHouseNumber}
+          />
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            placeholder="PLZ"
+            placeholderTextColor={palette.secondary}
+            value={postalCode}
+            onChangeText={setPostalCode}
+            keyboardType="numeric"
+          />
+        </View>
+      </FormSection>
 
-      {/* DATUM mit UnifiedPicker */}
-      <UnifiedPicker
-        label="Datum"
-        mode="date"
-        value={selectedDate}
-        onChange={(date) => setSelectedDate(date)}
-        palette={palette}
-        styles={styles}
-      />
+      {/* Einsatzdetails */}
+      <FormSection title="Einsatzdetails" styles={styles}>
+        <UnifiedPicker
+          label="Datum"
+          mode="date"
+          value={selectedDate}
+          onChange={setSelectedDate}
+          palette={palette}
+          styles={styles}
+        />
 
-      {/* Zeitfelder mit einem gemeinsamen Picker */}
-      <View style={[styles.createPickerRow, { alignItems: "flex-start" }]}>
-        <View style={styles.createPickerColumn}>
-          <Text style={styles.createTimeLabel}>Startzeit</Text>
-          <Pressable
-            onPress={() => toggleTimePicker("start")}
-            style={[
-              styles.input,
-              styles.createDateInput,
-              {
-                backgroundColor: palette.surface,
-                borderColor:
-                  activeTimeField === "start" ? palette.primary : palette.border,
-                borderWidth: activeTimeField === "start" ? 2 : 1,
-              },
-            ]}
-          >
-            <Text style={{ color: palette.text }}>{formatTime(startDateObj)}</Text>
-          </Pressable>
+        <View style={styles.createPickerRow}>
+          <View style={styles.createPickerColumn}>
+            <Text style={styles.createTimeLabel}>Startzeit</Text>
+            <Pressable
+              onPress={() => toggleTimePicker("start")}
+              style={[
+                styles.input,
+                styles.createDateInput,
+                {
+                  borderColor:
+                    activeTimeField === "start"
+                      ? palette.primary
+                      : palette.border,
+                  borderWidth: activeTimeField === "start" ? 2 : 1,
+                },
+              ]}
+            >
+              <Text style={{ color: palette.text }}>
+                {formatTime(startDateObj)}
+              </Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.createPickerColumn}>
+            <Text style={styles.createTimeLabel}>Endzeit</Text>
+            <Pressable
+              onPress={() => toggleTimePicker("end")}
+              style={[
+                styles.input,
+                styles.createDateInput,
+                {
+                  borderColor:
+                    activeTimeField === "end"
+                      ? palette.primary
+                      : palette.border,
+                  borderWidth: activeTimeField === "end" ? 2 : 1,
+                },
+              ]}
+            >
+              <Text style={{ color: palette.text }}>
+                {formatTime(endDateObj)}
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
-        <View style={styles.createPickerColumn}>
-          <Text style={styles.createTimeLabel}>Endzeit</Text>
-          <Pressable
-            onPress={() => toggleTimePicker("end")}
-            style={[
-              styles.input,
-              styles.createDateInput,
-              {
-                backgroundColor: palette.surface,
-                borderColor:
-                  activeTimeField === "end" ? palette.primary : palette.border,
-                borderWidth: activeTimeField === "end" ? 2 : 1,
-              },
-            ]}
-          >
-            <Text style={{ color: palette.text }}>{formatTime(endDateObj)}</Text>
-          </Pressable>
-        </View>
-      </View>
-      {activeTimeField && (
-        <View style={{ marginTop: 6 }}>
+        {activeTimeField && (
           <DateTimePicker
             mode="time"
             display={isAndroid ? "default" : "spinner"}
             value={timePickerValue}
             onChange={handleTimeChange}
           />
-        </View>
-      )}
+        )}
 
-      {/* DEADLINE mit UnifiedPicker */}
-      <View style={[styles.createSection, { marginTop: 12 }]}>
+        <TextInput
+          style={styles.input}
+          placeholder="Benötigte Mitarbeiter (Zahl)"
+          placeholderTextColor={palette.secondary}
+          value={requiredEmployees}
+          onChangeText={setRequiredEmployees}
+          keyboardType="numeric"
+        />
+      </FormSection>
+
+      {/* Antwortfrist */}
+      <FormSection title="Antwortfrist (optional)" subtle styles={styles}>
         <UnifiedPicker
-          label="Antwort Deadline (Datum)"
+          label="Datum"
           mode="date"
           value={deadlineDateObj}
           onChange={(d) => setResponseDeadline(d.toISOString())}
@@ -244,7 +272,7 @@ export default function TaskCreateForm({
           styles={styles}
         />
         <UnifiedPicker
-          label="Antwort Deadline (Zeit)"
+          label="Zeit"
           mode="time"
           value={deadlineDateObj}
           onChange={(d) => {
@@ -255,18 +283,16 @@ export default function TaskCreateForm({
           palette={palette}
           styles={styles}
         />
-      </View>
+      </FormSection>
 
-      <Text style={[styles.createTimeLabel, { marginBottom: 6 }]}>
-        Arbeiter unter dem Manager
-      </Text>
-      <ScrollView style={{ maxHeight: 200, marginBottom: 12 }}>
-        {availableEmployeesForNewTask.length === 0 ? (
-          <Text style={{ color: palette.secondary }}>
-            Keine Mitarbeiter gefunden.
-          </Text>
-        ) : (
-          availableEmployeesForNewTask.map(({ emp, busy, colorIndex }) => {
+      {/* Mitarbeiter */}
+      <FormSection title="Mitarbeiter auswählen" styles={styles}>
+        <Text style={[styles.text, { color: palette.secondary, marginBottom: 8 }]}>
+          Wähle bis zu {limit} Mitarbeiter
+        </Text>
+
+        <ScrollView style={styles.employeePickerList}>
+          {availableEmployeesForNewTask.map(({ emp, busy, colorIndex }) => {
             const colors = [
               "#4C8BFF",
               "#8e44ad",
@@ -296,7 +322,6 @@ export default function TaskCreateForm({
                 style={[
                   styles.createEmployeeRow,
                   {
-                    borderColor: palette.border,
                     backgroundColor: selected
                       ? `${palette.primary}11`
                       : "transparent",
@@ -308,38 +333,38 @@ export default function TaskCreateForm({
                   style={[
                     styles.createEmployeeSquare,
                     {
-                      borderWidth: 1,
-                      borderColor: palette.border,
                       backgroundColor: selected ? color : "transparent",
                     },
                   ]}
                 />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: palette.text }}>
+                  <Text style={styles.text}>
                     {emp.firstName} {emp.lastName}
                   </Text>
                   {busy && (
                     <Text style={{ color: "#e67e22", fontSize: 12 }}>
-                      (!) Belegt:{" "}
-                      {busy.company || busy.location || busy.type || "Job"}
+                      Belegt
                     </Text>
                   )}
                 </View>
               </Pressable>
             );
-          })
-        )}
-      </ScrollView>
+          })}
+        </ScrollView>
+      </FormSection>
 
-      <Pressable
-        style={[styles.button, { marginTop: 8, opacity: submitting ? 0.7 : 1 }]}
-        onPress={onSubmit}
-        disabled={submitting}
-      >
-        <Text style={styles.buttonText}>
-          {submitting ? "Wird erstellt..." : "Task erstellen"}
-        </Text>
-      </Pressable>
+      {/* Submit */}
+      <View style={{ marginTop: 32 }}>
+        <Pressable
+          style={[styles.button, { opacity: submitting ? 0.7 : 1 }]}
+          onPress={onSubmit}
+          disabled={submitting}
+        >
+          <Text style={styles.buttonText}>
+            {submitting ? "Wird erstellt..." : "Task erstellen"}
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }

@@ -38,7 +38,7 @@ const formatTimeRange = (startIso: string, endIso: string) => {
   )}:${pad(end.getMinutes())}`;
 };
 
-export default function TaskHub() {
+export default function TasksIndex() {
   const token = useAppSelector((s) => s.auth.token?.token);
   const role = useAppSelector((s) => s.auth.user?.role);
   const managerId = useAppSelector((s) => s.auth.user?.id);
@@ -126,7 +126,7 @@ export default function TaskHub() {
   if (role !== UserRole.MANAGER) {
     return (
       <SafeAreaView style={styles.taskHubSafeArea}>
-        <Text style={styles.title}>Create Task</Text>
+        <Text style={styles.title}>Tasks</Text>
         <Text style={styles.taskHubNotice}>
           Nur Manager können Tasks anlegen.
         </Text>
@@ -190,7 +190,12 @@ export default function TaskHub() {
           styles.taskCardContainer,
           isDone ? styles.taskCardDone : styles.taskCardCollapsed,
         ]}
-        onPress={() => router.push(`/task/${task.id}`)}
+        onPress={() =>
+          router.push({
+            pathname: "/tasks/[id]",
+            params: { id: task.id },
+          })
+        }
       >
         <View style={styles.taskCardHeader}>
           <Text style={[styles.title, styles.taskCardTitle]}>
@@ -218,8 +223,8 @@ export default function TaskHub() {
           {formatDate(task.start)} | {formatTimeRange(task.start, task.end)}
         </Text>
         <Text style={[styles.taskCardMeta, styles.taskCardMetaSpacer]}>
-          Bedarf: {task.requiredEmployees} | Zugewiesen: {active.length} | Offen:{" "}
-          {openSlots}
+          Bedarf: {task.requiredEmployees} | Zugewiesen: {active.length} |
+          Offen: {openSlots}
         </Text>
 
         <View style={styles.doneAssignmentsContainer}>
@@ -253,7 +258,11 @@ export default function TaskHub() {
           finishedCount={finishedCount}
           openCount={openCount}
           runningCount={runningCount}
-          onCreatePress={() => router.push("/task-create")}
+          onCreatePress={() =>
+            router.push({
+              pathname: "/tasks/create",
+            })
+          }
           activeStatus={statusFilter}
           onSelectStatus={(s) => setStatusFilter(s)}
           styles={styles}
@@ -293,7 +302,9 @@ export default function TaskHub() {
           </View>
         </View>
 
-        <View style={[styles.taskFilterSection, styles.taskFilterSectionSpacing]}>
+        <View
+          style={[styles.taskFilterSection, styles.taskFilterSectionSpacing]}
+        >
           <Text style={styles.taskFilterTitle}>Mitarbeiter</Text>
           <ScrollView
             horizontal
@@ -338,7 +349,9 @@ export default function TaskHub() {
             </Pressable>
           </View>
           {tasksLoading && filteredTasks.length === 0 ? (
-            <Text style={styles.taskListEmptyText}>Tasks werden geladen...</Text>
+            <Text style={styles.taskListEmptyText}>
+              Tasks werden geladen...
+            </Text>
           ) : filteredTasks.length === 0 ? (
             <Text style={styles.taskListEmptyText}>
               Keine Tasks für diesen Filter.
