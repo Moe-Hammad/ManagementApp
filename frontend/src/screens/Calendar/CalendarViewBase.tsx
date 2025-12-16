@@ -1,8 +1,18 @@
-import { useMemo } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
-import moment from "moment";
 import { DarkColors, LightColors } from "@/src/theme/colors";
-import { CalendarEvent, AssignmentStatus, CalendarEntryType } from "@/src/types/resources";
+import {
+  AssignmentStatus,
+  CalendarEntryType,
+  CalendarEvent,
+} from "@/src/types/resources";
+import moment from "moment";
+import { useMemo } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 
 const weekdays = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
@@ -59,14 +69,24 @@ export function CalendarViewBase({
   styles,
 }: CalendarViewProps) {
   const monthDays = useMemo(() => {
-    const start = new Date(monthAnchor.getFullYear(), monthAnchor.getMonth(), 1);
-    const end = new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() + 1, 0);
+    const start = new Date(
+      monthAnchor.getFullYear(),
+      monthAnchor.getMonth(),
+      1
+    );
+    const end = new Date(
+      monthAnchor.getFullYear(),
+      monthAnchor.getMonth() + 1,
+      0
+    );
     const daysInMonth = end.getDate();
     const startWeekday = (start.getDay() + 6) % 7;
     const cells: (Date | null)[] = [];
     for (let i = 0; i < startWeekday; i++) cells.push(null);
     for (let d = 1; d <= daysInMonth; d++) {
-      cells.push(new Date(monthAnchor.getFullYear(), monthAnchor.getMonth(), d));
+      cells.push(
+        new Date(monthAnchor.getFullYear(), monthAnchor.getMonth(), d)
+      );
     }
     return cells;
   }, [monthAnchor]);
@@ -96,7 +116,9 @@ export function CalendarViewBase({
     const columns: Date[] = [];
     let maxCols = 1;
     const withCols = mapped.map((ev) => {
-      let colIndex = columns.findIndex((end) => end.getTime() <= ev.startDate.getTime());
+      let colIndex = columns.findIndex(
+        (end) => end.getTime() <= ev.startDate.getTime()
+      );
       if (colIndex === -1) {
         colIndex = columns.length;
         columns.push(ev.endDate);
@@ -154,7 +176,9 @@ export function CalendarViewBase({
           <Pressable onPress={onPrevMonth} style={{ padding: 6 }}>
             <Text style={{ color: palette.primary }}>{"<"}</Text>
           </Pressable>
-          <Text style={{ color: palette.text, fontWeight: "700" }}>{monthLabel}</Text>
+          <Text style={{ color: palette.text, fontWeight: "700" }}>
+            {monthLabel}
+          </Text>
           <Pressable onPress={onNextMonth} style={{ padding: 6 }}>
             <Text style={{ color: palette.primary }}>{">"}</Text>
           </Pressable>
@@ -177,7 +201,8 @@ export function CalendarViewBase({
               return <View key={idx} style={styles.calendarDayCell} />;
             }
             const isSelected = dayKey(day) === selectedKey;
-            const hasEvents = eventsByDay.get(dayKey(day))?.length > 0;
+            const eventsForDay = eventsByDay.get(dayKey(day)) ?? [];
+            const hasEvents = eventsForDay.length > 0;
             return (
               <Pressable
                 key={idx}
@@ -188,7 +213,9 @@ export function CalendarViewBase({
                   style={[
                     styles.calendarDayNumber,
                     {
-                      backgroundColor: isSelected ? palette.primary : "transparent",
+                      backgroundColor: isSelected
+                        ? palette.primary
+                        : "transparent",
                     },
                   ]}
                 >
@@ -226,9 +253,18 @@ export function CalendarViewBase({
           }}
         >
           {[
-            { label: "Angenommen", color: statusColor(AssignmentStatus.ACCEPTED) },
-            { label: "Ausstehend", color: statusColor(AssignmentStatus.PENDING) },
-            { label: "Abgelehnt", color: statusColor(AssignmentStatus.DECLINED) },
+            {
+              label: "Angenommen",
+              color: statusColor(AssignmentStatus.ACCEPTED),
+            },
+            {
+              label: "Ausstehend",
+              color: statusColor(AssignmentStatus.PENDING),
+            },
+            {
+              label: "Abgelehnt",
+              color: statusColor(AssignmentStatus.DECLINED),
+            },
           ].map((item) => (
             <View
               key={item.label}
@@ -242,7 +278,9 @@ export function CalendarViewBase({
                   backgroundColor: item.color,
                 }}
               />
-              <Text style={{ color: palette.text, fontSize: 12 }}>{item.label}</Text>
+              <Text style={{ color: palette.text, fontSize: 12 }}>
+                {item.label}
+              </Text>
             </View>
           ))}
         </View>
@@ -252,7 +290,9 @@ export function CalendarViewBase({
         ) : error ? (
           <Text style={styles.calendarErrorText}>{error}</Text>
         ) : groupedEvents.length === 0 ? (
-          <Text style={[styles.calendarEmptyText, { color: palette.secondary }]}>
+          <Text
+            style={[styles.calendarEmptyText, { color: palette.secondary }]}
+          >
             Keine Eintr„ge.
           </Text>
         ) : (
@@ -266,7 +306,10 @@ export function CalendarViewBase({
               const ev = group.base;
               const color = eventColor(ev, palette);
               return (
-                <View key={ev.id} style={[styles.calendarEventRow, { flexDirection: "column" }]}>
+                <View
+                  key={ev.id}
+                  style={[styles.calendarEventRow, { flexDirection: "column" }]}
+                >
                   <View
                     style={[
                       styles.calendarEventCard,
@@ -292,7 +335,12 @@ export function CalendarViewBase({
                     {group.people.map((p, idx) => (
                       <View
                         key={idx}
-                        style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 6,
+                          marginTop: 4,
+                        }}
                       >
                         <View
                           style={{

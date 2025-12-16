@@ -235,14 +235,17 @@ export const makeStyles = (isDark: boolean) => {
       marginHorizontal: 4,
     },
     employeeFilterContent: {
-      paddingVertical: 6,
-      paddingRight: 4,
-      gap: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 8,
+      paddingHorizontal: 8,
     },
     employeeFilterChip: {
-      marginRight: 0,
-      paddingHorizontal: 14,
+      flex: 0,
+      marginRight: 10,
+      paddingHorizontal: 16,
       paddingVertical: 10,
+      minHeight: 40,
     },
     taskDashboardContainer: {
       gap: 12,
