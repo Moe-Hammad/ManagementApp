@@ -69,7 +69,6 @@ export function useChat() {
   // ==== Lokale UI-Zustände ===================================================
   const [chatSearch, setChatSearch] = useState("");
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-  const [messageText, setMessageText] = useState("");
   const [hasAutoSelected, setHasAutoSelected] = useState(false);
 
   /**
@@ -164,19 +163,18 @@ export function useChat() {
     setSelectedChatId(null);
   };
 
-  const sendMessage = async () => {
-    if (!selectedChatId || !messageText.trim() || !token) return;
+  const sendMessage = async (text: string) => {
+    if (!selectedChatId || !text.trim() || !token) return;
 
     try {
       await dispatch(
         sendChatMessage({
           chatId: selectedChatId,
-          text: messageText.trim(),
+          text: text.trim(),
           token,
         })
       ).unwrap();
 
-      setMessageText("");
     } catch (err: any) {
       console.warn(err.message || "Nachricht konnte nicht gesendet werden.");
     }
@@ -212,11 +210,9 @@ export function useChat() {
       isEmployee,
       chatSearch,
       selectedChatId,
-      messageText,
     },
     actions: {
       setChatSearch,
-      setMessageText,
       selectChat,
       clearSelection,
       sendMessage,

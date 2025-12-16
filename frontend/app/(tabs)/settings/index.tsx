@@ -15,7 +15,6 @@ export default function SettingsIndex() {
 
   const handleLogout = () => {
     dispatch(clearToken());
-    router.replace("/(auth)/login");
   };
 
   return (
@@ -23,44 +22,37 @@ export default function SettingsIndex() {
       <View style={styles.screen}>
         <View style={styles.section}>
           <Text style={styles.titles}>Settings</Text>
-          <Text style={[styles.text, { opacity: 0.6 }]}>
+          <Text style={[styles.text, styles.settingsMeta]}>
             Eingeloggt als {user ? `${user.firstName} ${user.lastName}` : "-"}
           </Text>
         </View>
 
         <TouchableOpacity
-          style={[styles.widget, { marginTop: 8 }]}
+          style={[styles.widget, styles.widgetSpacingXs]}
           onPress={() => router.push("/(tabs)/settings/account")}
         >
           <Text style={styles.widgetTitle}>Konto</Text>
-          <Text style={[styles.text, { opacity: 0.6 }]}>
-            Profildaten ansehen
-          </Text>
+          <Text style={[styles.text, styles.settingsMeta]}>Profildaten ansehen</Text>
         </TouchableOpacity>
 
-        <View style={[styles.widget, { marginTop: 12 }]}>
+        <View style={[styles.widget, styles.widgetSpacingSm]}>
           <Text style={styles.widgetTitle}>Darstellung</Text>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Text style={styles.text}>{isDark ? "Dark Mode" : "Light Mode"}</Text>
+          <View style={styles.rowBetween}>
+            <Text style={styles.text}>
+              {isDark ? "Dark Mode" : "Light Mode"}
+            </Text>
             <Switch value={isDark} onValueChange={toggleTheme} />
           </View>
         </View>
 
         <TouchableOpacity
           onPress={handleLogout}
-          style={[
-            styles.widget,
-            { marginTop: 16, backgroundColor: "#ef4444", borderColor: "#ef4444" },
-          ]}
+          style={[styles.widget, styles.widgetSpacingMd, styles.dangerWidget]}
         >
-          <Text style={[styles.widgetTitle, { color: "#fff" }]}>Logout</Text>
-          <Text style={[styles.text, { color: "#fff", opacity: 0.8 }]}>
+          <Text style={[styles.widgetTitle, styles.dangerWidgetTitle]}>
+            Logout
+          </Text>
+          <Text style={[styles.text, styles.dangerWidgetText]}>
             Session beenden und zum Login
           </Text>
         </TouchableOpacity>

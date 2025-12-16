@@ -50,6 +50,10 @@ class WebSocketManager {
     this.connecting = true;
     // SockJS erwartet die HTTP/HTTPS-URL, nicht ws://
     const sockUrl = API_BASE_URL + "/ws";
+    console.log("[STOMP] connecting", {
+      sockUrl,
+      hasToken: !!token,
+    });
 
     this.client = new Client({
       // SockJS-Factory nutzen; brokerURL wird dabei ignoriert
@@ -61,8 +65,10 @@ class WebSocketManager {
       reconnectDelay: 5000, // 5s Backoff
       heartbeatIncoming: 15000,
       heartbeatOutgoing: 15000,
-      onConnect: () => {
-        console.log("[STOMP] connected");
+      onConnect: (frame) => {
+        console.log("[STOMP] connected", {
+          session: frame?.headers?.["session"],
+        });
         this.connected = true;
         this.connecting = false;
         this.resubscribeAll();
@@ -94,6 +100,10 @@ class WebSocketManager {
     if (!this.client || !this.client.connected) return;
 
     for (const [id, meta] of this.subscriptions.entries()) {
+      console.log("[STOMP] resubscribe", {
+        id,
+        destination: meta.destination,
+      });
       const stompSub = this.client.subscribe(
         meta.destination,
         (msg: IMessage) => this.handleMessage(id, msg)
@@ -136,6 +146,12 @@ class WebSocketManager {
     if (!meta) return;
     try {
       const json = msg.body ? JSON.parse(msg.body) : null;
+      console.log("[STOMP] message", {
+        id,
+        destination: meta.destination,
+        type: json?.type,
+        status: json?.payload?.status ?? json?.status,
+      });
       meta.cb(json);
     } catch (err) {
       console.error("[STOMP] JSON parse error", err);
@@ -185,7 +201,15 @@ export function subscribeUserRequests(
 ) {
   try {
     ensureConnected(token);
-    const sub = wsInstance.subscribe(`/user/queue/requests`, onMessage);
+    console.log("[WS][REQUESTS] subscribing to /user/queue/requests");
+    const sub = wsInstance.subscribe(`/user/queue/requests`, (payload) => {
+      console.log("[WS][REQUESTS] incoming", {
+        type: payload?.type,
+        status: payload?.payload?.status ?? payload?.status,
+        id: payload?.payload?.id ?? payload?.id,
+      });
+      onMessage(payload);
+    });
     return {
       disconnect: () => sub.unsubscribe(),
     };

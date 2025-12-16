@@ -67,6 +67,7 @@ export function useWebSockets() {
   useEffect(() => {
     if (!token || !userId) return;
 
+    console.log("[WS][MESSAGES] subscribing", { userId });
     const ws = subscribeUserMessages(
       token,
       (payload) => {
@@ -80,6 +81,7 @@ export function useWebSockets() {
     setWsMessagesStatus("connected");
 
     return () => {
+      console.log("[WS][MESSAGES] disconnect");
       ws.disconnect();
       setWsMessagesStatus("idle");
     };
@@ -89,6 +91,7 @@ export function useWebSockets() {
   useEffect(() => {
     if (!token) return;
 
+    console.log("[WS][REQUESTS] subscribing");
     const ws = subscribeUserRequests(
       token,
       (payload) => {
@@ -103,6 +106,7 @@ export function useWebSockets() {
     setWsRequestsStatus("connected");
 
     return () => {
+      console.log("[WS][REQUESTS] disconnect");
       ws.disconnect();
       setWsRequestsStatus("idle");
     };
@@ -112,6 +116,7 @@ export function useWebSockets() {
   useEffect(() => {
     if (!token) return;
 
+    console.log("[WS][ASSIGNMENTS] subscribing");
     const ws = subscribeUserAssignments(
       token,
       (payload) => {
@@ -126,6 +131,7 @@ export function useWebSockets() {
     setWsAssignmentsStatus("connected");
 
     return () => {
+      console.log("[WS][ASSIGNMENTS] disconnect");
       ws.disconnect();
       setWsAssignmentsStatus("idle");
     };

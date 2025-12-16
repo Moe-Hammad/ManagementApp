@@ -1,5 +1,4 @@
 import ScreenController from "@/src/components/core/ScreenController";
-import { Tabs } from "expo-router";
 import { View } from "react-native";
 import ChatList from "../chat/ChatList";
 import ChatView from "../chat/ChatView";
@@ -10,6 +9,7 @@ import { useInboxTabs } from "../hooks/useInboxTabs";
 import { useRequests } from "../hooks/useRequest";
 import RequestsTab from "../Tabs/RequestsTab";
 import SearchTab from "../Tabs/SearchTab";
+import Tabs from "../Tabs/Tabs";
 import RequestsInfo from "./RequestsInfo";
 
 export default function RequestsScreen() {
@@ -17,18 +17,27 @@ export default function RequestsScreen() {
   const { chatState, actions: chatActions } = useChat();
   const { requestsState, actions: requestActions } = useRequests();
   const picker = useEmployeePicker(chatActions);
+  const { styles, palette } = requestsState;
+  const userId = requestsState.user?.id || "";
 
   return (
     <ScreenController scroll={false}>
-      <View style={{ padding: 12 }}>
-        <RequestsInfo wsStatus={requestsState.wsStatus} />
+      <View style={styles.requestsContainer}>
+        <RequestsInfo
+          wsRequestsStatus={requestsState.wsStatus}
+          styles={styles}
+        />
 
-        <Tabs activeTab={activeTab} tabs={tabs} onChange={setActiveTab} />
+        <Tabs
+          activeTab={activeTab}
+          tabs={tabs}
+          onChange={(key) => setActiveTab(key as any)}
+        />
 
         {activeTab === "requests" && (
           <RequestsTab
-            styles={requestsState.styles}
-            wsStatus={requestsState.wsStatus}
+            styles={styles}
+            palette={palette}
             assignments={requestsState.assignments}
             requests={requestsState.requests}
             user={requestsState.user as any}
@@ -43,6 +52,8 @@ export default function RequestsScreen() {
               chat={chatState.selectedChat}
               messages={chatState.selectedMessages}
               palette={chatState.palette}
+              styles={chatState.styles}
+              userId={userId}
               onBack={chatActions.clearSelection}
               onSend={chatActions.sendMessage}
               loading={chatState.isLoadingMessages}
@@ -50,9 +61,11 @@ export default function RequestsScreen() {
             />
           ) : (
             <ChatList
-              rooms={chatState.filteredRooms}
-              onSelect={chatActions.selectChat}
-              onStartChat={picker.open}
+              chats={chatState.filteredRooms}
+              currentUserId={userId}
+              onOpenChat={(room) => chatActions.selectChat(room.id)}
+              styles={chatState.styles}
+              palette={chatState.palette}
             />
           ))}
 
@@ -71,9 +84,10 @@ export default function RequestsScreen() {
 
         {picker.visible && (
           <EmployeePicker
+            visible={picker.visible}
             employees={picker.options}
-            onPick={picker.pick}
             onClose={picker.close}
+            styles={styles}
           />
         )}
       </View>

@@ -398,6 +398,11 @@ export const makeStyles = (isDark: boolean) => {
       justifyContent: "space-between",
       gap: 16,
     },
+    rowBetween: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
 
     themeToggleContainer: {
       position: "absolute",
@@ -783,6 +788,9 @@ export const makeStyles = (isDark: boolean) => {
     profileCancelButtonText: {
       color: isDark ? "#fff" : "#111827",
     },
+    widgetSpacingXs: {
+      marginTop: 8,
+    },
     widgetSpacingSm: {
       marginTop: 12,
     },
@@ -795,6 +803,10 @@ export const makeStyles = (isDark: boolean) => {
     textMuted: {
       color: C.text,
       opacity: 0.7,
+    },
+    settingsMeta: {
+      color: C.text,
+      opacity: 0.6,
     },
     dangerWidget: {
       backgroundColor: "#ef4444",

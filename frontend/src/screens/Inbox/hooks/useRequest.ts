@@ -82,14 +82,25 @@ export function useRequests() {
 
   // ==== WS: Live-Updates für Requests =======================================
   useEffect(() => {
-    if (!token) return;
+    if (!token || !userId || !role) return;
 
     const sub = subscribeUserRequests(
       token,
       (payload) => {
         const req = payload?.payload ?? payload;
         if (req) {
+          console.log("[WS][REQUESTS][HOOK] received", {
+            id: req.id,
+            status: req.status,
+            type: payload?.type,
+          });
           dispatch(upsertRequest(req));
+          console.log("[WS][REQUESTS][HOOK] dispatched upsert", {
+            id: req.id,
+            status: req.status,
+          });
+          // Fallback: sync gegen Backend, falls lokaler State alt ist
+          dispatch(fetchRequests({ userId, role, token }));
           refreshUser();
           setWsStatus("connected");
         }
@@ -102,7 +113,7 @@ export function useRequests() {
       sub.disconnect();
       setWsStatus("idle");
     };
-  }, [token, dispatch]);
+  }, [token, userId, role, dispatch]);
 
   // ==== Initial Assignments laden (Employee) ================================
   useEffect(() => {
