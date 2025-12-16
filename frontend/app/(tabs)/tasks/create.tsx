@@ -49,7 +49,10 @@ export default function TaskCreateScreen() {
   >([]);
 
   const combineDateTime = (date: Date, timeStr: string) => {
-    return new Date(`${date.toISOString().slice(0, 10)}T${timeStr}:00`);
+    const [hh, mm] = timeStr.split(":").map((n) => Number(n) || 0);
+    const combined = new Date(date);
+    combined.setHours(hh, mm, 0, 0);
+    return combined;
   };
 
   const startDateTime = combineDateTime(selectedDate, startTime);

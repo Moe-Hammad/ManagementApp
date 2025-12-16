@@ -505,6 +505,9 @@ export const makeStyles = (isDark: boolean) => {
       marginTop: 16,
       gap: 8,
     },
+    requestsListContent: {
+      paddingBottom: 120, // space for tab bar
+    },
     requestsNote: {
       opacity: 0.7,
     },
@@ -550,9 +553,15 @@ export const makeStyles = (isDark: boolean) => {
       borderBottomWidth: 1,
       borderBottomColor: C.border,
     },
+    searchResultWrapper: {
+      marginBottom: 8,
+    },
     searchResultsContainer: {
       maxHeight: 320,
       width: "100%",
+    },
+    searchResultsContent: {
+      paddingBottom: 8,
     },
     searchActionButton: {
       paddingHorizontal: 10,
@@ -768,6 +777,9 @@ export const makeStyles = (isDark: boolean) => {
       justifyContent: "space-between",
       alignItems: "center",
     },
+    requestItemWrapper: {
+      marginBottom: 10,
+    },
 
     // Settings / Account
     profileHeaderRow: {
@@ -963,6 +975,12 @@ export const makeStyles = (isDark: boolean) => {
     chatListContainer: {
       marginTop: 10,
       gap: 8,
+    },
+    chatListContent: {
+      paddingVertical: 4,
+    },
+    chatListItemWrapper: {
+      marginBottom: 8,
     },
     // Chats Tab
     chatsContainer: {

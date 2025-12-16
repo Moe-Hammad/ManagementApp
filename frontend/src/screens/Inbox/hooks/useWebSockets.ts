@@ -1,6 +1,6 @@
 import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
 import { upsertAssignment } from "@/src/redux/assignmentSlice";
-import { addMessage } from "@/src/redux/chatSlice";
+import { addMessage, fetchChatRooms } from "@/src/redux/chatSlice";
 import { upsertRequest } from "@/src/redux/requestSlice";
 import {
   disconnectWebSocket,
@@ -9,7 +9,7 @@ import {
   subscribeUserRequests,
 } from "@/src/services/wsClient";
 import { ChatMessage } from "@/src/types/resources";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * useWebSockets
@@ -40,6 +40,11 @@ export function useWebSockets() {
   // ==== Auth-Daten ===========================================================
   const token = useAppSelector((s) => s.auth.token?.token);
   const userId = useAppSelector((s) => s.auth.user?.id);
+  const chatRooms = useAppSelector((s) => s.chat.rooms);
+  const roomsRef = useRef(chatRooms);
+  useEffect(() => {
+    roomsRef.current = chatRooms;
+  }, [chatRooms]);
 
   useEffect(() => {
     if (!token || !userId) {
@@ -72,7 +77,13 @@ export function useWebSockets() {
       token,
       (payload) => {
         const msg = payload as ChatMessage;
-        if (msg?.chatId) dispatch(addMessage(msg));
+        if (msg?.chatId) {
+          dispatch(addMessage(msg));
+          const exists = roomsRef.current.some((r) => r.id === msg.chatId);
+          if (!exists) {
+            dispatch(fetchChatRooms({ token }));
+          }
+        }
         setWsMessagesStatus("connected");
       },
       () => setWsMessagesStatus("error")

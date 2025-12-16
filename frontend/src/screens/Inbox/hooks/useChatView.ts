@@ -63,7 +63,6 @@ export function useChatView(chatId?: string) {
 
     const sub = subscribeUserMessages(
       token,
-      user.id,
       (payload) => {
         const msg = payload as ChatMessage;
         if (msg?.chatId === chatId) {

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import moment from "moment";
 import { DarkColors, LightColors } from "@/src/theme/colors";
 import { CalendarEvent, AssignmentStatus, CalendarEntryType } from "@/src/types/resources";
 
@@ -23,15 +24,26 @@ const eventColor = (
   ev: CalendarEvent,
   palette: typeof LightColors | typeof DarkColors
 ) => {
-  if (ev.assignmentStatus === AssignmentStatus.DECLINED) return "#e74c3c";
-  if (ev.assignmentStatus === AssignmentStatus.PENDING) return "#f1c40f";
+  if (ev.assignmentStatus === AssignmentStatus.DECLINED) return "#ef4444"; // red
+  if (ev.assignmentStatus === AssignmentStatus.PENDING) return "#f59e0b"; // amber
+  if (ev.assignmentStatus === AssignmentStatus.ACCEPTED) return "#22c55e"; // green
   if (ev.type === CalendarEntryType.VACATION) return "#9b59b6";
   if (ev.type === CalendarEntryType.SICK) return "#e67e22";
   return palette.primary;
 };
 
+const statusColor = (status?: AssignmentStatus | null) => {
+  if (status === AssignmentStatus.ACCEPTED) return "#22c55e";
+  if (status === AssignmentStatus.DECLINED) return "#ef4444";
+  if (status === AssignmentStatus.PENDING) return "#f59e0b";
+  return "#94a3b8"; // muted
+};
+
 const formatTime = (d: Date) =>
   d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+const dayKey = (date: Date | string | number) =>
+  moment(date).startOf("day").format("YYYY-MM-DD");
 
 export function CalendarViewBase({
   roleLabel,
@@ -62,14 +74,14 @@ export function CalendarViewBase({
   const eventsByDay = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
     events.forEach((ev) => {
-      const dateKey = new Date(ev.start).toISOString().slice(0, 10);
+      const dateKey = dayKey(ev.start);
       if (!map.has(dateKey)) map.set(dateKey, []);
       map.get(dateKey)!.push(ev);
     });
     return map;
   }, [events]);
 
-  const selectedKey = selectedDate.toISOString().slice(0, 10);
+  const selectedKey = dayKey(selectedDate);
   const dayEventsRaw = eventsByDay.get(selectedKey) || [];
 
   const dayEvents = useMemo(() => {
@@ -97,6 +109,26 @@ export function CalendarViewBase({
     const finalMax = Math.max(...withCols.map((e) => e.maxColsSnapshot), 1);
     return withCols.map((ev) => ({ ...ev, maxCols: finalMax }));
   }, [dayEventsRaw]);
+
+  const groupedEvents = useMemo(() => {
+    type Group = {
+      base: (typeof dayEvents)[number];
+      people: { name?: string | null; status?: AssignmentStatus | null }[];
+    };
+    const map = new Map<string, Group>();
+    dayEvents.forEach((ev) => {
+      const key = ev.taskId || ev.id;
+      const person = { name: ev.employeeName, status: ev.assignmentStatus };
+      if (map.has(key)) {
+        map.get(key)!.people.push(person);
+      } else {
+        map.set(key, { base: ev, people: [person] });
+      }
+    });
+    return Array.from(map.values()).sort(
+      (a, b) => a.base.startDate.getTime() - b.base.startDate.getTime()
+    );
+  }, [dayEvents]);
 
   const monthLabel = monthAnchor.toLocaleDateString(undefined, {
     month: "long",
@@ -144,9 +176,8 @@ export function CalendarViewBase({
             if (!day) {
               return <View key={idx} style={styles.calendarDayCell} />;
             }
-            const isSelected = day.toDateString() === selectedDate.toDateString();
-            const hasEvents =
-              eventsByDay.get(day.toISOString().slice(0, 10))?.length > 0;
+            const isSelected = dayKey(day) === selectedKey;
+            const hasEvents = eventsByDay.get(dayKey(day))?.length > 0;
             return (
               <Pressable
                 key={idx}
@@ -186,14 +217,43 @@ export function CalendarViewBase({
 
       <View style={{ marginTop: 16, flex: 1 }}>
         <Text style={[styles.label, { marginBottom: 6 }]}>{dayTitle}</Text>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 8,
+          }}
+        >
+          {[
+            { label: "Angenommen", color: statusColor(AssignmentStatus.ACCEPTED) },
+            { label: "Ausstehend", color: statusColor(AssignmentStatus.PENDING) },
+            { label: "Abgelehnt", color: statusColor(AssignmentStatus.DECLINED) },
+          ].map((item) => (
+            <View
+              key={item.label}
+              style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+            >
+              <View
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: item.color,
+                }}
+              />
+              <Text style={{ color: palette.text, fontSize: 12 }}>{item.label}</Text>
+            </View>
+          ))}
+        </View>
 
         {loading ? (
           <ActivityIndicator color={palette.primary} />
         ) : error ? (
           <Text style={styles.calendarErrorText}>{error}</Text>
-        ) : dayEvents.length === 0 ? (
+        ) : groupedEvents.length === 0 ? (
           <Text style={[styles.calendarEmptyText, { color: palette.secondary }]}>
-            Keine Einträge.
+            Keine Eintr„ge.
           </Text>
         ) : (
           <ScrollView
@@ -202,43 +262,52 @@ export function CalendarViewBase({
               { borderColor: palette.border, backgroundColor: palette.card },
             ]}
           >
-            {dayEvents.map((ev) => {
-              const spacerLeft = ev.colIndex;
-              const spacerRight = Math.max(ev.maxCols - ev.colIndex - 1, 0);
+            {groupedEvents.map((group) => {
+              const ev = group.base;
               const color = eventColor(ev, palette);
               return (
-                <View key={ev.id} style={styles.calendarEventRow}>
-                  {spacerLeft > 0 && <View style={{ flex: spacerLeft }} />}
-                  <View style={{ flex: 1 }}>
-                    <View
-                      style={[
-                        styles.calendarEventCard,
-                        {
-                          borderColor: color,
-                          backgroundColor: `${color}22`,
-                        },
-                      ]}
+                <View key={ev.id} style={[styles.calendarEventRow, { flexDirection: "column" }]}>
+                  <View
+                    style={[
+                      styles.calendarEventCard,
+                      {
+                        borderColor: color,
+                        backgroundColor: `${color}22`,
+                        width: "100%",
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        color: palette.text,
+                        fontWeight: "700",
+                        marginBottom: 4,
+                      }}
                     >
-                      <Text
-                        style={{
-                          color: palette.text,
-                          fontWeight: "700",
-                          marginBottom: 4,
-                        }}
+                      {ev.company || ev.location || "Task"}
+                    </Text>
+                    <Text style={{ color: palette.text }}>
+                      {formatTime(ev.startDate)} - {formatTime(ev.endDate)}
+                    </Text>
+                    {group.people.map((p, idx) => (
+                      <View
+                        key={idx}
+                        style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}
                       >
-                        {ev.company || ev.location || "Task"}
-                      </Text>
-                      <Text style={{ color: palette.text }}>
-                        {formatTime(ev.startDate)} - {formatTime(ev.endDate)}
-                      </Text>
-                      {ev.employeeName && (
-                        <Text style={{ color: palette.secondary, marginTop: 2 }}>
-                          {ev.employeeName}
+                        <View
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: 4,
+                            backgroundColor: statusColor(p.status),
+                          }}
+                        />
+                        <Text style={{ color: palette.secondary }}>
+                          {p.name || "Unbekannt"}
                         </Text>
-                      )}
-                    </View>
+                      </View>
+                    ))}
                   </View>
-                  {spacerRight > 0 && <View style={{ flex: spacerRight }} />}
                 </View>
               );
             })}

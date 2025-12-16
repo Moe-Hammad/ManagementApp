@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { FlatList, Pressable, Text, TextInput, View } from "react-native";
 
 /**
  * SearchTab
@@ -48,6 +48,32 @@ export default function SearchTab({
 }) {
   const pendingIds = new Set(pendingRequests.map((req) => req.employeeId));
 
+  const renderItem = ({ item }: { item: any }) => {
+    const isPending = pendingIds.has(item.id);
+    return (
+      <View style={[styles.searchResultRow, styles.searchResultWrapper]}>
+        {/* Employee Info */}
+        <View>
+          <Text style={styles.text}>
+            {item.firstName} {item.lastName}
+          </Text>
+          <Text style={[styles.text, styles.requestsNote]}>{item.email}</Text>
+        </View>
+
+        {/* Request Button */}
+        <Pressable
+          onPress={() => !isPending && onRequest(item.id)}
+          disabled={isPending}
+          style={[styles.searchActionButton, isPending && { opacity: 0.5 }]}
+        >
+          <Text style={styles.requestsActionText}>
+            {isPending ? "Gesendet" : "Anfragen"}
+          </Text>
+        </Pressable>
+      </View>
+    );
+  };
+
   return (
     <View style={[styles.widget, styles.requestsBodyCard]}>
       {/* Title */}
@@ -63,48 +89,20 @@ export default function SearchTab({
       />
 
       {/* Search Results */}
-      <ScrollView
-        style={styles.searchResultsContainer}
+      <FlatList
+        data={unassigned}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
         showsVerticalScrollIndicator={false}
-      >
-        {unassigned.length === 0 ? (
+        style={styles.searchResultsContainer}
+        contentContainerStyle={styles.searchResultsContent}
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={
           <Text style={[styles.text, styles.requestsNote]}>
             Keine Ergebnisse gefunden.
           </Text>
-        ) : (
-          unassigned.map((emp) => {
-            const isPending = pendingIds.has(emp.id);
-
-            return (
-              <View key={emp.id} style={styles.searchResultRow}>
-                {/* Employee Info */}
-                <View>
-                  <Text style={styles.text}>
-                    {emp.firstName} {emp.lastName}
-                  </Text>
-                  <Text style={[styles.text, styles.requestsNote]}>
-                    {emp.email}
-                  </Text>
-                </View>
-
-                {/* Request Button */}
-                <Pressable
-                  onPress={() => !isPending && onRequest(emp.id)}
-                  disabled={isPending}
-                  style={[
-                    styles.searchActionButton,
-                    isPending && { opacity: 0.5 },
-                  ]}
-                >
-                  <Text style={styles.requestsActionText}>
-                    {isPending ? "Gesendet" : "Anfragen"}
-                  </Text>
-                </Pressable>
-              </View>
-            );
-          })
-        )}
-      </ScrollView>
+        }
+      />
     </View>
   );
 }

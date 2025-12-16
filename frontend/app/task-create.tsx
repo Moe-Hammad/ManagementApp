@@ -19,6 +19,7 @@ import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import moment from "moment";
 
 export default function TaskCreateScreen() {
   const token = useAppSelector((s) => s.auth.token?.token);
@@ -49,7 +50,14 @@ export default function TaskCreateScreen() {
   >([]);
 
   const combineDateTime = (date: Date, timeStr: string) => {
-    return new Date(`${date.toISOString().slice(0, 10)}T${timeStr}:00`);
+    const [hours, minutes] = timeStr.split(":").map((v) => parseInt(v, 10) || 0);
+    return moment(date)
+      .startOf("day")
+      .hour(hours)
+      .minute(minutes)
+      .second(0)
+      .millisecond(0)
+      .toDate();
   };
 
   const startDateTime = combineDateTime(selectedDate, startTime);
