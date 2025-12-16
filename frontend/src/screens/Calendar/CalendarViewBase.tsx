@@ -30,15 +30,29 @@ export type CalendarViewProps = {
   styles: ReturnType<typeof import("@/src/theme/styles").makeStyles>;
 };
 
+const taskState = (ev: CalendarEvent) => {
+  const now = moment();
+  const start = moment(ev.start);
+  const end = moment(ev.end);
+  if (end.isBefore(now)) return "done" as const;
+  if (start.isAfter(now)) return "open" as const;
+  return "running" as const;
+};
+
 const eventColor = (
   ev: CalendarEvent,
   palette: typeof LightColors | typeof DarkColors
 ) => {
-  if (ev.assignmentStatus === AssignmentStatus.DECLINED) return "#ef4444"; // red
-  if (ev.assignmentStatus === AssignmentStatus.PENDING) return "#f59e0b"; // amber
-  if (ev.assignmentStatus === AssignmentStatus.ACCEPTED) return "#22c55e"; // green
+  if (ev.assignmentStatus === AssignmentStatus.DECLINED) return palette.danger; // keep decline visible
   if (ev.type === CalendarEntryType.VACATION) return "#9b59b6";
   if (ev.type === CalendarEntryType.SICK) return "#e67e22";
+  if (ev.type === CalendarEntryType.BLOCKED) return palette.secondary;
+  if (ev.type === CalendarEntryType.TASK) {
+    const state = taskState(ev);
+    if (state === "running") return "#f59e0b"; // orange like task "laufend"
+    if (state === "open") return palette.success; // green for open
+    return "#94a3b8"; // muted for done
+  }
   return palette.primary;
 };
 
@@ -253,18 +267,10 @@ export function CalendarViewBase({
           }}
         >
           {[
-            {
-              label: "Angenommen",
-              color: statusColor(AssignmentStatus.ACCEPTED),
-            },
-            {
-              label: "Ausstehend",
-              color: statusColor(AssignmentStatus.PENDING),
-            },
-            {
-              label: "Abgelehnt",
-              color: statusColor(AssignmentStatus.DECLINED),
-            },
+            { label: "Offen", color: palette.success },
+            { label: "Laufend", color: "#f59e0b" },
+            { label: "Fertig", color: "#94a3b8" },
+            { label: "Abgelehnt", color: palette.danger },
           ].map((item) => (
             <View
               key={item.label}
