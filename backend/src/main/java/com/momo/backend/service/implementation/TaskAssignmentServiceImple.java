@@ -157,9 +157,14 @@ public class TaskAssignmentServiceImple extends AbstractSecuredService implement
 
         UUID current = getCurrentUserId();
         UUID employeeId = assignment.getEmployee().getId();
+        UUID managerId = assignment.getTask().getManager().getId();
 
-        // Nur der Mitarbeiter selbst darf den Status aendern
-        if (!current.equals(employeeId)) {
+        // Employee darf eigenen Status setzen; Manager darf nur ablehnen (z.B. Kapazität)
+        boolean isEmployeeSelf = current.equals(employeeId);
+        boolean isTaskManager = current.equals(managerId);
+        boolean managerAllowed = isTaskManager && status == AssignmentStatus.DECLINED;
+
+        if (!isEmployeeSelf && !managerAllowed) {
             throw new CustomAccessDeniedException("Nur der Employee darf seinen Assignment-Status aendern.");
         }
 
