@@ -144,6 +144,11 @@ export const makeStyles = (isDark: boolean) => {
     taskCardTitle: {
       fontSize: 18,
     },
+    taskCardTitleEllipsis: {
+      flex: 1,
+      flexShrink: 1,
+      marginRight: 8,
+    },
     taskCardStatus: {
       fontWeight: "700",
     },

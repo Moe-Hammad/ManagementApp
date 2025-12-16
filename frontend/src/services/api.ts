@@ -377,6 +377,23 @@ export async function fetchTasksForManager(
   return response.json();
 }
 
+export async function deleteTaskApi(taskId: string, token: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(token),
+    },
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(
+      `Task delete failed (${response.status}) ${body || ""}`.trim()
+    );
+  }
+}
+
 export async function assignEmployeeToTask(
   payload: { taskId: string; employeeId: string; status?: AssignmentStatus },
   token: string
@@ -441,6 +458,35 @@ export async function fetchAssignmentsForEmployee(
     throw new Error(`Assignments fetch failed (${response.status})`);
   }
 
+  return response.json();
+}
+
+export async function fetchTaskById(taskId: string, token: string): Promise<Task> {
+  const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(token),
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`Task fetch failed (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function updateTaskApi(taskId: string, payload: Partial<Task>, token: string): Promise<Task> {
+  const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(token),
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Task update failed (${response.status}) ${body || ""}`.trim());
+  }
   return response.json();
 }
 

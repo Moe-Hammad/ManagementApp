@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useChatView } from "../hooks/useChatView";
 import ChatHeader from "./ChatHeader";
+import ChatMembersModal from "./ChatMembersModal";
 import MessageBubble from "./MessageBubble";
 import MessageInput from "./MessageInput";
 
@@ -25,7 +26,7 @@ export default function ChatScreen({
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
-  const { room, user, messages, sending, handleSend } = useChatView(
+  const { room, user, members, messages, sending, handleSend } = useChatView(
     id as string
   );
 
@@ -33,6 +34,7 @@ export default function ChatScreen({
   const keyboardOffset = Platform.OS === "ios" ? 0 : 0;
   const bottomInset = insets.bottom || 0;
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [showMembers, setShowMembers] = useState(false);
 
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -75,7 +77,11 @@ export default function ChatScreen({
       keyboardVerticalOffset={keyboardOffset}
     >
       <View style={styles.chatHeaderSticky}>
-        <ChatHeader room={room} styles={styles} />
+        <ChatHeader
+          room={room}
+          styles={styles}
+          onShowMembers={() => setShowMembers(true)}
+        />
       </View>
 
       <View style={styles.chatBody}>
@@ -116,6 +122,15 @@ export default function ChatScreen({
           bottomPadding={bottomInset + 8}
         />
       </View>
+
+      <ChatMembersModal
+        visible={showMembers}
+        onClose={() => setShowMembers(false)}
+        title={room.name || "Chat"}
+        members={members || []}
+        styles={styles}
+        palette={palette}
+      />
     </KeyboardAvoidingView>
   );
 }

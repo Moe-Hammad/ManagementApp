@@ -5,6 +5,7 @@ import {
   fetchMessagesForChat,
   sendChatMessage,
 } from "@/src/redux/chatSlice";
+import { fetchUserById } from "@/src/redux/userSlice";
 import { subscribeUserMessages } from "@/src/services/wsClient";
 import { ChatMessage, ChatRoom } from "@/src/types/resources";
 import { useCallback, useEffect, useMemo } from "react";
@@ -33,6 +34,7 @@ export function useChatView(chatId?: string) {
       return s.chat.messages[chatId] ?? EMPTY_MESSAGES;
     }
   );
+  const userMap = useAppSelector((s) => s.users.userMap);
 
   // Raum + Partner
   const room: ChatRoom | undefined = useMemo(
@@ -40,6 +42,16 @@ export function useChatView(chatId?: string) {
     [rooms, chatId]
   );
   const { partner } = useChatPartner(room);
+
+  // Member-Infos nachladen
+  useEffect(() => {
+    if (!room) return;
+    room.memberIds.forEach((id) => {
+      if (!userMap[id]) {
+        dispatch(fetchUserById(id));
+      }
+    });
+  }, [room, userMap, dispatch]);
 
   // Erstladen
   useEffect(() => {
@@ -89,6 +101,9 @@ export function useChatView(chatId?: string) {
     room,
     partner,
     user,
+    members: room?.memberIds
+      .map((id) => userMap[id])
+      .filter(Boolean) as any[],
     messages,
     sending,
     handleSend,

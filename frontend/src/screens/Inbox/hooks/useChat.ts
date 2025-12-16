@@ -8,6 +8,7 @@ import {
   setMessagesForChat,
   setRooms,
 } from "@/src/redux/chatSlice";
+import { fetchUserById } from "@/src/redux/userSlice";
 import {
   loadChatMessages,
   loadChatRooms,
@@ -65,6 +66,7 @@ export function useChat() {
   const messagesByChat = useAppSelector((s) => s.chat.messages);
   const loadingMessages = useAppSelector((s) => s.chat.loadingMessages);
   const sendingMessage = useAppSelector((s) => s.chat.sending);
+  const userMap = useAppSelector((s) => s.users.userMap);
 
   // ==== Lokale UI-Zustände ===================================================
   const [chatSearch, setChatSearch] = useState("");
@@ -153,6 +155,16 @@ export function useChat() {
         .catch(() => {});
     })();
   }, [selectedChatId, token, dispatch]);
+
+  // Missing user details for chat members laden
+  useEffect(() => {
+    if (!selectedChat) return;
+    selectedChat.memberIds.forEach((id) => {
+      if (!userMap[id]) {
+        dispatch(fetchUserById(id));
+      }
+    });
+  }, [selectedChat, userMap, dispatch]);
 
   // ==== Actions ===============================================================
   const selectChat = (chatId: string) => {

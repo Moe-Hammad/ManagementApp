@@ -3,6 +3,7 @@ import TaskDashboard from "@/src/screens/Tasks/TaskDashboard";
 import {
   fetchAssignmentsForTask,
   fetchTasksForManager,
+  deleteTaskApi,
   listEmployeesUnderManager,
 } from "@/src/services/api";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
@@ -16,7 +17,7 @@ import {
 } from "@/src/types/resources";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type AssignmentMap = Record<string, TaskAssignment[]>;
@@ -178,9 +179,37 @@ export default function TasksIndex() {
   const renderTaskCard = (task: Task, index: number) => {
     const active = activeAssignments(task.id);
     const assignments = assignmentsByTask[task.id] || [];
+    const pendingCount = assignments.filter((a) => a.status === AssignmentStatus.PENDING).length;
     const openSlots = openSlotsForTask(task);
     const status = deriveStatus(task);
     const isDone = status === "DONE";
+    const isFuture = new Date(task.start).getTime() > Date.now();
+
+    const confirmDelete = () => {
+      if (!token || !managerId) return;
+      Alert.alert(
+        "Task löschen?",
+        "Kommende Tasks werden entfernt und verschwinden aus dem Kalender.",
+        [
+          { text: "Abbrechen", style: "cancel" },
+          {
+            text: "Löschen",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                setTasksLoading(true);
+                await deleteTaskApi(task.id, token);
+                await loadTasks();
+              } catch (err: any) {
+                Alert.alert("Fehler", err?.message || "Task konnte nicht gelöscht werden.");
+              } finally {
+                setTasksLoading(false);
+              }
+            },
+          },
+        ]
+      );
+    };
 
     return (
       <Pressable
@@ -198,9 +227,20 @@ export default function TasksIndex() {
         }
       >
         <View style={styles.taskCardHeader}>
-          <Text style={[styles.title, styles.taskCardTitle]}>
+          <Text
+            style={[styles.title, styles.taskCardTitle, styles.taskCardTitleEllipsis]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             #{index + 1} {task.company}
           </Text>
+          {isFuture && !isDone && (
+            <Pressable onPress={confirmDelete} style={{ marginRight: 8 }}>
+              <Text style={[styles.taskListAction, { color: "#ef4444" }]}>
+                Löschen
+              </Text>
+            </Pressable>
+          )}
           <Text
             style={[
               styles.taskCardStatus,
@@ -223,8 +263,7 @@ export default function TasksIndex() {
           {formatDate(task.start)} | {formatTimeRange(task.start, task.end)}
         </Text>
         <Text style={[styles.taskCardMeta, styles.taskCardMetaSpacer]}>
-          Bedarf: {task.requiredEmployees} | Zugewiesen: {active.length} |
-          Offen: {openSlots}
+          Bedarf: {task.requiredEmployees} | Zugewiesen: {active.length} | Offen: {openSlots} | Pending: {pendingCount}
         </Text>
 
         <View style={styles.doneAssignmentsContainer}>
