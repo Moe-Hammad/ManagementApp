@@ -14,7 +14,7 @@ import ManagerCalendarView from "@/src/screens/Calendar/ManagerCalendarView";
 import EmployeeCalendarView from "@/src/screens/Calendar/EmployeeCalendarView";
 
 export default function Calendar() {
-  const token = useAppSelector((s) => s.auth.token?.token);
+  const token = useAppSelector((s) => s.auth.token?.accessToken);
   const role = useAppSelector((s) => s.auth.user?.role);
 
   const { isDark } = useThemeMode();

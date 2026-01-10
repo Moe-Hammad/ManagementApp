@@ -22,31 +22,46 @@ public class TaskAssignmentController {
     private final TaskAssignmentService taskAssignmentService;
 
     @PostMapping
-    @Operation(summary = "Assignment anlegen")
+    @Operation(
+            summary = "Assignment anlegen",
+            description = "Weist einen Task einem Employee zu und legt eine Zuweisung an."
+    )
     public ResponseEntity<TaskAssignmentDto> createAssignment(@RequestBody TaskAssignmentDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(taskAssignmentService.createAssignment(dto));
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Assignment nach ID abrufen")
+    @Operation(
+            summary = "Assignment nach ID abrufen",
+            description = "Liefert Details einer Zuweisung (Task <-> Employee) fuer Statusanzeigen."
+    )
     public ResponseEntity<TaskAssignmentDto> getAssignment(@PathVariable UUID id) {
         return ResponseEntity.ok(taskAssignmentService.getAssignment(id));
     }
 
     @GetMapping("/task/{taskId}")
-    @Operation(summary = "Alle Assignments zu einem Task abrufen")
+    @Operation(
+            summary = "Alle Assignments zu einem Task abrufen",
+            description = "Listet alle Zuweisungen zu einem Task, z.B. fuer Teamuebersicht."
+    )
     public ResponseEntity<List<TaskAssignmentDto>> getAssignmentsForTask(@PathVariable UUID taskId) {
         return ResponseEntity.ok(taskAssignmentService.getAssignmentsForTask(taskId));
     }
 
     @GetMapping("/employee/{employeeId}")
-    @Operation(summary = "Alle Assignments für einen Employee abrufen")
+    @Operation(
+            summary = "Alle Assignments fuer einen Employee abrufen",
+            description = "Listet alle Zuweisungen eines Employees (Meine Aufgaben)."
+    )
     public ResponseEntity<List<TaskAssignmentDto>> getAssignmentsForEmployee(@PathVariable UUID employeeId) {
         return ResponseEntity.ok(taskAssignmentService.getAssignmentsForEmployee(employeeId));
     }
 
     @PutMapping("/{id}/status")
-    @Operation(summary = "Status eines Assignments aktualisieren")
+    @Operation(
+            summary = "Status eines Assignments aktualisieren",
+            description = "Setzt den Bearbeitungsstatus der Zuweisung (z.B. OPEN, IN_PROGRESS, DONE)."
+    )
     public ResponseEntity<TaskAssignmentDto> updateStatus(
             @PathVariable UUID id,
             @RequestParam AssignmentStatus status) {
@@ -54,7 +69,10 @@ public class TaskAssignmentController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Assignment löschen")
+    @Operation(
+            summary = "Assignment loeschen",
+            description = "Entfernt eine Task-Zuweisung."
+    )
     public ResponseEntity<Void> deleteAssignment(@PathVariable UUID id) {
         taskAssignmentService.deleteAssignment(id);
         return ResponseEntity.noContent().build();

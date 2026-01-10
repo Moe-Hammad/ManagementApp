@@ -26,7 +26,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Tag(name = "Auth", description = "Login und Registrierung")
+@Tag(name = "Auth", description = "Login, Registrierung, Refresh und Logout")
 public class AuthController {
 
     private final AuthService authService;
@@ -34,7 +34,7 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(
             summary = "User Login",
-            description = "Authentifiziert per Basic Auth, antwortet mit JWT für weitere Requests."
+            description = "Authentifiziert per Basic Auth (email:passwort) und startet eine Session. Gibt Access-Token fuer API-Aufrufe und Refresh-Token fuer spaeteres Erneuern zurueck."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Login erfolgreich",
@@ -64,7 +64,7 @@ public class AuthController {
     @PostMapping("/register")
     @Operation(
             summary = "User Registrierung",
-            description = "Legt einen neuen Manager oder Employee an und gibt direkt ein JWT zurück."
+            description = "Legt einen neuen Manager oder Employee an und startet sofort eine Session. Gibt Access-Token fuer API-Aufrufe und Refresh-Token fuer spaeteres Erneuern zurueck."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "User erstellt",
@@ -91,7 +91,7 @@ public class AuthController {
     @PostMapping("/refresh")
     @Operation(
             summary = "Refresh access token",
-            description = "Exchanges a refresh token for new access and refresh tokens."
+            description = "Validiert das Refresh-Token, rotiert es und liefert ein neues Token-Paar. Das alte Refresh-Token wird invalidiert; bei Reuse werden alle Tokens des Users widerrufen."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Token refreshed",
@@ -117,7 +117,7 @@ public class AuthController {
     @PostMapping("/logout")
     @Operation(
             summary = "Logout",
-            description = "Revokes the refresh token."
+            description = "Invalidiert das Refresh-Token der Session, damit keine weitere Erneuerung moeglich ist. Das Access-Token laeuft regulaer aus."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Logout successful"),
@@ -130,8 +130,8 @@ public class AuthController {
 
     @GetMapping("/me")
     @Operation(
-            summary = "Gibt den eingeloggten User zurück",
-            description = "Basierend auf dem JWT wird der vollständige User inkl. Role-Daten zurückgegeben."
+            summary = "Eingeloggten User abrufen",
+            description = "Ermittelt den eingeloggten User aus dem JWT und liefert Profil- und Rolleninfos fuer Bootstrap oder Profilansichten."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "User erfolgreich geladen"),

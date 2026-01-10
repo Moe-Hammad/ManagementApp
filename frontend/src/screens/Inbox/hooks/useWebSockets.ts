@@ -38,7 +38,7 @@ export function useWebSockets() {
   const dispatch = useAppDispatch();
 
   // ==== Auth-Daten ===========================================================
-  const token = useAppSelector((s) => s.auth.token?.token);
+  const token = useAppSelector((s) => s.auth.token?.accessToken);
   const userId = useAppSelector((s) => s.auth.user?.id);
   const chatRooms = useAppSelector((s) => s.chat.rooms);
   const roomsRef = useRef(chatRooms);

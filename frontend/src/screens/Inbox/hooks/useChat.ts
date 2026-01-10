@@ -55,7 +55,7 @@ export function useChat() {
   const palette = isDark ? DarkColors : LightColors;
 
   // ==== Auth / User Info =====================================================
-  const token = useAppSelector((s) => s.auth.token?.token);
+  const token = useAppSelector((s) => s.auth.token?.accessToken);
   const userId = useAppSelector((s) => s.auth.user?.id);
   const role = useAppSelector((s) => s.auth.user?.role);
   const isManager = role === UserRole.MANAGER;

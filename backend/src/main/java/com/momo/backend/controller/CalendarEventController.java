@@ -21,13 +21,19 @@ public class CalendarEventController {
     private final CalendarEntryService calendarEntryService;
 
     @GetMapping("/me")
-    @Operation(summary = "Eigene Kalender-Events abrufen")
+    @Operation(
+            summary = "Eigene Kalender-Events abrufen",
+            description = "Aggregierte Kalender-Events fuer den eingeloggten Employee, abgeleitet aus Eintraegen."
+    )
     public ResponseEntity<List<CalendarEventDto>> getMyEvents() {
         return ResponseEntity.ok(calendarEntryService.getEventsForCurrentEmployee());
     }
 
     @GetMapping("/manager")
-    @Operation(summary = "Alle Kalender-Events der eigenen Mitarbeiter abrufen")
+    @Operation(
+            summary = "Alle Kalender-Events der eigenen Mitarbeiter abrufen",
+            description = "Aggregierte Kalender-Events fuer alle Employees des eingeloggten Managers."
+    )
     public ResponseEntity<List<CalendarEventDto>> getManagerEvents() {
         return ResponseEntity.ok(calendarEntryService.getEventsForCurrentManager());
     }

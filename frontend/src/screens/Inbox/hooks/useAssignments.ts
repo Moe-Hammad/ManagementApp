@@ -7,7 +7,7 @@ import { useEffect } from "react";
 
 export function useAssignments() {
   const dispatch = useAppDispatch();
-  const token = useAppSelector((s) => s.auth.token?.token);
+  const token = useAppSelector((s) => s.auth.token?.accessToken);
   const assignments = useAppSelector((s) => s.assignments.items);
 
   useEffect(() => {

@@ -13,7 +13,7 @@ export const fetchUserById = createAsyncThunk<
   { state: RootState; rejectValue: string }
 >("users/fetchById", async (id, { getState, rejectWithValue }) => {
   try {
-    const token = getState().auth.token?.token;
+    const token = getState().auth.token?.accessToken;
 
     const response = await fetch(`${API}/api/users/${id}`, {
       headers: {

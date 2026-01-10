@@ -22,7 +22,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import moment from "moment";
 
 export default function TaskCreateScreen() {
-  const token = useAppSelector((s) => s.auth.token?.token);
+  const token = useAppSelector((s) => s.auth.token?.accessToken);
   const role = useAppSelector((s) => s.auth.user?.role);
   const managerId = useAppSelector((s) => s.auth.user?.id);
 

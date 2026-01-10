@@ -25,7 +25,10 @@ public class ManagerController {
     // ============================================
 
     @PostMapping
-    @Operation(summary = "Manager anlegen")
+    @Operation(
+            summary = "Manager anlegen",
+            description = "Erstellt einen Manager-Datensatz fuer Verwaltung oder Onboarding."
+    )
     public ResponseEntity<ManagerDto> createManager(@RequestBody ManagerDto managerDto) {
         ManagerDto saved = managerService.createManager(managerDto);
         return ResponseEntity.ok(saved);
@@ -36,7 +39,10 @@ public class ManagerController {
     // ============================================
 
     @GetMapping("/{managerId}")
-    @Operation(summary = "Manager nach ID abrufen")
+    @Operation(
+            summary = "Manager nach ID abrufen",
+            description = "Liefert Manager-Stammdaten fuer Detailansichten."
+    )
     public ResponseEntity<ManagerDto> getManager(@PathVariable UUID managerId) {
         return ResponseEntity.ok(managerService.getManagerById(managerId));
     }
@@ -46,7 +52,10 @@ public class ManagerController {
     // ============================================
 
     @GetMapping("/{managerId}/employees")
-    @Operation(summary = "Employees eines Managers abrufen")
+    @Operation(
+            summary = "Employees eines Managers abrufen",
+            description = "Gibt alle Employees zurueck, die dem Manager zugeordnet sind."
+    )
     public ResponseEntity<List<EmployeeDto>> getEmployeesUnderManager(@PathVariable UUID managerId) {
         return ResponseEntity.ok(managerService.getAllEmployeesUnderManager(managerId));
     }
@@ -56,7 +65,10 @@ public class ManagerController {
     // ============================================
 
     @PutMapping("/{managerId}")
-    @Operation(summary = "Manager aktualisieren")
+    @Operation(
+            summary = "Manager aktualisieren",
+            description = "Aktualisiert Manager-Stammdaten."
+    )
     public ResponseEntity<ManagerDto> updateManager(
             @PathVariable UUID managerId,
             @RequestBody ManagerDto update) {
@@ -70,7 +82,10 @@ public class ManagerController {
     // ============================================
 
     @DeleteMapping("/{managerId}")
-    @Operation(summary = "Manager löschen")
+    @Operation(
+            summary = "Manager loeschen",
+            description = "Loescht einen Manager-Datensatz."
+    )
     public ResponseEntity<Void> deleteManager(@PathVariable UUID managerId) {
         managerService.deleteManager(managerId);
         return ResponseEntity.noContent().build();
@@ -81,7 +96,10 @@ public class ManagerController {
     // ============================================
 
     @PostMapping("/{managerId}/employees/{employeeId}")
-    @Operation(summary = "Employee einem Manager zuordnen")
+    @Operation(
+            summary = "Employee einem Manager zuordnen",
+            description = "Ordnet einen Employee einem Manager zu (Teamzuordnung)."
+    )
     public ResponseEntity<Void> addEmployeeToManager(
             @PathVariable UUID managerId,
             @PathVariable UUID employeeId) {
@@ -95,7 +113,10 @@ public class ManagerController {
     // ============================================
 
     @DeleteMapping("/{managerId}/employees/{employeeId}")
-    @Operation(summary = "Employee von Manager trennen")
+    @Operation(
+            summary = "Employee von Manager trennen",
+            description = "Entfernt die Zuordnung zwischen Employee und Manager."
+    )
     public ResponseEntity<Void> removeEmployeeFromManager(
             @PathVariable UUID managerId,
             @PathVariable UUID employeeId) {

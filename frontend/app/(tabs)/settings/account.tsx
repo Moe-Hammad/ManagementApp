@@ -1,23 +1,22 @@
 import ScreenController from "@/src/components/core/ScreenController";
 import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
-import { clearToken, setUser } from "@/src/redux/authSlice";
-import { deleteUserAccount, updateUserProfile } from "@/src/services/api";
+import { setUser } from "@/src/redux/authSlice";
+import { deleteUserAccount, logout, updateUserProfile } from "@/src/services/api";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
 import { makeStyles } from "@/src/theme/styles";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useNavigation, useRouter } from "expo-router";
+import { useNavigation } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function AccountScreen() {
   const { isDark } = useThemeMode();
   const styles = makeStyles(isDark);
-  const router = useRouter();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
 
   const user = useAppSelector((s) => s.auth.user);
-  const token = useAppSelector((s) => s.auth.token?.token);
+  const token = useAppSelector((s) => s.auth.token?.accessToken);
 
   const [firstName, setFirstName] = useState(user?.firstName ?? "");
   const [lastName, setLastName] = useState(user?.lastName ?? "");
@@ -109,7 +108,7 @@ export default function AccountScreen() {
             try {
               setDeleteLoading(true);
               await deleteUserAccount(user, token);
-              dispatch(clearToken());
+              await logout();
             } catch (err: any) {
               Alert.alert(
                 "Fehler",

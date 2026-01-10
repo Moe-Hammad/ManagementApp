@@ -43,10 +43,10 @@ class WebSocketManager {
   }
 
   connect(token: string) {
+    this.token = token;
     // Vermeide parallele Connect-Versuche
     if (this.connecting || this.connected || this.client?.active) return;
 
-    this.token = token;
     this.connecting = true;
     // SockJS erwartet die HTTP/HTTPS-URL, nicht ws://
     const sockUrl = API_BASE_URL + "/ws";

@@ -1,6 +1,7 @@
 import ScreenController from "@/src/components/core/ScreenController";
-import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
-import { clearToken } from "@/src/redux/authSlice";
+import { useAppSelector } from "@/src/hooks/useRedux";
+import { logout } from "@/src/services/api";
+import { disconnectWebSocket } from "@/src/services/wsClient";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
 import { makeStyles } from "@/src/theme/styles";
 import { useRouter } from "expo-router";
@@ -10,11 +11,11 @@ export default function SettingsIndex() {
   const { isDark, toggleTheme } = useThemeMode();
   const styles = makeStyles(isDark);
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
 
-  const handleLogout = () => {
-    dispatch(clearToken());
+  const handleLogout = async () => {
+    disconnectWebSocket();
+    await logout();
   };
 
   return (

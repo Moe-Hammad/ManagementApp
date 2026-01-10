@@ -22,25 +22,37 @@ public class RequestController {
     private final RequestService requestService;
 
     @PostMapping
-    @Operation(summary = "Neue Anfrage senden")
+    @Operation(
+            summary = "Neue Anfrage senden",
+            description = "Sendet eine Manager-Employee Anfrage, z.B. fuer eine Teamzuordnung."
+    )
     public ResponseEntity<RequestDto> create(@RequestBody RequestDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(requestService.createRequest(dto));
     }
 
     @GetMapping("/manager/{managerId}")
-    @Operation(summary = "Alle Anfragen eines Managers abrufen")
+    @Operation(
+            summary = "Alle Anfragen eines Managers abrufen",
+            description = "Listet alle Anfragen, die einem Manager zugeordnet sind."
+    )
     public ResponseEntity<List<RequestDto>> getForManager(@PathVariable UUID managerId) {
         return ResponseEntity.ok(requestService.getRequestsForManager(managerId));
     }
 
     @GetMapping("/employee/{employeeId}")
-    @Operation(summary = "Alle Anfragen f\u00fcr einen Employee abrufen")
+    @Operation(
+            summary = "Alle Anfragen fuer einen Employee abrufen",
+            description = "Listet alle Anfragen, die einen Employee betreffen."
+    )
     public ResponseEntity<List<RequestDto>> getForEmployee(@PathVariable UUID employeeId) {
         return ResponseEntity.ok(requestService.getRequestsForEmployee(employeeId));
     }
 
     @PatchMapping("/{id}")
-    @Operation(summary = "Status einer Anfrage \u00e4ndern (APPROVED/REJECTED)")
+    @Operation(
+            summary = "Status einer Anfrage aendern (APPROVED/REJECTED)",
+            description = "Setzt den Status einer Anfrage auf APPROVED oder REJECTED, um sie abzuschliessen."
+    )
     public ResponseEntity<RequestDto> updateStatus(
             @PathVariable UUID id,
             @RequestParam RequestStatus status
@@ -49,7 +61,10 @@ public class RequestController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Einzelne Anfrage abrufen")
+    @Operation(
+            summary = "Einzelne Anfrage abrufen",
+            description = "Liefert Details einer einzelnen Anfrage."
+    )
     public ResponseEntity<RequestDto> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(requestService.getById(id));
     }

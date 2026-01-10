@@ -1,11 +1,11 @@
 import ScreenController from "@/src/components/core/ScreenController";
 import { useAppDispatch } from "@/src/hooks/useRedux";
 import { clearAssignments } from "@/src/redux/assignmentSlice";
-import { clearToken } from "@/src/redux/authSlice";
 import { clearChatState } from "@/src/redux/chatSlice";
 import { clearRequests } from "@/src/redux/requestSlice";
 import { clearUsers } from "@/src/redux/userSlice";
 import Dashboard from "@/src/screens/Inbox/components/dashboard";
+import { logout } from "@/src/services/api";
 import { disconnectWebSocket } from "@/src/services/wsClient";
 import { makeStyles } from "@/src/theme/styles";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
@@ -18,11 +18,11 @@ export default function LandingPage() {
 
   async function handleLogout() {
     disconnectWebSocket();
+    await logout();
     dispatch(clearAssignments());
     dispatch(clearChatState());
     dispatch(clearRequests());
     dispatch(clearUsers());
-    dispatch(clearToken());
   }
 
   return (

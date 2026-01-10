@@ -24,7 +24,7 @@ const EMPTY_MESSAGES: ChatMessage[] = [];
 export function useChatView(chatId?: string) {
   const dispatch = useAppDispatch();
 
-  const token = useAppSelector((s) => s.auth.token?.token);
+  const token = useAppSelector((s) => s.auth.token?.accessToken);
   const user = useAppSelector((s) => s.auth.user);
   const rooms = useAppSelector((s) => s.chat.rooms);
   const sending = useAppSelector((s) => s.chat.sending);

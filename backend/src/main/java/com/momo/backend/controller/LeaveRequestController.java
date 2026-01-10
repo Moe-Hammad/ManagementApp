@@ -22,37 +22,55 @@ public class LeaveRequestController {
     private final LeaveRequestService leaveRequestService;
 
     @PostMapping
-    @Operation(summary = "Abwesenheitsantrag erstellen")
+    @Operation(
+            summary = "Abwesenheitsantrag erstellen",
+            description = "Employee erstellt einen Abwesenheitsantrag fuer einen Zeitraum."
+    )
     public ResponseEntity<LeaveRequestDto> createLeaveRequest(@RequestBody LeaveRequestDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(leaveRequestService.createLeaveRequest(dto));
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Abwesenheitsantrag nach ID abrufen")
+    @Operation(
+            summary = "Abwesenheitsantrag nach ID abrufen",
+            description = "Liefert Details eines Abwesenheitsantrags."
+    )
     public ResponseEntity<LeaveRequestDto> getLeaveRequest(@PathVariable UUID id) {
         return ResponseEntity.ok(leaveRequestService.getLeaveRequest(id));
     }
 
     @GetMapping("/employee/{employeeId}")
-    @Operation(summary = "Alle Abwesenheiten eines Employees abrufen")
+    @Operation(
+            summary = "Alle Abwesenheiten eines Employees abrufen",
+            description = "Listet alle Antraege eines Employees (eigene Historie)."
+    )
     public ResponseEntity<List<LeaveRequestDto>> getForEmployee(@PathVariable UUID employeeId) {
         return ResponseEntity.ok(leaveRequestService.getLeaveRequestsForEmployee(employeeId));
     }
 
     @GetMapping("/manager/{managerId}")
-    @Operation(summary = "Alle Abwesenheiten unter einem Manager abrufen")
+    @Operation(
+            summary = "Alle Abwesenheiten unter einem Manager abrufen",
+            description = "Listet Antraege der Employees eines Managers zur Entscheidung."
+    )
     public ResponseEntity<List<LeaveRequestDto>> getForManager(@PathVariable UUID managerId) {
         return ResponseEntity.ok(leaveRequestService.getLeaveRequestsForManager(managerId));
     }
 
     @GetMapping("/status/{status}")
-    @Operation(summary = "Abwesenheiten nach Status filtern")
+    @Operation(
+            summary = "Abwesenheiten nach Status filtern",
+            description = "Filtert Antraege nach Status (PENDING/APPROVED/REJECTED)."
+    )
     public ResponseEntity<List<LeaveRequestDto>> getByStatus(@PathVariable LeaveStatus status) {
         return ResponseEntity.ok(leaveRequestService.getLeaveRequestsByStatus(status));
     }
 
     @PutMapping("/{id}/status")
-    @Operation(summary = "Status eines Abwesenheitsantrags setzen")
+    @Operation(
+            summary = "Status eines Abwesenheitsantrags setzen",
+            description = "Setzt den Status eines Abwesenheitsantrags; decidedById ist optional."
+    )
     public ResponseEntity<LeaveRequestDto> updateStatus(
             @PathVariable UUID id,
             @RequestParam LeaveStatus status,
@@ -62,7 +80,10 @@ public class LeaveRequestController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Abwesenheitsantrag löschen")
+    @Operation(
+            summary = "Abwesenheitsantrag loeschen",
+            description = "Loescht einen Abwesenheitsantrag."
+    )
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         leaveRequestService.deleteLeaveRequest(id);
         return ResponseEntity.noContent().build();

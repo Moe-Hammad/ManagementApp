@@ -50,7 +50,7 @@ export function useRequests() {
   const palette = isDark ? DarkColors : LightColors;
 
   // ==== Auth ================================================================
-  const token = useAppSelector((s) => s.auth.token?.token);
+  const token = useAppSelector((s) => s.auth.token?.accessToken);
   const userId = useAppSelector((s) => s.auth.user?.id);
   const user = useAppSelector((s) => s.auth.user);
   const role = useAppSelector((s) => s.auth.user?.role);

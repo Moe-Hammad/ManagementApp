@@ -43,7 +43,7 @@ export default function RequestsTab({
   const isManager = user.role === UserRole.MANAGER;
   const isEmployee = user.role === UserRole.EMPLOYEE;
   const userMap = useAppSelector((s) => s.users.userMap);
-  const token = useAppSelector((s) => s.auth.token?.token);
+  const token = useAppSelector((s) => s.auth.token?.accessToken);
 
   const employeeMap = isManager
     ? Object.fromEntries((user as Manager).employees.map((e) => [e.id, e]))
