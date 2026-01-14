@@ -30,13 +30,23 @@ export type CalendarViewProps = {
   styles: ReturnType<typeof import("@/src/theme/styles").makeStyles>;
 };
 
+const parseEventTime = (value: Date | string | number) => {
+  if (typeof value === "string") {
+    const hasOffset = /([zZ]|[+-]\d{2}:\d{2})$/.test(value);
+    return hasOffset ? moment(value) : moment.utc(value).local();
+  }
+  return moment(value);
+};
+
 const taskState = (ev: CalendarEvent) => {
   const now = moment();
-  const start = moment(ev.start);
-  const end = moment(ev.end);
+  const start = parseEventTime(ev.start);
+  const end = parseEventTime(ev.end);
   if (end.isBefore(now)) return "done" as const;
-  if (start.isAfter(now)) return "open" as const;
-  return "running" as const;
+  const isToday = now.isSame(start, "day");
+  const isInRange = now.isBetween(start, end, undefined, "[]");
+  if (isToday && isInRange) return "running" as const;
+  return "open" as const;
 };
 
 const eventColor = (
@@ -51,7 +61,7 @@ const eventColor = (
     const state = taskState(ev);
     if (state === "running") return "#f59e0b"; // orange like task "laufend"
     if (state === "open") return palette.success; // green for open
-    return "#94a3b8"; // muted for done
+    return "#3b82f6"; // blue for done
   }
   return palette.primary;
 };
@@ -63,11 +73,11 @@ const statusColor = (status?: AssignmentStatus | null) => {
   return "#94a3b8"; // muted
 };
 
-const formatTime = (d: Date) =>
-  d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+const formatTime = (d: Date | string) =>
+  parseEventTime(d).format("HH:mm");
 
 const dayKey = (date: Date | string | number) =>
-  moment(date).startOf("day").format("YYYY-MM-DD");
+  parseEventTime(date).startOf("day").format("YYYY-MM-DD");
 
 export function CalendarViewBase({
   roleLabel,
@@ -120,11 +130,15 @@ export function CalendarViewBase({
 
   const dayEvents = useMemo(() => {
     const mapped = dayEventsRaw
-      .map((ev) => ({
-        ...ev,
-        startDate: new Date(ev.start),
-        endDate: new Date(ev.end),
-      }))
+      .map((ev) => {
+        const startDate = parseEventTime(ev.start).toDate();
+        const endDate = parseEventTime(ev.end).toDate();
+        return {
+          ...ev,
+          startDate,
+          endDate,
+        };
+      })
       .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
     const columns: Date[] = [];
@@ -269,7 +283,7 @@ export function CalendarViewBase({
           {[
             { label: "Offen", color: palette.success },
             { label: "Laufend", color: "#f59e0b" },
-            { label: "Fertig", color: "#94a3b8" },
+            { label: "Fertig", color: "#3b82f6" },
             { label: "Abgelehnt", color: palette.danger },
           ].map((item) => (
             <View

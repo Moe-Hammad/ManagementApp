@@ -1,9 +1,9 @@
 import { useAppSelector } from "@/src/hooks/useRedux";
 import {
-  assignEmployeeToTask,
   fetchAssignmentsForTask,
   fetchTaskById,
   listEmployeesUnderManager,
+  deleteTaskApi,
   updateAssignmentStatusApi,
   updateTaskApi,
 } from "@/src/services/api";
@@ -30,6 +30,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import moment from "moment";
 
 type AssignmentMap = Record<string, TaskAssignment>;
 
@@ -95,16 +96,20 @@ export default function TaskDetailsScreen() {
 
   const status: "OPEN" | "RUNNING" | "DONE" = useMemo(() => {
     if (!task) return "OPEN";
-    const now = Date.now();
-    const start = new Date(task.start).getTime();
-    const end = new Date(task.end).getTime();
-    if (end < now) return "DONE";
-    if (start <= now && now <= end) return "RUNNING";
+    const now = moment();
+    const start = moment(task.start);
+    const end = moment(task.end);
+    if (end.isBefore(now)) return "DONE";
+    const isToday = now.isSame(start, "day");
+    const isInRange = now.isBetween(start, end, undefined, "[]");
+    if (isToday && isInRange) return "RUNNING";
     return "OPEN";
   }, [task]);
 
   const canEdit = status === "OPEN";
   const visibleAssignedIds = status === "DONE" ? resolvedAssignmentIds : assignedIds;
+  const isFuture = task ? moment(task.start).isAfter(moment()) : false;
+  const canDelete = isFuture;
 
   useEffect(() => {
     if (task) {
@@ -237,6 +242,36 @@ export default function TaskDetailsScreen() {
     }
   };
 
+  const handleDelete = () => {
+    if (!token || !id || !canDelete) return;
+    Alert.alert(
+      "Task loeschen?",
+      "Kommende Tasks werden entfernt und verschwinden aus dem Kalender.",
+      [
+        { text: "Abbrechen", style: "cancel" },
+        {
+          text: "Loeschen",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setSaving(true);
+              await deleteTaskApi(id, token);
+              router.back();
+            } catch (err: any) {
+              Alert.alert(
+                "Fehler",
+                err?.message || "Task konnte nicht geloescht werden."
+              );
+            } finally {
+              setSaving(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  /*
   const assignEmployee = async (employeeId: string) => {
     if (!token || !id) return;
     if (!canEdit || !editMode) {
@@ -257,6 +292,7 @@ export default function TaskDetailsScreen() {
       Alert.alert("Fehler", err?.message || "Mitarbeiter konnte nicht zugewiesen werden.");
     }
   };
+  */
 
   const handleToggleEdit = () => {
     if (!canEdit) {
@@ -318,6 +354,24 @@ export default function TaskDetailsScreen() {
             <Text style={{ color: palette.secondary, fontWeight: "600" }}>
               Status: {status === "OPEN" ? "Offen" : status === "RUNNING" ? "Laufend" : "Fertig"}
             </Text>
+            {canDelete && (
+              <Pressable
+                onPress={handleDelete}
+                style={{
+                  padding: 6,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: palette.danger,
+                  backgroundColor: `${palette.danger}22`,
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="trash-can-outline"
+                  size={18}
+                  color={palette.danger}
+                />
+              </Pressable>
+            )}
             <TouchableOpacity
               onPress={handleToggleEdit}
               disabled={!canEdit}
@@ -475,7 +529,7 @@ export default function TaskDetailsScreen() {
           )}
         </View>
 
-        {status !== "DONE" && (
+        {/*
           <View style={[styles.cardWrapper, { marginTop: 12 }]}>
             <Text style={styles.label}>Mitarbeiter hinzufügen</Text>
             {employees.map((emp) => {
@@ -524,7 +578,7 @@ export default function TaskDetailsScreen() {
             );
           })}
           </View>
-        )}
+        */}
       </ScrollView>
     </SafeAreaView>
   );

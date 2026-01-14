@@ -163,13 +163,13 @@ export const makeStyles = (isDark: boolean) => {
       fontWeight: "700",
     },
     taskCardStatusOpen: {
-      color: "#4ade80",
+      color: "#34d399",
     },
     taskCardStatusRunning: {
       color: "#f59e0b",
     },
     taskCardStatusDone: {
-      color: "#22c55e",
+      color: "#3b82f6",
     },
     taskCardLocation: {
       color: C.text,
@@ -207,8 +207,8 @@ export const makeStyles = (isDark: boolean) => {
       ...shadow(C.shadow, 3, 10, 0.25),
     },
     taskCardSurfaceOpen: {
-      backgroundColor: isDark ? "rgba(74,222,128,0.16)" : "rgba(74,222,128,0.12)",
-      borderColor: isDark ? "rgba(74,222,128,0.35)" : "rgba(74,222,128,0.45)",
+      backgroundColor: isDark ? "rgba(52,211,153,0.16)" : "rgba(52,211,153,0.12)",
+      borderColor: isDark ? "rgba(52,211,153,0.35)" : "rgba(52,211,153,0.45)",
       borderWidth: 1,
     },
     taskCardSurfaceRunning: {
@@ -217,8 +217,8 @@ export const makeStyles = (isDark: boolean) => {
       borderWidth: 1,
     },
     taskCardSurfaceDone: {
-      backgroundColor: isDark ? "rgba(34,197,94,0.2)" : "rgba(34,197,94,0.16)",
-      borderColor: isDark ? "rgba(34,197,94,0.45)" : "rgba(34,197,94,0.55)",
+      backgroundColor: isDark ? "rgba(59,130,246,0.2)" : "rgba(59,130,246,0.14)",
+      borderColor: isDark ? "rgba(59,130,246,0.45)" : "rgba(59,130,246,0.5)",
       borderWidth: 1,
     },
     taskAssignContainer: {
@@ -278,13 +278,13 @@ export const makeStyles = (isDark: boolean) => {
       fontSize: 12,
     },
     taskStatusDotOpen: {
-      backgroundColor: "#4ade80",
+      backgroundColor: "#34d399",
     },
     taskStatusDotRunning: {
       backgroundColor: "#f59e0b",
     },
     taskStatusDotDone: {
-      backgroundColor: "#22c55e",
+      backgroundColor: "#3b82f6",
     },
     taskStatusDotDeclined: {
       backgroundColor: C.danger,

@@ -27,7 +27,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -169,6 +171,12 @@ public class DataLoader {
         seedTasksAndCalendar(manager2, now,
                 manager2Team.stream().limit(2).collect(Collectors.toList()),
                 manager2Team);
+        seedExtendedTimelineTasks(manager1, now,
+                List.of(empAssigned, empApproved),
+                manager1Team);
+        seedExtendedTimelineTasks(manager2, now,
+                manager2Team.stream().limit(2).collect(Collectors.toList()),
+                manager2Team);
 
         // Chats + messages (direct chats manager<->employee; groups for employees)
         seedChatsAndMessages(manager1, empApproved, manager1Team);
@@ -305,6 +313,105 @@ public class DataLoader {
             }
             saveTaskWithCalendar(upcomingTask);
         }
+    }
+
+    private void seedExtendedTimelineTasks(Manager manager,
+                                           LocalDateTime now,
+                                           List<Employee> priorityAssignees,
+                                           List<Employee> fallbackPool) {
+        LocalDate endDate = LocalDate.of(now.getYear(), 2, 26);
+        if (endDate.isBefore(now.toLocalDate())) {
+            endDate = endDate.plusYears(1);
+        }
+        LocalDate startDate = now.toLocalDate().minusDays(21);
+
+        List<Task> existing = taskRepo.findAll();
+        List<Employee> pool = new ArrayList<>();
+        pool.addAll(priorityAssignees);
+        pool.addAll(fallbackPool);
+        if (pool.isEmpty()) {
+            return;
+        }
+
+        int seedIndex = 1;
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(4)) {
+            String company = "Seed - " + date + " - " + manager.getEmail();
+            String location = "Seed Location " + seedIndex;
+            if (findTask(existing, company, location) != null) {
+                seedIndex++;
+                continue;
+            }
+
+            LocalDateTime start = date.atTime(9, 0);
+            LocalDateTime end = date.atTime(17, 0);
+            Task task = buildTask(manager, company, location, start, end, 3, start.minusDays(1));
+
+            List<Employee> sample = sampleEmployees(pool, seedIndex, 3);
+            if (date.isBefore(now.toLocalDate())) {
+                addAssignmentWithStatus(
+                        task,
+                        sample.subList(0, Math.min(2, sample.size())),
+                        AssignmentStatus.ACCEPTED,
+                        start.minusDays(1));
+                if (sample.size() > 2) {
+                    addAssignmentWithStatus(
+                            task,
+                            sample.subList(2, 3),
+                            AssignmentStatus.DECLINED,
+                            start.minusDays(1));
+                }
+            } else if (date.isEqual(now.toLocalDate())) {
+                addAssignmentWithStatus(
+                        task,
+                        sample.subList(0, Math.min(2, sample.size())),
+                        AssignmentStatus.ACCEPTED,
+                        now.minusHours(1));
+            } else {
+                if (!sample.isEmpty()) {
+                    addAssignmentWithStatus(
+                            task,
+                            sample.subList(0, 1),
+                            AssignmentStatus.PENDING,
+                            now.minusHours(2));
+                }
+                if (seedIndex % 2 == 0 && sample.size() > 1) {
+                    addAssignmentWithStatus(
+                            task,
+                            sample.subList(1, 2),
+                            AssignmentStatus.ACCEPTED,
+                            now.minusHours(3));
+                }
+            }
+
+            saveTaskWithCalendar(task);
+            existing.add(task);
+            seedIndex++;
+        }
+
+        String endCompany = "Seed - EndFeb - " + manager.getEmail();
+        String endLocation = "Seed EndFeb";
+        if (findTask(existing, endCompany, endLocation) == null) {
+            LocalDateTime start = endDate.atTime(10, 0);
+            Task endTask = buildTask(
+                    manager,
+                    endCompany,
+                    endLocation,
+                    start,
+                    start.plusHours(6),
+                    2,
+                    start.minusDays(1));
+            List<Employee> sample = sampleEmployees(pool, 0, 2);
+            addAssignmentWithStatus(endTask, sample, AssignmentStatus.ACCEPTED, start.minusDays(1));
+            saveTaskWithCalendar(endTask);
+        }
+    }
+
+    private List<Employee> sampleEmployees(List<Employee> pool, int startIndex, int count) {
+        List<Employee> picked = new ArrayList<>();
+        for (int i = 0; i < count && i < pool.size(); i++) {
+            picked.add(pool.get((startIndex + i) % pool.size()));
+        }
+        return picked;
     }
 
     private Task buildTask(Manager manager,

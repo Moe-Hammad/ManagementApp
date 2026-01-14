@@ -3,7 +3,6 @@ import TaskDashboard from "@/src/screens/Tasks/TaskDashboard";
 import {
   fetchAssignmentsForTask,
   fetchTasksForManager,
-  deleteTaskApi,
   listEmployeesUnderManager,
 } from "@/src/services/api";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
@@ -16,8 +15,10 @@ import {
   UserRole,
 } from "@/src/types/resources";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
+import moment from "moment";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type AssignmentMap = Record<string, TaskAssignment[]>;
@@ -139,14 +140,16 @@ export default function TasksIndex() {
 
   const deriveStatus = useCallback(
     (task: Task): Exclude<StatusFilter, "ALL"> => {
-      const now = Date.now();
-      const end = new Date(task.end).getTime();
-      const start = new Date(task.start).getTime();
-      if (end < now) return "DONE";
-      if (start <= now && now <= end) return "RUNNING";
-      return openSlotsForTask(task) > 0 ? "OPEN" : "RUNNING";
+      const now = moment();
+      const start = moment(task.start);
+      const end = moment(task.end);
+      if (end.isBefore(now)) return "DONE";
+      const isToday = now.isSame(start, "day");
+      const isInRange = now.isBetween(start, end, undefined, "[]");
+      if (isToday && isInRange) return "RUNNING";
+      return "OPEN";
     },
-    [openSlotsForTask]
+    []
   );
 
   const finishedCount = useMemo(
@@ -199,7 +202,12 @@ export default function TasksIndex() {
             (a) => a.employeeId === userFilter
           );
         return statusMatch && userMatch;
-      }),
+      })
+        .sort((a, b) => {
+          const startDiff = moment(a.start).valueOf() - moment(b.start).valueOf();
+          if (startDiff !== 0) return startDiff;
+          return moment(a.end).valueOf() - moment(b.end).valueOf();
+        }),
     [tasks, deriveStatus, statusFilter, userFilter, assignmentsByTask]
   );
 
@@ -252,9 +260,11 @@ export default function TasksIndex() {
     }
   }, [token, managerId]);
 
-  useEffect(() => {
-    loadTasks();
-  }, [loadTasks]);
+  useFocusEffect(
+    useCallback(() => {
+      loadTasks();
+    }, [loadTasks])
+  );
 
   const renderTaskCard = (task: Task, index: number) => {
     const active = activeAssignments(task.id);
@@ -263,7 +273,6 @@ export default function TasksIndex() {
     const openSlots = openSlotsForTask(task);
     const status = deriveStatus(task);
     const isDone = status === "DONE";
-    const isFuture = new Date(task.start).getTime() > Date.now();
     const isExpanded = expandedTaskId === task.id;
     const statusLabel =
       status === "OPEN" ? "Offen" : status === "RUNNING" ? "Laufend" : "Fertig";
@@ -274,6 +283,7 @@ export default function TasksIndex() {
         ? styles.taskCardSurfaceRunning
         : styles.taskCardSurfaceOpen;
 
+    /*
     const confirmDelete = () => {
       if (!token || !managerId) return;
       Alert.alert(
@@ -299,6 +309,7 @@ export default function TasksIndex() {
         ]
       );
     };
+    */
 
     return (
       <View
@@ -325,13 +336,13 @@ export default function TasksIndex() {
             #{index + 1} {task.company}
           </Text>
           <View style={styles.taskAccordionHeaderRight}>
-            {isExpanded && isFuture && !isDone && (
+            {/*
             <Pressable onPress={confirmDelete} style={{ marginRight: 8 }}>
               <Text style={[styles.taskListAction, { color: "#ef4444" }]}>
                 Löschen
               </Text>
             </Pressable>
-          )}
+          */}
           {isExpanded && (
             <Text
               style={[
