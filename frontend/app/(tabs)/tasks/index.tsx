@@ -22,6 +22,68 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 type AssignmentMap = Record<string, TaskAssignment[]>;
 type StatusFilter = "ALL" | "OPEN" | "RUNNING" | "DONE";
+type DropdownOption = { value: string; label: string };
+
+type FilterDropdownProps = {
+  value: string;
+  options: DropdownOption[];
+  open: boolean;
+  onToggle: () => void;
+  onSelect: (value: string) => void;
+  styles: ReturnType<typeof makeStyles>;
+};
+
+const FilterDropdown = ({
+  value,
+  options,
+  open,
+  onToggle,
+  onSelect,
+  styles,
+}: FilterDropdownProps) => {
+  const selectedLabel =
+    options.find((option) => option.value === value)?.label ?? options[0]?.label;
+
+  return (
+    <View style={styles.dropdownWrapper}>
+      <Pressable style={styles.dropdownTrigger} onPress={onToggle}>
+        <Text style={styles.dropdownTriggerText}>{selectedLabel}</Text>
+        <Text style={styles.dropdownTriggerIcon}>{open ? "^" : "v"}</Text>
+      </Pressable>
+      {open && (
+        <View style={styles.dropdownMenu}>
+          <ScrollView style={styles.dropdownMenuScroll} nestedScrollEnabled>
+            {options.map((option, idx) => {
+              const active = option.value === value;
+              return (
+                <Pressable
+                  key={option.value}
+                  onPress={() => onSelect(option.value)}
+                  style={[
+                    styles.dropdownItem,
+                    idx === options.length - 1 && styles.dropdownItemLast,
+                    active && styles.dropdownItemActive,
+                  ]}
+                >
+                  <Text
+                    style={
+                      active
+                        ? styles.dropdownItemTextActive
+                        : styles.dropdownItemText
+                    }
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
+
+    </View>
+  );
+};
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, {
@@ -50,6 +112,9 @@ export default function TasksIndex() {
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [userFilter, setUserFilter] = useState<string>("ALL");
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -106,6 +171,21 @@ export default function TasksIndex() {
       })),
     ],
     [employees]
+  );
+
+  const statusOptions = useMemo(
+    () => [
+      { value: "ALL", label: "Alle" },
+      { value: "OPEN", label: "Offen" },
+      { value: "RUNNING", label: "Laufend" },
+      { value: "DONE", label: "Fertig" },
+    ],
+    []
+  );
+
+  const userOptions = useMemo(
+    () => users.map((user) => ({ value: user.id, label: user.name })),
+    [users]
   );
 
   const filteredTasks = useMemo(
@@ -184,6 +264,9 @@ export default function TasksIndex() {
     const status = deriveStatus(task);
     const isDone = status === "DONE";
     const isFuture = new Date(task.start).getTime() > Date.now();
+    const isExpanded = expandedTaskId === task.id;
+    const statusLabel =
+      status === "OPEN" ? "Offen" : status === "RUNNING" ? "Laufend" : "Fertig";
 
     const confirmDelete = () => {
       if (!token || !managerId) return;
@@ -212,21 +295,21 @@ export default function TasksIndex() {
     };
 
     return (
-      <Pressable
+      <View
         key={task.id}
         style={[
           styles.taskCardSurface,
           styles.taskCardContainer,
           isDone ? styles.taskCardDone : styles.taskCardCollapsed,
+          isExpanded ? styles.taskCardExpanded : null,
         ]}
-        onPress={() =>
-          router.push({
-            pathname: "/tasks/[id]",
-            params: { id: task.id },
-          })
-        }
       >
-        <View style={styles.taskCardHeader}>
+        <Pressable
+          style={styles.taskCardHeader}
+          onPress={() =>
+            setExpandedTaskId((prev) => (prev === task.id ? null : task.id))
+          }
+        >
           <Text
             style={[styles.title, styles.taskCardTitle, styles.taskCardTitleEllipsis]}
             numberOfLines={1}
@@ -234,59 +317,79 @@ export default function TasksIndex() {
           >
             #{index + 1} {task.company}
           </Text>
-          {isFuture && !isDone && (
+          <View style={styles.taskAccordionHeaderRight}>
+            {isExpanded && isFuture && !isDone && (
             <Pressable onPress={confirmDelete} style={{ marginRight: 8 }}>
               <Text style={[styles.taskListAction, { color: "#ef4444" }]}>
                 Löschen
               </Text>
             </Pressable>
           )}
-          <Text
-            style={[
-              styles.taskCardStatus,
-              status === "DONE"
-                ? styles.taskCardStatusDone
-                : status === "RUNNING"
-                ? styles.taskCardStatusRunning
-                : styles.taskCardStatusOpen,
-            ]}
-          >
-            {status === "OPEN"
-              ? "Offen"
-              : status === "RUNNING"
-              ? "Laufend"
-              : "Fertig"}
+          {isExpanded && (
+            <Text
+              style={[
+                styles.taskCardStatus,
+                status === "DONE"
+                  ? styles.taskCardStatusDone
+                  : status === "RUNNING"
+                  ? styles.taskCardStatusRunning
+                  : styles.taskCardStatusOpen,
+              ]}
+            >
+              Status: {statusLabel}
+            </Text>
+          )}
+          <Text style={styles.taskAccordionChevron}>
+            {isExpanded ? "^" : "v"}
           </Text>
         </View>
-        <Text style={styles.taskCardLocation}>{task.location}</Text>
-        <Text style={styles.taskCardMeta}>
-          {formatDate(task.start)} | {formatTimeRange(task.start, task.end)}
-        </Text>
-        <Text style={[styles.taskCardMeta, styles.taskCardMetaSpacer]}>
-          Bedarf: {task.requiredEmployees} | Zugewiesen: {active.length} | Offen: {openSlots} | Pending: {pendingCount}
-        </Text>
+        </Pressable>
+        {isExpanded && (
+          <View style={styles.taskAccordionBody}>
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/tasks/[id]",
+                  params: { id: task.id },
+                })
+              }
+              style={styles.taskAccordionDetails}
+            >
+              <Text style={styles.taskListAction}>Details</Text>
+            </Pressable>
 
-        <View style={styles.doneAssignmentsContainer}>
-          <Text style={styles.taskAssignLabel}>Mitarbeiter</Text>
-          {assignments.length === 0 ? (
-            <Text style={styles.taskAssignBusy}>Keine Zuweisungen</Text>
-          ) : (
-            assignments.map((a) => {
-              const emp = employees.find((e) => e.id === a.employeeId);
-              return (
-                <View key={a.id} style={styles.doneAssignmentRow}>
-                  <Text style={styles.doneAssignmentName}>
-                    {emp ? `${emp.firstName} ${emp.lastName}` : a.employeeId}
-                  </Text>
-                  <Text style={styles.doneAssignmentStatus}>
-                    Status: {a.status}
-                  </Text>
-                </View>
-              );
-            })
-          )}
-        </View>
-      </Pressable>
+            <Text style={styles.taskCardLocation}>{task.location}</Text>
+            <Text style={styles.taskCardMeta}>
+              {formatDate(task.start)} | {formatTimeRange(task.start, task.end)}
+            </Text>
+            <Text style={[styles.taskCardMeta, styles.taskCardMetaSpacer]}>
+              Bedarf: {task.requiredEmployees} | Zugewiesen: {active.length} |
+              Offen: {openSlots} | Pending: {pendingCount}
+            </Text>
+
+            <View style={styles.doneAssignmentsContainer}>
+              <Text style={styles.taskAssignLabel}>Mitarbeiter</Text>
+              {assignments.length === 0 ? (
+                <Text style={styles.taskAssignBusy}>Keine Zuweisungen</Text>
+              ) : (
+                assignments.map((a) => {
+                  const emp = employees.find((e) => e.id === a.employeeId);
+                  return (
+                    <View key={a.id} style={styles.doneAssignmentRow}>
+                      <Text style={styles.doneAssignmentName}>
+                        {emp ? `${emp.firstName} ${emp.lastName}` : a.employeeId}
+                      </Text>
+                      <Text style={styles.doneAssignmentStatus}>
+                        Status: {a.status}
+                      </Text>
+                    </View>
+                  );
+                })
+              )}
+            </View>
+          </View>
+        )}
+      </View>
     );
   };
 
@@ -307,73 +410,42 @@ export default function TasksIndex() {
           styles={styles}
         />
 
-        <View style={styles.taskFilterSection}>
-          <Text style={styles.taskFilterTitle}>Status</Text>
-          <View style={styles.statusFilterRow}>
-            {[
-              { key: "ALL", label: "Alle" },
-              { key: "OPEN", label: "Offen" },
-              { key: "RUNNING", label: "Laufend" },
-              { key: "DONE", label: "Fertig" },
-            ].map((item) => (
-              <Pressable
-                key={item.key}
-                onPress={() => setStatusFilter(item.key as StatusFilter)}
-                style={[
-                  styles.requestsSegmentTab,
-                  styles.statusFilterChip,
-                  statusFilter === item.key
-                    ? styles.requestsSegmentTabActive
-                    : styles.requestsSegmentTabInactive,
-                ]}
-              >
-                <Text
-                  style={
-                    statusFilter === item.key
-                      ? styles.requestsSegmentTextActive
-                      : styles.requestsSegmentText
-                  }
-                >
-                  {item.label}
-                </Text>
-              </Pressable>
-            ))}
+        <View style={styles.taskFilterRow}>
+          <View style={[styles.taskFilterSection, styles.taskFilterColumn]}>
+            <Text style={styles.taskFilterTitle}>Status</Text>
+            <FilterDropdown
+              value={statusFilter}
+              options={statusOptions}
+              open={statusDropdownOpen}
+              onToggle={() => {
+                setStatusDropdownOpen((prev) => !prev);
+                setUserDropdownOpen(false);
+              }}
+              onSelect={(value) => {
+                setStatusFilter(value as StatusFilter);
+                setStatusDropdownOpen(false);
+              }}
+              styles={styles}
+            />
           </View>
-        </View>
 
-        <View
-          style={[styles.taskFilterSection, styles.taskFilterSectionSpacing]}
-        >
-          <Text style={styles.taskFilterTitle}>Mitarbeiter</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.employeeFilterContent}
-          >
-            {users.map((user) => (
-              <Pressable
-                key={user.id}
-                onPress={() => setUserFilter(user.id)}
-                style={[
-                  styles.requestsSegmentTab,
-                  styles.employeeFilterChip,
-                  userFilter === user.id
-                    ? styles.requestsSegmentTabActive
-                    : styles.requestsSegmentTabInactive,
-                ]}
-              >
-                <Text
-                  style={
-                    userFilter === user.id
-                      ? styles.requestsSegmentTextActive
-                      : styles.requestsSegmentText
-                  }
-                >
-                  {user.name}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+          <View style={[styles.taskFilterSection, styles.taskFilterColumn]}>
+            <Text style={styles.taskFilterTitle}>Mitarbeiter</Text>
+            <FilterDropdown
+              value={userFilter}
+              options={userOptions}
+              open={userDropdownOpen}
+              onToggle={() => {
+                setUserDropdownOpen((prev) => !prev);
+                setStatusDropdownOpen(false);
+              }}
+              onSelect={(value) => {
+                setUserFilter(value);
+                setUserDropdownOpen(false);
+              }}
+              styles={styles}
+            />
+          </View>
         </View>
 
         <ScrollView
@@ -387,13 +459,26 @@ export default function TasksIndex() {
               <Text style={styles.taskListAction}>Aktualisieren</Text>
             </Pressable>
           </View>
+          <View style={styles.taskLegendRow}>
+            {[
+              { label: "Offen", style: styles.taskStatusDotOpen },
+              { label: "Laufend", style: styles.taskStatusDotRunning },
+              { label: "Fertig", style: styles.taskStatusDotDone },
+              { label: "Abgelehnt", style: styles.taskStatusDotDeclined },
+            ].map((item) => (
+              <View key={item.label} style={styles.taskLegendItem}>
+                <View style={[styles.taskLegendDot, item.style]} />
+                <Text style={styles.taskLegendLabel}>{item.label}</Text>
+              </View>
+            ))}
+          </View>
           {tasksLoading && filteredTasks.length === 0 ? (
             <Text style={styles.taskListEmptyText}>
               Tasks werden geladen...
             </Text>
           ) : filteredTasks.length === 0 ? (
             <Text style={styles.taskListEmptyText}>
-              Keine Tasks für diesen Filter.
+              Keine Tasks fuer diesen Filter.
             </Text>
           ) : (
             filteredTasks.map((t, idx) => renderTaskCard(t, idx))

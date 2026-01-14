@@ -141,6 +141,16 @@ export const makeStyles = (isDark: boolean) => {
       justifyContent: "space-between",
       alignItems: "center",
     },
+    taskAccordionHeaderRight: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    taskAccordionChevron: {
+      color: C.secondary,
+      fontSize: 16,
+      fontWeight: "700",
+    },
     taskCardTitle: {
       fontSize: 18,
     },
@@ -170,6 +180,13 @@ export const makeStyles = (isDark: boolean) => {
     },
     taskCardMetaSpacer: {
       marginTop: 6,
+    },
+    taskAccordionBody: {
+      marginTop: 8,
+      gap: 8,
+    },
+    taskAccordionDetails: {
+      alignSelf: "flex-end",
     },
     taskCardSurface: {
       backgroundColor: C.card,
@@ -214,6 +231,39 @@ export const makeStyles = (isDark: boolean) => {
       color: "#e67e22",
       fontSize: 12,
     },
+    taskLegendRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      gap: 12,
+      marginBottom: 4,
+    },
+    taskLegendItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+    },
+    taskLegendDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+    },
+    taskLegendLabel: {
+      color: C.text,
+      fontSize: 12,
+    },
+    taskStatusDotOpen: {
+      backgroundColor: C.success,
+    },
+    taskStatusDotRunning: {
+      backgroundColor: "#f59e0b",
+    },
+    taskStatusDotDone: {
+      backgroundColor: "#94a3b8",
+    },
+    taskStatusDotDeclined: {
+      backgroundColor: C.danger,
+    },
     doneAssignmentsContainer: {
       marginTop: 10,
     },
@@ -251,6 +301,58 @@ export const makeStyles = (isDark: boolean) => {
       paddingHorizontal: 16,
       paddingVertical: 10,
       minHeight: 40,
+    },
+    dropdownWrapper: {
+      gap: 8,
+    },
+    dropdownTrigger: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: C.border,
+      backgroundColor: C.surface,
+    },
+    dropdownTriggerText: {
+      color: C.text,
+      fontWeight: "700",
+    },
+    dropdownTriggerIcon: {
+      color: C.secondary,
+      fontSize: 14,
+    },
+    dropdownMenu: {
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: C.border,
+      backgroundColor: C.surface,
+      overflow: "hidden",
+    },
+    dropdownMenuScroll: {
+      maxHeight: 220,
+    },
+    dropdownItem: {
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: C.border,
+    },
+    dropdownItemLast: {
+      borderBottomWidth: 0,
+    },
+    dropdownItemActive: {
+      backgroundColor: `${C.primary}1A`,
+    },
+    dropdownItemText: {
+      color: C.text,
+      fontWeight: "500",
+    },
+    dropdownItemTextActive: {
+      color: C.primary,
+      fontWeight: "700",
     },
     taskDashboardContainer: {
       gap: 12,
@@ -310,6 +412,13 @@ export const makeStyles = (isDark: boolean) => {
     },
     taskFilterSectionSpacing: {
       marginTop: 14,
+    },
+    taskFilterRow: {
+      flexDirection: "row",
+      gap: 12,
+    },
+    taskFilterColumn: {
+      flex: 1,
     },
     taskFilterTitle: {
       color: C.text,
@@ -565,7 +674,7 @@ export const makeStyles = (isDark: boolean) => {
       marginBottom: 8,
     },
     searchResultsContainer: {
-      maxHeight: 320,
+      maxHeight: 420,
       width: "100%",
     },
     searchResultsContent: {

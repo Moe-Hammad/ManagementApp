@@ -49,7 +49,7 @@ export default function InboxScreen() {
       : "#e74c3c";
 
   return (
-    <ScreenController scroll={false}>
+    <ScreenController scroll={false} dismissKeyboardOnPress={false}>
       <View style={[styles.screen, styles.requestsContainer]}>
         {/* HEADER */}
         <Text style={[styles.titles, styles.requestsTitle]}>Inbox</Text>

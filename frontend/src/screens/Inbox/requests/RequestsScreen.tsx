@@ -21,7 +21,7 @@ export default function RequestsScreen() {
   const userId = requestsState.user?.id || "";
 
   return (
-    <ScreenController scroll={false}>
+    <ScreenController scroll={false} dismissKeyboardOnPress={false}>
       <View style={styles.requestsContainer}>
         <RequestsInfo
           wsRequestsStatus={requestsState.wsStatus}

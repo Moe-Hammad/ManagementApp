@@ -71,6 +71,18 @@ export default function TaskDetailsScreen() {
     [assignments]
   );
 
+  const resolvedAssignmentIds = useMemo(
+    () =>
+      Object.values(assignments)
+        .filter(
+          (a) =>
+            a.status === AssignmentStatus.ACCEPTED ||
+            a.status === AssignmentStatus.DECLINED
+        )
+        .map((a) => a.employeeId),
+    [assignments]
+  );
+
   const acceptedCount = useMemo(
     () =>
       Object.values(assignments).filter(
@@ -92,6 +104,7 @@ export default function TaskDetailsScreen() {
   }, [task]);
 
   const canEdit = status === "OPEN";
+  const visibleAssignedIds = status === "DONE" ? resolvedAssignmentIds : assignedIds;
 
   useEffect(() => {
     if (task) {
@@ -414,11 +427,13 @@ export default function TaskDetailsScreen() {
         </View>
 
         <View style={[styles.cardWrapper, { marginTop: 12 }]}>
-          <Text style={styles.label}>Zugewiesene Mitarbeiter</Text>
-          {assignedIds.length === 0 ? (
+          <Text style={styles.label}>
+            {status === "DONE" ? "Mitarbeiterstatus" : "Zugewiesene Mitarbeiter"}
+          </Text>
+          {visibleAssignedIds.length === 0 ? (
             <Text style={styles.taskAssignBusy}>Keine Zuweisungen</Text>
           ) : (
-            assignedIds.map((empId) => {
+            visibleAssignedIds.map((empId) => {
               const emp = employees.find((e) => e.id === empId);
               const assignment = assignments[empId];
               return (
@@ -460,9 +475,10 @@ export default function TaskDetailsScreen() {
           )}
         </View>
 
-        <View style={[styles.cardWrapper, { marginTop: 12 }]}>
-          <Text style={styles.label}>Mitarbeiter hinzufügen</Text>
-          {employees.map((emp) => {
+        {status !== "DONE" && (
+          <View style={[styles.cardWrapper, { marginTop: 12 }]}>
+            <Text style={styles.label}>Mitarbeiter hinzufügen</Text>
+            {employees.map((emp) => {
             const assigned = assignedIds.includes(emp.id);
             const assignment = assignments[emp.id];
             const disableAdd = assigned || assignedIds.length >= currentCapacity || !canEdit || !editMode;
@@ -507,7 +523,8 @@ export default function TaskDetailsScreen() {
               </View>
             );
           })}
-        </View>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

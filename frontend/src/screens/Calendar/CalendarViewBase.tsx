@@ -299,7 +299,7 @@ export function CalendarViewBase({
           <Text
             style={[styles.calendarEmptyText, { color: palette.secondary }]}
           >
-            Keine Eintr„ge.
+            Keine Einträge.
           </Text>
         ) : (
           <ScrollView
