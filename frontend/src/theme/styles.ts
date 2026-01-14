@@ -163,13 +163,13 @@ export const makeStyles = (isDark: boolean) => {
       fontWeight: "700",
     },
     taskCardStatusOpen: {
-      color: "#22c55e",
+      color: "#4ade80",
     },
     taskCardStatusRunning: {
-      color: C.primary,
+      color: "#f59e0b",
     },
     taskCardStatusDone: {
-      color: C.secondary,
+      color: "#22c55e",
     },
     taskCardLocation: {
       color: C.text,
@@ -187,6 +187,16 @@ export const makeStyles = (isDark: boolean) => {
     },
     taskAccordionDetails: {
       alignSelf: "flex-end",
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: C.primary,
+      backgroundColor: C.primary,
+    },
+    taskAccordionDetailsText: {
+      color: "#fff",
+      fontWeight: "700",
     },
     taskCardSurface: {
       backgroundColor: C.card,
@@ -195,6 +205,21 @@ export const makeStyles = (isDark: boolean) => {
       borderWidth: isDark ? 0 : 1,
       borderColor: isDark ? "transparent" : C.border,
       ...shadow(C.shadow, 3, 10, 0.25),
+    },
+    taskCardSurfaceOpen: {
+      backgroundColor: isDark ? "rgba(74,222,128,0.16)" : "rgba(74,222,128,0.12)",
+      borderColor: isDark ? "rgba(74,222,128,0.35)" : "rgba(74,222,128,0.45)",
+      borderWidth: 1,
+    },
+    taskCardSurfaceRunning: {
+      backgroundColor: isDark ? "rgba(245,158,11,0.14)" : "rgba(245,158,11,0.12)",
+      borderColor: isDark ? "rgba(245,158,11,0.35)" : "rgba(245,158,11,0.45)",
+      borderWidth: 1,
+    },
+    taskCardSurfaceDone: {
+      backgroundColor: isDark ? "rgba(34,197,94,0.2)" : "rgba(34,197,94,0.16)",
+      borderColor: isDark ? "rgba(34,197,94,0.45)" : "rgba(34,197,94,0.55)",
+      borderWidth: 1,
     },
     taskAssignContainer: {
       marginTop: 10,
@@ -253,13 +278,13 @@ export const makeStyles = (isDark: boolean) => {
       fontSize: 12,
     },
     taskStatusDotOpen: {
-      backgroundColor: C.success,
+      backgroundColor: "#4ade80",
     },
     taskStatusDotRunning: {
       backgroundColor: "#f59e0b",
     },
     taskStatusDotDone: {
-      backgroundColor: "#94a3b8",
+      backgroundColor: "#22c55e",
     },
     taskStatusDotDeclined: {
       backgroundColor: C.danger,

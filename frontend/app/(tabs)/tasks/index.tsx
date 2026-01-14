@@ -267,6 +267,12 @@ export default function TasksIndex() {
     const isExpanded = expandedTaskId === task.id;
     const statusLabel =
       status === "OPEN" ? "Offen" : status === "RUNNING" ? "Laufend" : "Fertig";
+    const statusCardStyle =
+      status === "DONE"
+        ? styles.taskCardSurfaceDone
+        : status === "RUNNING"
+        ? styles.taskCardSurfaceRunning
+        : styles.taskCardSurfaceOpen;
 
     const confirmDelete = () => {
       if (!token || !managerId) return;
@@ -302,6 +308,7 @@ export default function TasksIndex() {
           styles.taskCardContainer,
           isDone ? styles.taskCardDone : styles.taskCardCollapsed,
           isExpanded ? styles.taskCardExpanded : null,
+          statusCardStyle,
         ]}
       >
         <Pressable
@@ -355,7 +362,7 @@ export default function TasksIndex() {
               }
               style={styles.taskAccordionDetails}
             >
-              <Text style={styles.taskListAction}>Details</Text>
+              <Text style={styles.taskAccordionDetailsText}>Details</Text>
             </Pressable>
 
             <Text style={styles.taskCardLocation}>{task.location}</Text>
