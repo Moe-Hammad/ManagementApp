@@ -245,12 +245,12 @@ export default function TaskDetailsScreen() {
   const handleDelete = () => {
     if (!token || !id || !canDelete) return;
     Alert.alert(
-      "Task loeschen?",
+      "Task löschen?",
       "Kommende Tasks werden entfernt und verschwinden aus dem Kalender.",
       [
         { text: "Abbrechen", style: "cancel" },
         {
-          text: "Loeschen",
+          text: "Löschen",
           style: "destructive",
           onPress: async () => {
             try {
@@ -260,7 +260,7 @@ export default function TaskDetailsScreen() {
             } catch (err: any) {
               Alert.alert(
                 "Fehler",
-                err?.message || "Task konnte nicht geloescht werden."
+                err?.message || "Task konnte nicht gelöscht werden."
               );
             } finally {
               setSaving(false);

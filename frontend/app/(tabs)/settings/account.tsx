@@ -102,7 +102,7 @@ export default function AccountScreen() {
       [
         { text: "Abbrechen", style: "cancel" },
         {
-          text: "Loeschen",
+          text: "Löschen",
           style: "destructive",
           onPress: async () => {
             try {

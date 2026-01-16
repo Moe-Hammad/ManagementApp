@@ -14,8 +14,8 @@ import {
   TaskAssignment,
   UserRole,
 } from "@/src/types/resources";
-import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import moment from "moment";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -43,7 +43,8 @@ const FilterDropdown = ({
   styles,
 }: FilterDropdownProps) => {
   const selectedLabel =
-    options.find((option) => option.value === value)?.label ?? options[0]?.label;
+    options.find((option) => option.value === value)?.label ??
+    options[0]?.label;
 
   return (
     <View style={styles.dropdownWrapper}>
@@ -81,7 +82,6 @@ const FilterDropdown = ({
           </ScrollView>
         </View>
       )}
-
     </View>
   );
 };
@@ -191,9 +191,10 @@ export default function TasksIndex() {
     [users]
   );
 
-  const filteredTasks = useMemo(
-    () =>
-      tasks.filter((task) => {
+  const filteredTasks = useMemo(() => {
+    const now = moment();
+    return tasks
+      .filter((task) => {
         const status = deriveStatus(task);
         const statusMatch = statusFilter === "ALL" || status === statusFilter;
         const userMatch =
@@ -203,13 +204,22 @@ export default function TasksIndex() {
           );
         return statusMatch && userMatch;
       })
-        .sort((a, b) => {
-          const startDiff = moment(a.start).valueOf() - moment(b.start).valueOf();
-          if (startDiff !== 0) return startDiff;
-          return moment(a.end).valueOf() - moment(b.end).valueOf();
-        }),
-    [tasks, deriveStatus, statusFilter, userFilter, assignmentsByTask]
-  );
+      .sort((a, b) => {
+        const statusA = deriveStatus(a);
+        const statusB = deriveStatus(b);
+        const rank = (task: Task, status: Exclude<StatusFilter, "ALL">) => {
+          if (status === "DONE") return 2;
+          if (moment(task.start).isAfter(now)) return 0;
+          if (status === "RUNNING") return 1;
+          return 1;
+        };
+        const rankDiff = rank(a, statusA) - rank(b, statusB);
+        if (rankDiff !== 0) return rankDiff;
+        const startDiff = moment(a.start).valueOf() - moment(b.start).valueOf();
+        if (startDiff !== 0) return startDiff;
+        return moment(a.end).valueOf() - moment(b.end).valueOf();
+      });
+  }, [tasks, deriveStatus, statusFilter, userFilter, assignmentsByTask]);
 
   // Guards -------------------------------------------------------------------
   if (role !== UserRole.MANAGER) {
@@ -269,7 +279,9 @@ export default function TasksIndex() {
   const renderTaskCard = (task: Task, index: number) => {
     const active = activeAssignments(task.id);
     const assignments = assignmentsByTask[task.id] || [];
-    const pendingCount = assignments.filter((a) => a.status === AssignmentStatus.PENDING).length;
+    const pendingCount = assignments.filter(
+      (a) => a.status === AssignmentStatus.PENDING
+    ).length;
     const openSlots = openSlotsForTask(task);
     const status = deriveStatus(task);
     const isDone = status === "DONE";
@@ -282,34 +294,6 @@ export default function TasksIndex() {
         : status === "RUNNING"
         ? styles.taskCardSurfaceRunning
         : styles.taskCardSurfaceOpen;
-
-    /*
-    const confirmDelete = () => {
-      if (!token || !managerId) return;
-      Alert.alert(
-        "Task löschen?",
-        "Kommende Tasks werden entfernt und verschwinden aus dem Kalender.",
-        [
-          { text: "Abbrechen", style: "cancel" },
-          {
-            text: "Löschen",
-            style: "destructive",
-            onPress: async () => {
-              try {
-                setTasksLoading(true);
-                await deleteTaskApi(task.id, token);
-                await loadTasks();
-              } catch (err: any) {
-                Alert.alert("Fehler", err?.message || "Task konnte nicht gelöscht werden.");
-              } finally {
-                setTasksLoading(false);
-              }
-            },
-          },
-        ]
-      );
-    };
-    */
 
     return (
       <View
@@ -329,38 +313,35 @@ export default function TasksIndex() {
           }
         >
           <Text
-            style={[styles.title, styles.taskCardTitle, styles.taskCardTitleEllipsis]}
+            style={[
+              styles.title,
+              styles.taskCardTitle,
+              styles.taskCardTitleEllipsis,
+            ]}
             numberOfLines={1}
             ellipsizeMode="tail"
           >
             #{index + 1} {task.company}
           </Text>
           <View style={styles.taskAccordionHeaderRight}>
-            {/*
-            <Pressable onPress={confirmDelete} style={{ marginRight: 8 }}>
-              <Text style={[styles.taskListAction, { color: "#ef4444" }]}>
-                Löschen
+            {isExpanded && (
+              <Text
+                style={[
+                  styles.taskCardStatus,
+                  status === "DONE"
+                    ? styles.taskCardStatusDone
+                    : status === "RUNNING"
+                    ? styles.taskCardStatusRunning
+                    : styles.taskCardStatusOpen,
+                ]}
+              >
+                Status: {statusLabel}
               </Text>
-            </Pressable>
-          */}
-          {isExpanded && (
-            <Text
-              style={[
-                styles.taskCardStatus,
-                status === "DONE"
-                  ? styles.taskCardStatusDone
-                  : status === "RUNNING"
-                  ? styles.taskCardStatusRunning
-                  : styles.taskCardStatusOpen,
-              ]}
-            >
-              Status: {statusLabel}
+            )}
+            <Text style={styles.taskAccordionChevron}>
+              {isExpanded ? "^" : "v"}
             </Text>
-          )}
-          <Text style={styles.taskAccordionChevron}>
-            {isExpanded ? "^" : "v"}
-          </Text>
-        </View>
+          </View>
         </Pressable>
         {isExpanded && (
           <View style={styles.taskAccordionBody}>
@@ -395,7 +376,9 @@ export default function TasksIndex() {
                   return (
                     <View key={a.id} style={styles.doneAssignmentRow}>
                       <Text style={styles.doneAssignmentName}>
-                        {emp ? `${emp.firstName} ${emp.lastName}` : a.employeeId}
+                        {emp
+                          ? `${emp.firstName} ${emp.lastName}`
+                          : a.employeeId}
                       </Text>
                       <Text style={styles.doneAssignmentStatus}>
                         Status: {a.status}

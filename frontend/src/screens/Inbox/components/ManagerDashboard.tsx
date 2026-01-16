@@ -17,7 +17,7 @@ export default function ManagerDashboard({
   const { isDark } = useThemeMode();
   const styles = makeStyles(isDark);
 
-  const topEmployees = manager.employees.slice(0, 3);
+  const topEmployees = manager.employees;
 
   return (
     <View style={styles.screen}>
@@ -31,9 +31,7 @@ export default function ManagerDashboard({
       <View style={styles.row}>
         <View style={[styles.widget, styles.col]}>
           <Text style={styles.widgetTitle}>Verfügbar</Text>
-          <Text style={styles.widgetValue}>
-            {availableEmployees} / {totalEmployees}
-          </Text>
+          <Text style={styles.widgetValue}>{availableEmployees}</Text>
         </View>
 
         <View style={[styles.widget, styles.col]}>
@@ -43,7 +41,7 @@ export default function ManagerDashboard({
       </View>
 
       <View style={[styles.widget, { marginTop: 16 }]}>
-        <Text style={styles.widgetTitle}>Team Status (Top 3)</Text>
+        <Text style={styles.widgetTitle}>Team Status</Text>
         {topEmployees.map((emp) => (
           <View
             key={emp.id}

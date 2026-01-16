@@ -128,7 +128,7 @@ export function useRequests() {
     })();
   }, [token, role, userId, dispatch]);
 
-  // ==== WS: Live-Updates fr Assignments ====================================
+  // ==== WS: Live-Updates für Assignments ====================================
   useEffect(() => {
     if (!token) return;
 
