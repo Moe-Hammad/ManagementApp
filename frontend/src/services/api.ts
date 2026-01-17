@@ -738,6 +738,31 @@ export async function listEmployeesUnderManager(
   return response.json();
 }
 
+export async function removeEmployeeFromManager(
+  managerId: string,
+  employeeId: string,
+  token: string
+): Promise<void> {
+  const response = await fetchWithAuth(
+    `${API_BASE_URL}/api/managers/${managerId}/employees/${employeeId}`,
+    {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeader(token),
+      },
+    },
+    token
+  );
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Employee remove failed (${response.status}) ${errorBody || ""}`.trim()
+    );
+  }
+}
+
 // ============================
 // Account / Profile
 // ============================

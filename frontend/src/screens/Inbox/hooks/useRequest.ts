@@ -16,7 +16,7 @@ import { upsertAssignment } from "@/src/redux/assignmentSlice";
 import { subscribeUserAssignments } from "@/src/services/wsClient";
 import { RequestStatus, UserRole } from "@/src/types/resources";
 import { fetchAssignmentsForEmployee } from "@/src/services/api";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 
 /**
@@ -62,6 +62,7 @@ export function useRequests() {
 
   // ==== Lokaler UI-State ====================================================
   const [employeeSearch, setEmployeeSearch] = useState("");
+  const employeeSearchRef = useRef(employeeSearch);
   const [wsStatus, setWsStatus] = useState<"idle" | "connected" | "error">(
     "idle"
   );
@@ -75,10 +76,20 @@ export function useRequests() {
     dispatch(fetchCurrentUser(token));
   };
 
-  const pendingRequests = useMemo(
-    () => requests.filter((r) => r.status === RequestStatus.PENDING),
-    [requests]
-  );
+  const pendingRequests = useMemo(() => {
+    if (role === UserRole.MANAGER) {
+      return requests.filter(
+        (r) =>
+          r.status === RequestStatus.PENDING ||
+          r.status === RequestStatus.APPROVED
+      );
+    }
+    return requests.filter((r) => r.status === RequestStatus.PENDING);
+  }, [requests, role]);
+
+  useEffect(() => {
+    employeeSearchRef.current = employeeSearch;
+  }, [employeeSearch]);
 
   // ==== WS: Live-Updates für Requests =======================================
   useEffect(() => {
@@ -102,6 +113,14 @@ export function useRequests() {
           // Fallback: sync gegen Backend, falls lokaler State alt ist
           dispatch(fetchRequests({ userId, role, token }));
           refreshUser();
+          if (role === UserRole.MANAGER) {
+            dispatch(
+              fetchUnassigned({
+                query: employeeSearchRef.current.trim(),
+                token,
+              })
+            );
+          }
           setWsStatus("connected");
         }
       },

@@ -50,6 +50,75 @@ public class DataLoader {
     private final MessageRepository messageRepo;
     private final TransactionTemplate txTemplate;
 
+    private static final List<String[]> MANAGER1_TEAM_NAMES = List.of(
+            new String[]{"Sofia", "Klein"},
+            new String[]{"Lukas", "Bauer"},
+            new String[]{"Mila", "Hoffmann"},
+            new String[]{"Jonas", "Schneider"},
+            new String[]{"Lea", "Fischer"},
+            new String[]{"Noah", "Becker"},
+            new String[]{"Emma", "Krueger"},
+            new String[]{"Paul", "Neumann"},
+            new String[]{"Lina", "Wolf"},
+            new String[]{"Tim", "Schubert"}
+    );
+
+    private static final List<String[]> MANAGER2_TEAM_NAMES = List.of(
+            new String[]{"Felix", "Brandt"},
+            new String[]{"Nina", "Hartmann"},
+            new String[]{"Marie", "Vogel"},
+            new String[]{"Leon", "Richter"},
+            new String[]{"Sara", "Koch"},
+            new String[]{"David", "Zimmermann"},
+            new String[]{"Jana", "Peters"},
+            new String[]{"Jan", "Schulte"},
+            new String[]{"Carla", "Walter"},
+            new String[]{"Tom", "Friedrich"}
+    );
+
+    private static final List<String[]> UNASSIGNED_NAMES = List.of(
+            new String[]{"Mara", "Seidel"},
+            new String[]{"Louis", "Krause"},
+            new String[]{"Hanna", "Schwarz"},
+            new String[]{"Niklas", "Frank"},
+            new String[]{"Tessa", "Lange"},
+            new String[]{"Kevin", "Dietrich"},
+            new String[]{"Melina", "Otto"},
+            new String[]{"Fabian", "Jung"},
+            new String[]{"Clara", "Simon"},
+            new String[]{"Pascal", "Kuhn"}
+    );
+
+    private static final List<String> SEED_COMPANIES = List.of(
+            "Nordlicht Logistik GmbH",
+            "Rhein-Main Service GmbH",
+            "Hanseatic Eventtechnik GmbH",
+            "Spreewerk Facility Services",
+            "Elbe Hafenservice AG",
+            "Isar Catering GmbH",
+            "Ruhr City Security GmbH",
+            "MainCity Reinigung",
+            "Koenigshof Technik GmbH",
+            "Bergblick Messebau GmbH",
+            "Baltic Crew Services",
+            "Westpark Infrastruktur GmbH"
+    );
+
+    private static final List<String> SEED_LOCATIONS = List.of(
+            "Messeplatz 1, 20357 Hamburg",
+            "Friedrichstrasse 68, 10117 Berlin",
+            "Koenigstrasse 5, 70173 Stuttgart",
+            "Marienplatz 8, 80331 Muenchen",
+            "Neumarkt 2, 50667 Koeln",
+            "Hauptbahnhof 1, 60329 Frankfurt",
+            "Augustusplatz 1, 04109 Leipzig",
+            "Theaterplatz 1, 01067 Dresden",
+            "Domplatz 1, 49074 Osnabrueck",
+            "Heumarkt 20, 50667 Koeln",
+            "Bismarckstrasse 45, 90402 Nuernberg",
+            "Markt 1, 97070 Wuerzburg"
+    );
+
     @Bean
     ApplicationRunner loadData() {
         return args -> txTemplate.executeWithoutResult(status -> seed());
@@ -63,27 +132,33 @@ public class DataLoader {
                 "manager1@mail.com",
                 () -> {
                     Manager m = new Manager();
-                    m.setFirstName("Manager");
-                    m.setLastName("One");
+                    m.setFirstName("Laura");
+                    m.setLastName("Schmidt");
                     m.setEmail("manager1@mail.com");
                     m.setPassword("pass123");
                     m.setRole(UserRole.MANAGER);
                     return m;
                 }
         );
+        manager1.setFirstName("Laura");
+        manager1.setLastName("Schmidt");
+        managerRepo.save(manager1);
 
         Manager manager2 = ensureManager(
                 "manager2@mail.com",
                 () -> {
                     Manager m = new Manager();
-                    m.setFirstName("Manager");
-                    m.setLastName("Two");
+                    m.setFirstName("Daniel");
+                    m.setLastName("Weber");
                     m.setEmail("manager2@mail.com");
                     m.setPassword("pass123");
                     m.setRole(UserRole.MANAGER);
                     return m;
                 }
         );
+        manager2.setFirstName("Daniel");
+        manager2.setLastName("Weber");
+        managerRepo.save(manager2);
 
         // Core employees for manager1 demo requests
         Employee empAssigned = ensureEmployee(
@@ -91,7 +166,7 @@ public class DataLoader {
                 () -> {
                     Employee e = new Employee();
                     e.setFirstName("Anna");
-                    e.setLastName("Assigned");
+                    e.setLastName("Keller");
                     e.setEmail("emp1_1@mail.com");
                     e.setHourlyRate(18.5);
                     e.setAvailability(true);
@@ -100,6 +175,10 @@ public class DataLoader {
                     return e;
                 }
         );
+        empAssigned.setFirstName("Anna");
+        empAssigned.setLastName("Keller");
+        empAssigned.setHourlyRate(18.5);
+        empAssigned.setAvailability(true);
         if (empAssigned.getManager() == null) {
             manager1.addEmployee(empAssigned);
         }
@@ -110,7 +189,7 @@ public class DataLoader {
                 () -> {
                     Employee e = new Employee();
                     e.setFirstName("Elias");
-                    e.setLastName("Pending");
+                    e.setLastName("Braun");
                     e.setEmail("emp1_2@mail.com");
                     e.setHourlyRate(17.0);
                     e.setAvailability(true);
@@ -119,6 +198,10 @@ public class DataLoader {
                     return e;
                 }
         );
+        empPending.setFirstName("Elias");
+        empPending.setLastName("Braun");
+        empPending.setHourlyRate(17.0);
+        empPending.setAvailability(true);
         employeeRepo.save(empPending);
 
         Employee empApproved = ensureEmployee(
@@ -126,7 +209,7 @@ public class DataLoader {
                 () -> {
                     Employee e = new Employee();
                     e.setFirstName("Ben");
-                    e.setLastName("Approved");
+                    e.setLastName("Wagner");
                     e.setEmail("emp1_3@mail.com");
                     e.setHourlyRate(19.0);
                     e.setAvailability(true);
@@ -135,12 +218,16 @@ public class DataLoader {
                     return e;
                 }
         );
+        empApproved.setFirstName("Ben");
+        empApproved.setLastName("Wagner");
+        empApproved.setHourlyRate(19.0);
+        empApproved.setAvailability(true);
         employeeRepo.save(empApproved);
 
         // Teams and unassigned pool
-        List<Employee> manager1Team = seedTeamForManager(manager1, "m1_team", 10, 17.5);
-        List<Employee> manager2Team = seedTeamForManager(manager2, "m2_team", 10, 18.5);
-        seedUnassignedEmployees(10);
+        List<Employee> manager1Team = seedTeamForManager(manager1, "m1_team", MANAGER1_TEAM_NAMES, 17.5);
+        List<Employee> manager2Team = seedTeamForManager(manager2, "m2_team", MANAGER2_TEAM_NAMES, 18.5);
+        seedUnassignedEmployees(UNASSIGNED_NAMES);
 
         // Requests (idempotent)
         if (!requestRepo.existsByManagerIdAndEmployeeId(manager1.getId(), empPending.getId())) {
@@ -217,18 +304,21 @@ public class DataLoader {
         return entry;
     }
 
-    private List<Employee> seedTeamForManager(Manager manager, String prefix, int count, double hourlyRate) {
+    private List<Employee> seedTeamForManager(Manager manager,
+                                              String prefix,
+                                              List<String[]> names,
+                                              double hourlyRate) {
         List<Employee> seeded = employeeRepo.findAll().stream()
                 .filter(e -> e.getManager() != null && manager.getId().equals(e.getManager().getId()))
                 .collect(Collectors.toList());
 
-        for (int i = 1; i <= count; i++) {
-            String email = prefix + "_" + i + "@mail.com";
-            int finalI = i;
+        for (int i = 0; i < names.size(); i++) {
+            String[] name = names.get(i);
+            String email = prefix + "_" + (i + 1) + "@mail.com";
             Employee emp = ensureEmployee(email, () -> {
                 Employee e = new Employee();
-                e.setFirstName(prefix.toUpperCase());
-                e.setLastName("User" + finalI);
+                e.setFirstName(name[0]);
+                e.setLastName(name[1]);
                 e.setEmail(email);
                 e.setHourlyRate(hourlyRate);
                 e.setAvailability(true);
@@ -236,24 +326,30 @@ public class DataLoader {
                 e.setRole(UserRole.EMPLOYEE);
                 return e;
             });
+            emp.setFirstName(name[0]);
+            emp.setLastName(name[1]);
+            emp.setHourlyRate(hourlyRate);
+            emp.setAvailability(true);
             if (emp.getManager() == null) {
                 manager.addEmployee(emp);
                 employeeRepo.save(emp);
             }
-            seeded.add(emp);
+            if (seeded.stream().noneMatch(existing -> existing.getId().equals(emp.getId()))) {
+                seeded.add(emp);
+            }
         }
         managerRepo.save(manager);
         return seeded;
     }
 
-    private void seedUnassignedEmployees(int count) {
-        for (int i = 1; i <= count; i++) {
-            String email = "unassigned_" + i + "@mail.com";
-            int finalI = i;
+    private void seedUnassignedEmployees(List<String[]> names) {
+        for (int i = 0; i < names.size(); i++) {
+            String[] name = names.get(i);
+            String email = "unassigned_" + (i + 1) + "@mail.com";
             ensureEmployee(email, () -> {
                 Employee e = new Employee();
-                e.setFirstName("Unassigned");
-                e.setLastName("Emp" + finalI);
+                e.setFirstName(name[0]);
+                e.setLastName(name[1]);
                 e.setEmail(email);
                 e.setHourlyRate(16.0);
                 e.setAvailability(true);
@@ -261,6 +357,20 @@ public class DataLoader {
                 e.setRole(UserRole.EMPLOYEE);
                 return e;
             });
+            Employee emp = userRepo.findByEmail(email)
+                    .filter(Employee.class::isInstance)
+                    .map(Employee.class::cast)
+                    .orElse(null);
+            if (emp != null) {
+                emp.setFirstName(name[0]);
+                emp.setLastName(name[1]);
+                emp.setHourlyRate(16.0);
+                emp.setAvailability(true);
+                if (emp.getManager() != null) {
+                    emp.setManager(null);
+                }
+                employeeRepo.save(emp);
+            }
         }
     }
 
@@ -270,39 +380,51 @@ public class DataLoader {
                                       List<Employee> fallbackPool) {
         List<Task> existing = taskRepo.findAll();
 
-        Task finishedTask = findTask(existing, "Seed - Finished - " + manager.getEmail(), "Hamburg Messehalle 4");
+        LocalDateTime finishedStart = now.minusDays(7).withHour(9).withMinute(0);
+        LocalDateTime finishedEnd = now.minusDays(7).withHour(17).withMinute(0);
+        String finishedCompany = "Nordlicht Logistik GmbH";
+        String finishedLocation = "Messeplatz 1, 20357 Hamburg";
+        Task finishedTask = findTask(existing, manager, finishedCompany, finishedLocation, finishedStart, finishedEnd);
         if (finishedTask == null) {
             finishedTask = buildTask(manager,
-                    "Seed - Finished - " + manager.getEmail(),
-                    "Hamburg Messehalle 4",
-                    now.minusDays(7).withHour(9).withMinute(0),
-                    now.minusDays(7).withHour(17).withMinute(0),
+                    finishedCompany,
+                    finishedLocation,
+                    finishedStart,
+                    finishedEnd,
                     2,
                     now.minusDays(8));
             addAssignmentWithStatus(finishedTask, priorityAssignees, AssignmentStatus.ACCEPTED, finishedTask.getStart().minusDays(1));
             saveTaskWithCalendar(finishedTask);
         }
 
-        Task runningTask = findTask(existing, "Seed - Running - " + manager.getEmail(), "Berlin Lager 12");
+        LocalDateTime runningStart = now.minusHours(2);
+        LocalDateTime runningEnd = now.plusHours(4);
+        String runningCompany = "Spreewerk Facility Services";
+        String runningLocation = "Friedrichstrasse 68, 10117 Berlin";
+        Task runningTask = findTask(existing, manager, runningCompany, runningLocation, runningStart, runningEnd);
         if (runningTask == null) {
             runningTask = buildTask(manager,
-                    "Seed - Running - " + manager.getEmail(),
-                    "Berlin Lager 12",
-                    now.minusHours(2),
-                    now.plusHours(4),
+                    runningCompany,
+                    runningLocation,
+                    runningStart,
+                    runningEnd,
                     2,
                     now.minusHours(3));
             addAssignmentWithStatus(runningTask, priorityAssignees, AssignmentStatus.ACCEPTED, now.minusHours(2));
             saveTaskWithCalendar(runningTask);
         }
 
-        Task upcomingTask = findTask(existing, "Seed - Upcoming - " + manager.getEmail(), "Muenchen Innenstadt");
+        LocalDateTime upcomingStart = now.plusDays(3).withHour(8).withMinute(30);
+        LocalDateTime upcomingEnd = now.plusDays(3).withHour(16).withMinute(0);
+        String upcomingCompany = "Isar Catering GmbH";
+        String upcomingLocation = "Marienplatz 8, 80331 Muenchen";
+        Task upcomingTask = findTask(existing, manager, upcomingCompany, upcomingLocation, upcomingStart, upcomingEnd);
         if (upcomingTask == null) {
             upcomingTask = buildTask(manager,
-                    "Seed - Upcoming - " + manager.getEmail(),
-                    "Muenchen Innenstadt",
-                    now.plusDays(3).withHour(8).withMinute(30),
-                    now.plusDays(3).withHour(16).withMinute(0),
+                    upcomingCompany,
+                    upcomingLocation,
+                    upcomingStart,
+                    upcomingEnd,
                     3,
                     now.plusDays(2));
             if (!fallbackPool.isEmpty()) {
@@ -335,15 +457,15 @@ public class DataLoader {
 
         int seedIndex = 1;
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(4)) {
-            String company = "Seed - " + date + " - " + manager.getEmail();
-            String location = "Seed Location " + seedIndex;
-            if (findTask(existing, company, location) != null) {
+            String company = pickFromList(SEED_COMPANIES, seedIndex);
+            String location = pickFromList(SEED_LOCATIONS, seedIndex);
+            LocalDateTime start = date.atTime(9, 0);
+            LocalDateTime end = date.atTime(17, 0);
+            if (findTask(existing, manager, company, location, start, end) != null) {
                 seedIndex++;
                 continue;
             }
 
-            LocalDateTime start = date.atTime(9, 0);
-            LocalDateTime end = date.atTime(17, 0);
             Task task = buildTask(manager, company, location, start, end, 3, start.minusDays(1));
 
             List<Employee> sample = sampleEmployees(pool, seedIndex, 3);
@@ -388,10 +510,10 @@ public class DataLoader {
             seedIndex++;
         }
 
-        String endCompany = "Seed - EndFeb - " + manager.getEmail();
-        String endLocation = "Seed EndFeb";
-        if (findTask(existing, endCompany, endLocation) == null) {
-            LocalDateTime start = endDate.atTime(10, 0);
+        String endCompany = pickFromList(SEED_COMPANIES, 0);
+        String endLocation = pickFromList(SEED_LOCATIONS, 0);
+        LocalDateTime start = endDate.atTime(10, 0);
+        if (findTask(existing, manager, endCompany, endLocation, start, start.plusHours(6)) == null) {
             Task endTask = buildTask(
                     manager,
                     endCompany,
@@ -414,6 +536,11 @@ public class DataLoader {
         return picked;
     }
 
+    private String pickFromList(List<String> list, int index) {
+        int safeIndex = Math.abs(index) % list.size();
+        return list.get(safeIndex);
+    }
+
     private Task buildTask(Manager manager,
                            String company,
                            String location,
@@ -432,9 +559,16 @@ public class DataLoader {
         return task;
     }
 
-    private Task findTask(List<Task> existing, String company, String location) {
+    private Task findTask(List<Task> existing,
+                          Manager manager,
+                          String company,
+                          String location,
+                          LocalDateTime start,
+                          LocalDateTime end) {
         return existing.stream()
+                .filter(t -> manager.getId().equals(t.getManager().getId()))
                 .filter(t -> company.equals(t.getCompany()) && location.equals(t.getLocation()))
+                .filter(t -> start.equals(t.getStart()) && end.equals(t.getEnd()))
                 .findFirst()
                 .orElse(null);
     }

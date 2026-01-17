@@ -162,6 +162,19 @@ export const makeStyles = (isDark: boolean) => {
     taskCardStatus: {
       fontWeight: "700",
     },
+    taskWaitingPill: {
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: isDark ? "rgba(56,189,248,0.45)" : "rgba(56,189,248,0.55)",
+      backgroundColor: isDark ? "rgba(56,189,248,0.18)" : "rgba(56,189,248,0.14)",
+    },
+    taskWaitingText: {
+      color: "#38bdf8",
+      fontSize: 12,
+      fontWeight: "700",
+    },
     taskCardStatusOpen: {
       color: "#34d399",
     },

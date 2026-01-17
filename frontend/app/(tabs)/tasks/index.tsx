@@ -282,10 +282,14 @@ export default function TasksIndex() {
     const pendingCount = assignments.filter(
       (a) => a.status === AssignmentStatus.PENDING
     ).length;
+    const acceptedCount = assignments.filter(
+      (a) => a.status === AssignmentStatus.ACCEPTED
+    ).length;
     const openSlots = openSlotsForTask(task);
     const status = deriveStatus(task);
     const isDone = status === "DONE";
     const isExpanded = expandedTaskId === task.id;
+    const isWaiting = !isDone && acceptedCount < task.requiredEmployees;
     const statusLabel =
       status === "OPEN" ? "Offen" : status === "RUNNING" ? "Laufend" : "Fertig";
     const statusCardStyle =
@@ -324,6 +328,11 @@ export default function TasksIndex() {
             #{index + 1} {task.company}
           </Text>
           <View style={styles.taskAccordionHeaderRight}>
+            {isWaiting && (
+              <View style={styles.taskWaitingPill}>
+                <Text style={styles.taskWaitingText}>Wartend</Text>
+              </View>
+            )}
             {isExpanded && (
               <Text
                 style={[

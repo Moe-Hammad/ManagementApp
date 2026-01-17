@@ -1,7 +1,12 @@
+import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
+import { fetchCurrentUser } from "@/src/redux/fetchCurrentUser";
+import { removeEmployeeFromManager } from "@/src/services/api";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
 import { makeStyles } from "@/src/theme/styles";
 import { Manager } from "@/src/types/resources";
-import { Text, View } from "react-native";
+import { useState } from "react";
+import { Alert, Pressable, Text, View } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 type Props = {
   manager: Manager;
@@ -16,8 +21,40 @@ export default function ManagerDashboard({
 }: Props) {
   const { isDark } = useThemeMode();
   const styles = makeStyles(isDark);
+  const dispatch = useAppDispatch();
+  const token = useAppSelector((s) => s.auth.token?.accessToken);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   const topEmployees = manager.employees;
+
+  const handleRemoveEmployee = (employeeId: string) => {
+    if (!token || removingId) return;
+    Alert.alert(
+      "Mitarbeiter entfernen?",
+      "Der Mitarbeiter wird aus allen kuenftigen Tasks entfernt und ein Ersatz wird gesucht.",
+      [
+        { text: "Abbrechen", style: "cancel" },
+        {
+          text: "Entfernen",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setRemovingId(employeeId);
+              await removeEmployeeFromManager(manager.id, employeeId, token);
+              await dispatch(fetchCurrentUser(token));
+            } catch (err: any) {
+              Alert.alert(
+                "Fehler",
+                err?.message || "Mitarbeiter konnte nicht entfernt werden."
+              );
+            } finally {
+              setRemovingId(null);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <View style={styles.screen}>
@@ -50,14 +87,26 @@ export default function ManagerDashboard({
             <Text style={styles.text}>
               {emp.firstName} {emp.lastName}
             </Text>
-            <Text
-              style={[
-                styles.text,
-                { color: emp.availability ? "#22c55e" : "#ef4444" },
-              ]}
-            >
-              {emp.availability ? "frei" : "belegt"}
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <Text
+                style={[
+                  styles.text,
+                  { color: emp.availability ? "#22c55e" : "#ef4444" },
+                ]}
+              >
+                {emp.availability ? "frei" : "belegt"}
+              </Text>
+              <Pressable
+                onPress={() => handleRemoveEmployee(emp.id)}
+                disabled={removingId === emp.id}
+              >
+                <MaterialCommunityIcons
+                  name="trash-can-outline"
+                  size={18}
+                  color={removingId === emp.id ? "#ef4444" : "#ef4444"}
+                />
+              </Pressable>
+            </View>
           </View>
         ))}
         {topEmployees.length === 0 && (

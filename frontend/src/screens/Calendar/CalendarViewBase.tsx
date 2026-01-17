@@ -161,16 +161,48 @@ export function CalendarViewBase({
   }, [dayEventsRaw]);
 
   const groupedEvents = useMemo(() => {
+    type Person = {
+      employeeId: string;
+      name?: string | null;
+      status?: AssignmentStatus | null;
+    };
     type Group = {
       base: (typeof dayEvents)[number];
-      people: { name?: string | null; status?: AssignmentStatus | null }[];
+      people: Person[];
     };
+
+    const statusRank = (status?: AssignmentStatus | null) => {
+      if (status === AssignmentStatus.ACCEPTED) return 3;
+      if (status === AssignmentStatus.PENDING) return 2;
+      if (status === AssignmentStatus.DECLINED) return 1;
+      if (status === AssignmentStatus.EXPIRED) return 0;
+      return 0;
+    };
+
+    const mergePerson = (people: Person[], next: Person) => {
+      const existing = people.find((p) => p.employeeId === next.employeeId);
+      if (!existing) {
+        people.push(next);
+        return;
+      }
+      if (statusRank(next.status) > statusRank(existing.status)) {
+        existing.status = next.status;
+      }
+      if (!existing.name && next.name) {
+        existing.name = next.name;
+      }
+    };
+
     const map = new Map<string, Group>();
     dayEvents.forEach((ev) => {
       const key = ev.taskId || ev.id;
-      const person = { name: ev.employeeName, status: ev.assignmentStatus };
+      const person = {
+        employeeId: ev.employeeId,
+        name: ev.employeeName,
+        status: ev.assignmentStatus,
+      };
       if (map.has(key)) {
-        map.get(key)!.people.push(person);
+        mergePerson(map.get(key)!.people, person);
       } else {
         map.set(key, { base: ev, people: [person] });
       }
@@ -354,7 +386,7 @@ export function CalendarViewBase({
                     </Text>
                     {group.people.map((p, idx) => (
                       <View
-                        key={idx}
+                        key={p.employeeId || String(idx)}
                         style={{
                           flexDirection: "row",
                           alignItems: "center",
