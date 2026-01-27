@@ -24,26 +24,38 @@ public class ChatController {
     private final ChatService chatService;
 
     @GetMapping
-    @Operation(summary = "Alle Chats des eingeloggten Users")
+    @Operation(
+            summary = "Alle Chats des eingeloggten Users",
+            description = "Listet alle Chats des eingeloggten Users fuer die Chatliste."
+    )
     public ResponseEntity<List<ChatDto>> getChats() {
         return ResponseEntity.ok(chatService.getChatsForCurrentUser());
     }
 
     @GetMapping("/{chatId}/messages")
-    @Operation(summary = "Nachrichten eines Chats abrufen")
+    @Operation(
+            summary = "Nachrichten eines Chats abrufen",
+            description = "Liefert Nachrichten eines Chats fuer den Verlauf."
+    )
     public ResponseEntity<List<MessageDto>> getMessages(@PathVariable UUID chatId) {
         return ResponseEntity.ok(chatService.getMessages(chatId));
     }
 
     @PostMapping("/direct")
-    @Operation(summary = "Direkten Chat anlegen (Manager/Employee)")
+    @Operation(
+            summary = "Direkten Chat anlegen (Manager/Employee)",
+            description = "Erstellt einen Direktchat zwischen Manager und Employee."
+    )
     public ResponseEntity<ChatDto> createDirect(@RequestBody CreateDirectChatRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(chatService.createDirectChat(req.getManagerId(), req.getEmployeeId()));
     }
 
     @PostMapping("/group")
-    @Operation(summary = "Gruppenchat anlegen")
+    @Operation(
+            summary = "Gruppenchat anlegen",
+            description = "Erstellt einen Gruppenchat, optional mit Bezug zu einem Task."
+    )
     public ResponseEntity<ChatDto> createGroup(@RequestBody CreateGroupChatRequest req) {
         ChatDto chatDto = new ChatDto();
         chatDto.setName(req.getName());
@@ -53,7 +65,10 @@ public class ChatController {
     }
 
     @PostMapping("/{chatId}/messages")
-    @Operation(summary = "Nachricht in Chat senden")
+    @Operation(
+            summary = "Nachricht in Chat senden",
+            description = "Sendet eine Nachricht in den Chat und speichert sie."
+    )
     public ResponseEntity<MessageDto> sendMessage(
             @PathVariable UUID chatId,
             @RequestBody String text

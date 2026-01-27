@@ -25,13 +25,13 @@ export default function MessageInput({
   sending,
   styles,
   palette,
-  bottomInset = 0,
+  bottomPadding = 0,
 }: {
   onSend: (text: string) => void;
   sending: boolean;
   styles: any;
   palette: any;
-  bottomInset?: number;
+  bottomPadding?: number;
 }) {
   const [text, setText] = useState("");
 
@@ -45,7 +45,7 @@ export default function MessageInput({
     <View
       style={[
         styles.chatInputContainer,
-        bottomInset ? { paddingBottom: bottomInset } : null,
+        bottomPadding ? { paddingBottom: bottomPadding } : null,
       ]}
     >
       {/* Eingabefeld */}

@@ -18,8 +18,7 @@ public class Manager extends User {
 
     @OneToMany(
             mappedBy = "manager",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}
     )
     private List<Employee> employees = new ArrayList<>();
 

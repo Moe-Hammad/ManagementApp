@@ -1,6 +1,6 @@
 import { useChatPartner } from "@/src/hooks/useChatPartner";
 import { ChatRoom } from "@/src/types/resources";
-import { Pressable, Text, View } from "react-native";
+import { FlatList, Pressable, Text, View } from "react-native";
 
 function ChatListItem({
   room,
@@ -67,22 +67,26 @@ export default function ChatList({
   palette: any;
 }) {
   return (
-    <View style={styles.chatListContainer}>
-      {chats.length === 0 ? (
-        <Text style={[styles.text, styles.requestsNote]}>
-          Keine Chats vorhanden.
-        </Text>
-      ) : (
-        chats.map((room) => (
+    <FlatList
+      data={chats}
+      keyExtractor={(room) => room.id}
+      renderItem={({ item }) => (
+        <View style={styles.chatListItemWrapper}>
           <ChatListItem
-            key={room.id}
-            room={room}
+            room={item}
             onOpenChat={onOpenChat}
             styles={styles}
             palette={palette}
           />
-        ))
+        </View>
       )}
-    </View>
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.chatListContent}
+      ListEmptyComponent={
+        <Text style={[styles.text, styles.requestsNote]}>
+          Keine Chats vorhanden.
+        </Text>
+      }
+    />
   );
 }

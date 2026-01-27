@@ -1,8 +1,10 @@
 package com.momo.backend.service.implementation;
 
 import com.momo.backend.dto.Login.LoginRequest;
-import com.momo.backend.dto.Login.LoginResponse;
+import com.momo.backend.dto.Login.LogoutRequest;
+import com.momo.backend.dto.Login.RefreshRequest;
 import com.momo.backend.dto.Login.RegisterRequest;
+import com.momo.backend.dto.Login.TokenResponse;
 import com.momo.backend.dto.UserDto;
 import com.momo.backend.entity.*;
 import com.momo.backend.mapper.UserMapper;
@@ -12,6 +14,7 @@ import com.momo.backend.service.interfaces.EmployeeService;
 import com.momo.backend.service.interfaces.ManagerService;
 import com.momo.backend.service.interfaces.UserService;
 import com.momo.backend.service.security.JwtTokenProvider;
+import com.momo.backend.service.security.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -36,6 +39,7 @@ public class AuthServiceImple implements AuthService {
     private final ManagerService managerService;
     private final EmployeeService employeeService;
     private final JwtTokenProvider tokenProvider;
+    private final RefreshTokenService refreshTokenService;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
@@ -65,7 +69,7 @@ public class AuthServiceImple implements AuthService {
     // =======================
     // LOGIN
     // =======================
-    public LoginResponse login(LoginRequest request) {
+    public TokenResponse login(LoginRequest request, String deviceId, String userAgent, String ipAddress) {
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -75,15 +79,17 @@ public class AuthServiceImple implements AuthService {
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        UserDto userDto = userService.loadUserDtoByEmail(request.getEmail());
 
-        return buildResponse(userDto);
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
+        return buildTokenResponse(user, deviceId, userAgent, ipAddress);
     }
 
     // =======================
     // REGISTER
     // =======================
-    public LoginResponse register(RegisterRequest request) {
+    public TokenResponse register(RegisterRequest request, String deviceId, String userAgent, String ipAddress) {
 
         if (userService.emailExists(request.getEmail())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
@@ -100,21 +106,58 @@ public class AuthServiceImple implements AuthService {
             created = employeeService.registerEmployee(request);
         }
 
-        return buildResponse(created);
+        User user = userRepository.findById(created.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        return buildTokenResponse(user, deviceId, userAgent, ipAddress);
+    }
+
+    // =======================
+    // REFRESH
+    // =======================
+    public TokenResponse refresh(RefreshRequest request, String deviceId, String userAgent, String ipAddress) {
+        if (request == null || request.refreshToken() == null || request.refreshToken().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Refresh token required");
+        }
+
+        RefreshTokenService.RotationResult result = refreshTokenService.rotate(
+                request.refreshToken(),
+                deviceId,
+                userAgent,
+                ipAddress
+        );
+
+        User user = result.user();
+        String accessToken = buildAccessToken(user);
+        return new TokenResponse(accessToken, result.refreshToken(), user.getId().toString(), user.getRole());
+    }
+
+    // =======================
+    // LOGOUT
+    // =======================
+    public void logout(LogoutRequest request) {
+        if (request == null || request.refreshToken() == null || request.refreshToken().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Refresh token required");
+        }
+        refreshTokenService.revoke(request.refreshToken());
     }
 
     // =======================
     // TOKEN BUILDER
     // =======================
-    public LoginResponse buildResponse(UserDto user) {
+    private TokenResponse buildTokenResponse(User user, String deviceId, String userAgent, String ipAddress) {
+        String accessToken = buildAccessToken(user);
+        String refreshToken = refreshTokenService.createToken(user, deviceId, userAgent, ipAddress);
+        return new TokenResponse(accessToken, refreshToken, user.getId().toString(), user.getRole());
+    }
 
+    private String buildAccessToken(User user) {
 
-        String token = tokenProvider.generateToken(
+        return tokenProvider.generateToken(
                 user.getEmail(),
                 Map.of("uid", user.getId().toString(), "role", user.getRole())
         );
 
-        return new LoginResponse(token, user.getId().toString(), user.getRole());
     }
 
     // =======================

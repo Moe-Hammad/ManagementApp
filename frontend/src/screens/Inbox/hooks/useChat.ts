@@ -5,21 +5,22 @@ import {
   fetchChatRooms,
   fetchMessagesForChat,
   sendChatMessage,
-  setRooms,
   setMessagesForChat,
+  setRooms,
 } from "@/src/redux/chatSlice";
-import { subscribeUserMessages } from "@/src/services/wsClient";
-import { useThemeMode } from "@/src/theme/ThemeProvider";
-import { DarkColors, LightColors } from "@/src/theme/colors";
-import { makeStyles } from "@/src/theme/styles";
-import { ChatMessage, ChatRoom, UserRole } from "@/src/types/resources";
-import { useEffect, useMemo, useState } from "react";
+import { fetchUserById } from "@/src/redux/userSlice";
 import {
   loadChatMessages,
   loadChatRooms,
   saveChatMessages,
   saveChatRooms,
 } from "@/src/services/chatCache";
+import { subscribeUserMessages } from "@/src/services/wsClient";
+import { useThemeMode } from "@/src/theme/ThemeProvider";
+import { DarkColors, LightColors } from "@/src/theme/colors";
+import { makeStyles } from "@/src/theme/styles";
+import { ChatMessage, ChatRoom, UserRole } from "@/src/types/resources";
+import { useEffect, useMemo, useState } from "react";
 
 /**
  * useChat
@@ -54,7 +55,7 @@ export function useChat() {
   const palette = isDark ? DarkColors : LightColors;
 
   // ==== Auth / User Info =====================================================
-  const token = useAppSelector((s) => s.auth.token?.token);
+  const token = useAppSelector((s) => s.auth.token?.accessToken);
   const userId = useAppSelector((s) => s.auth.user?.id);
   const role = useAppSelector((s) => s.auth.user?.role);
   const isManager = role === UserRole.MANAGER;
@@ -65,11 +66,11 @@ export function useChat() {
   const messagesByChat = useAppSelector((s) => s.chat.messages);
   const loadingMessages = useAppSelector((s) => s.chat.loadingMessages);
   const sendingMessage = useAppSelector((s) => s.chat.sending);
+  const userMap = useAppSelector((s) => s.users.userMap);
 
   // ==== Lokale UI-Zustände ===================================================
   const [chatSearch, setChatSearch] = useState("");
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-  const [messageText, setMessageText] = useState("");
   const [hasAutoSelected, setHasAutoSelected] = useState(false);
 
   /**
@@ -107,7 +108,6 @@ export function useChat() {
 
     const sub = subscribeUserMessages(
       token,
-      userId,
       (payload) => {
         const msg = payload as ChatMessage;
         if (msg?.chatId) {
@@ -156,6 +156,16 @@ export function useChat() {
     })();
   }, [selectedChatId, token, dispatch]);
 
+  // Missing user details for chat members laden
+  useEffect(() => {
+    if (!selectedChat) return;
+    selectedChat.memberIds.forEach((id) => {
+      if (!userMap[id]) {
+        dispatch(fetchUserById(id));
+      }
+    });
+  }, [selectedChat, userMap, dispatch]);
+
   // ==== Actions ===============================================================
   const selectChat = (chatId: string) => {
     setSelectedChatId(chatId);
@@ -165,21 +175,20 @@ export function useChat() {
     setSelectedChatId(null);
   };
 
-  const sendMessage = async () => {
-    if (!selectedChatId || !messageText.trim() || !token) return;
+  const sendMessage = async (text: string) => {
+    if (!selectedChatId || !text.trim() || !token) return;
 
     try {
       await dispatch(
         sendChatMessage({
           chatId: selectedChatId,
-          text: messageText.trim(),
+          text: text.trim(),
           token,
         })
       ).unwrap();
 
-      setMessageText("");
     } catch (err: any) {
-      alert(err.message || "Nachricht konnte nicht gesendet werden.");
+      console.warn(err.message || "Nachricht konnte nicht gesendet werden.");
     }
   };
 
@@ -193,7 +202,7 @@ export function useChat() {
 
       setSelectedChatId(chat.id);
     } catch (err: any) {
-      alert(err.message || "Chat konnte nicht erstellt werden.");
+      console.warn(err.message || "Chat konnte nicht erstellt werden.");
     }
   };
 
@@ -213,11 +222,9 @@ export function useChat() {
       isEmployee,
       chatSearch,
       selectedChatId,
-      messageText,
     },
     actions: {
       setChatSearch,
-      setMessageText,
       selectChat,
       clearSelection,
       sendMessage,

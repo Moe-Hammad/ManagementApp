@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppSelector } from "@/src/hooks/useRedux";
 import { CalendarEvent, UserRole } from "@/src/types/resources";
@@ -6,6 +6,7 @@ import {
   fetchManagerCalendarEvents,
   fetchMyCalendarEvents,
 } from "@/src/services/api";
+import { useFocusEffect } from "expo-router";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
 import { makeStyles } from "@/src/theme/styles";
 import { DarkColors, LightColors } from "@/src/theme/colors";
@@ -13,7 +14,7 @@ import ManagerCalendarView from "@/src/screens/Calendar/ManagerCalendarView";
 import EmployeeCalendarView from "@/src/screens/Calendar/EmployeeCalendarView";
 
 export default function Calendar() {
-  const token = useAppSelector((s) => s.auth.token?.token);
+  const token = useAppSelector((s) => s.auth.token?.accessToken);
   const role = useAppSelector((s) => s.auth.user?.role);
 
   const { isDark } = useThemeMode();
@@ -26,8 +27,8 @@ export default function Calendar() {
   const [monthAnchor, setMonthAnchor] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(() => new Date());
 
-  useEffect(() => {
-    if (!token || !role) return;
+  const loadEvents = useCallback(() => {
+    if (!token || !role) return () => {};
     let active = true;
     (async () => {
       try {
@@ -48,6 +49,16 @@ export default function Calendar() {
       active = false;
     };
   }, [token, role]);
+
+  useEffect(() => {
+    return loadEvents();
+  }, [loadEvents]);
+
+  useFocusEffect(
+    useCallback(() => {
+      return loadEvents();
+    }, [loadEvents])
+  );
 
   const onPrevMonth = () =>
     setMonthAnchor(

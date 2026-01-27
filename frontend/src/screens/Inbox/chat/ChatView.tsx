@@ -1,12 +1,13 @@
 import { useChatPartner } from "@/src/hooks/useChatPartner";
+import { useAppSelector } from "@/src/hooks/useRedux";
 import { ChatMessage, ChatRoom } from "@/src/types/resources";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import MessageBubble from "./MessageBubble";
 import MessageInput from "./MessageInput";
 
 /**
- * ChatView — Vollbild Chat wie Instagram
+ * ChatView - Vollbild Chat wie Instagram
  */
 export default function ChatView({
   chat,
@@ -29,10 +30,18 @@ export default function ChatView({
   styles: any;
   userId: string;
 }) {
-  // 🔥 Partner automatisch laden
   const { partner } = useChatPartner(chat);
+  const userMap = useAppSelector((s) => s.users.userMap);
 
-  // 🔽 Scroll automatisch ans Ende
+  const memberNames = useMemo(
+    () =>
+      (chat.memberIds || [])
+        .map((id) => userMap[id])
+        .filter(Boolean)
+        .map((u: any) => `${u.firstName} ${u.lastName}`),
+    [chat.memberIds, userMap]
+  );
+
   const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -47,7 +56,7 @@ export default function ChatView({
       <View style={styles.chatHeader}>
         <Pressable onPress={onBack} style={styles.chatHeaderBackButton}>
           <Text style={[styles.chatHeaderBackIcon, { color: palette.primary }]}>
-            ←
+            
           </Text>
         </Pressable>
 
@@ -58,7 +67,15 @@ export default function ChatView({
               : chat.name || "Chat"}
           </Text>
 
-          {partner && (
+          {memberNames.length > 0 ? (
+            <Text
+              style={styles.chatHeaderSubtitle}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {memberNames.join(", ")}
+            </Text>
+          ) : partner && (
             <Text style={styles.chatHeaderSubtitle}>
               {partner.role === "MANAGER" ? "Manager" : "Employee"}
             </Text>

@@ -24,7 +24,10 @@ public class EmployeeController {
 
     // Build and Employee Rest Api
     @PostMapping 
-    @Operation(summary = "Employee anlegen")
+    @Operation(
+            summary = "Employee anlegen",
+            description = "Erstellt einen Employee-Datensatz fuer Verwaltung oder Onboarding."
+    )
     @ApiResponse(responseCode = "201", description = "Employee erstellt")
     public ResponseEntity<EmployeeDto> createEmployee(@RequestBody EmployeeDto employeeDto){
         EmployeeDto savedEmployee = employeeService.createEmployee(employeeDto);
@@ -34,7 +37,10 @@ public class EmployeeController {
     // Build and get Employee REST API
 
     @GetMapping("{id}")
-    @Operation(summary = "Employee nach ID abrufen")
+    @Operation(
+            summary = "Employee nach ID abrufen",
+            description = "Liefert Employee-Stammdaten fuer Detailansicht."
+    )
     public ResponseEntity<EmployeeDto> getEmployeeById(@PathVariable("id") UUID employeeId){
         EmployeeDto employeeDto = employeeService.getEmployeeById(employeeId);
         return new ResponseEntity<>(employeeDto, HttpStatus.OK);
@@ -43,14 +49,20 @@ public class EmployeeController {
     // Build and get All Employees Rest API
 
     @GetMapping
-    @Operation(summary = "Alle Employees abrufen")
+    @Operation(
+            summary = "Alle Employees abrufen",
+            description = "Listet alle Employees fuer Listen und Verwaltung."
+    )
     public ResponseEntity<List<EmployeeDto>> getAllEmployees(){
         List<EmployeeDto> employeeDtoList = employeeService.getAllEmployees();
         return new ResponseEntity<>(employeeDtoList, HttpStatus.OK);
     }
 
     @GetMapping("/unassigned")
-    @Operation(summary = "Alle Employees ohne Manager abrufen (optional Suche)")
+    @Operation(
+            summary = "Alle Employees ohne Manager abrufen (optional Suche)",
+            description = "Listet Employees ohne Manager; optionales query filtert z.B. nach Name oder Email."
+    )
     public ResponseEntity<List<EmployeeDto>> getUnassignedEmployees(
             @RequestParam(value = "query", required = false) String query
     ){
@@ -61,14 +73,20 @@ public class EmployeeController {
     // Build and Update Employees Rest API
 
     @PutMapping("{id}")
-    @Operation(summary = "Employee aktualisieren")
+    @Operation(
+            summary = "Employee aktualisieren",
+            description = "Aktualisiert Employee-Stammdaten."
+    )
     public  ResponseEntity<EmployeeDto> updateEmployee(@PathVariable ("id") UUID employId, @RequestBody EmployeeDto em){
         EmployeeDto employeeDto = employeeService.updateEmployee(employId,em);
         return new ResponseEntity<>(employeeDto,HttpStatus.OK );
     }
     @DeleteMapping("{id}")
     // Delete Employee Rest API
-    @Operation(summary = "Employee löschen")
+    @Operation(
+            summary = "Employee loeschen",
+            description = "Loescht einen Employee-Datensatz."
+    )
     public ResponseEntity<EmployeeDto> deleteEmployee(@PathVariable ("id") UUID employeeId){
         employeeService.deleteEmployee(employeeId);
         return new ResponseEntity<>(HttpStatus.OK );

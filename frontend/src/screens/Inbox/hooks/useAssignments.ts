@@ -7,7 +7,7 @@ import { useEffect } from "react";
 
 export function useAssignments() {
   const dispatch = useAppDispatch();
-  const token = useAppSelector((s) => s.auth.token?.token);
+  const token = useAppSelector((s) => s.auth.token?.accessToken);
   const assignments = useAppSelector((s) => s.assignments.items);
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export function useAssignments() {
       dispatch(upsertAssignment(updated));
       return updated;
     } catch (err: any) {
-      alert(err?.message || "Assignment konnte nicht aktualisiert werden.");
+      console.warn(err?.message || "Assignment konnte nicht aktualisiert werden.");
       throw err;
     }
   };

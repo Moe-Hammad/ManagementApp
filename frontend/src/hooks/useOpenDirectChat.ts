@@ -21,7 +21,7 @@ export function useOpenDirectChat() {
   const dispatch = useAppDispatch();
 
   const currentUser = useAppSelector((s: RootState) => s.auth.user);
-  const token = useAppSelector((s: RootState) => s.auth.token?.token);
+  const token = useAppSelector((s: RootState) => s.auth.token?.accessToken);
   const rooms = useAppSelector((s: RootState) => s.chat.rooms);
 
   return async (targetUserId: string): Promise<ChatRoom | undefined> => {

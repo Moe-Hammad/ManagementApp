@@ -139,6 +139,10 @@ public class TaskServiceImple extends AbstractSecuredService implements TaskServ
             throw new CustomAccessDeniedException("Du darfst nur deine eigenen Tasks loeschen.");
         }
 
+        if (task.getStart() != null && !task.getStart().isAfter(java.time.LocalDateTime.now())) {
+            throw new CustomAccessDeniedException("Nur kommende Tasks koennen geloescht werden.");
+        }
+
         calendarEntryRepository.findByTaskId(id)
                 .forEach(calendarEntryRepository::delete);
 

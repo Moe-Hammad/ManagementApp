@@ -21,12 +21,16 @@ interface ScreenProps {
   children: React.ReactNode;
   scroll?: boolean; // optional!
   style?: ViewStyle;
+  noPadding?: boolean;
+  dismissKeyboardOnPress?: boolean;
 }
 
 export default function ScreenController({
   children,
   style,
   scroll = true,
+  noPadding = false,
+  dismissKeyboardOnPress = true,
 }: ScreenProps) {
   const { isDark } = useThemeMode();
   const styles = makeStyles(isDark);
@@ -79,19 +83,22 @@ export default function ScreenController({
       }
     : {};
 
+  const Wrapper: React.ElementType = dismissKeyboardOnPress ? Pressable : View;
+  const wrapperProps = dismissKeyboardOnPress
+    ? { onPress: Keyboard.dismiss, accessible: false }
+    : {};
+
   return (
-    <SafeAreaView style={[{ flex: 1 }, styles.screen]}>
-      <Pressable
-        style={{ flex: 1 }}
-        onPress={Keyboard.dismiss}
-        accessible={false}
-      >
+    <SafeAreaView
+      style={[{ flex: 1 }, styles.screen, noPadding ? { padding: 0 } : null]}
+    >
+      <Wrapper style={{ flex: 1 }} {...wrapperProps}>
         <Animated.View style={[{ flex: 1 }, animatedStyle]}>
           <Container style={[{ flex: 1 }, style]} {...containerProps}>
             {children}
           </Container>
         </Animated.View>
-      </Pressable>
+      </Wrapper>
     </SafeAreaView>
   );
 }

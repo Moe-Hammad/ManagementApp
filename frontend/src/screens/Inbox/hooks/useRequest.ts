@@ -16,7 +16,7 @@ import { upsertAssignment } from "@/src/redux/assignmentSlice";
 import { subscribeUserAssignments } from "@/src/services/wsClient";
 import { RequestStatus, UserRole } from "@/src/types/resources";
 import { fetchAssignmentsForEmployee } from "@/src/services/api";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 
 /**
@@ -50,7 +50,7 @@ export function useRequests() {
   const palette = isDark ? DarkColors : LightColors;
 
   // ==== Auth ================================================================
-  const token = useAppSelector((s) => s.auth.token?.token);
+  const token = useAppSelector((s) => s.auth.token?.accessToken);
   const userId = useAppSelector((s) => s.auth.user?.id);
   const user = useAppSelector((s) => s.auth.user);
   const role = useAppSelector((s) => s.auth.user?.role);
@@ -62,6 +62,7 @@ export function useRequests() {
 
   // ==== Lokaler UI-State ====================================================
   const [employeeSearch, setEmployeeSearch] = useState("");
+  const employeeSearchRef = useRef(employeeSearch);
   const [wsStatus, setWsStatus] = useState<"idle" | "connected" | "error">(
     "idle"
   );
@@ -75,33 +76,63 @@ export function useRequests() {
     dispatch(fetchCurrentUser(token));
   };
 
-  const pendingRequests = useMemo(
-    () => requests.filter((r) => r.status === RequestStatus.PENDING),
-    [requests]
-  );
+  const pendingRequests = useMemo(() => {
+    if (role === UserRole.MANAGER) {
+      return requests.filter(
+        (r) =>
+          r.status === RequestStatus.PENDING ||
+          r.status === RequestStatus.APPROVED
+      );
+    }
+    return requests.filter((r) => r.status === RequestStatus.PENDING);
+  }, [requests, role]);
+
+  useEffect(() => {
+    employeeSearchRef.current = employeeSearch;
+  }, [employeeSearch]);
 
   // ==== WS: Live-Updates für Requests =======================================
   useEffect(() => {
-    if (!token) return;
+    if (!token || !userId || !role) return;
 
     const sub = subscribeUserRequests(
       token,
       (payload) => {
         const req = payload?.payload ?? payload;
         if (req) {
+          console.log("[WS][REQUESTS][HOOK] received", {
+            id: req.id,
+            status: req.status,
+            type: payload?.type,
+          });
           dispatch(upsertRequest(req));
+          console.log("[WS][REQUESTS][HOOK] dispatched upsert", {
+            id: req.id,
+            status: req.status,
+          });
+          // Fallback: sync gegen Backend, falls lokaler State alt ist
+          dispatch(fetchRequests({ userId, role, token }));
           refreshUser();
+          if (role === UserRole.MANAGER) {
+            dispatch(
+              fetchUnassigned({
+                query: employeeSearchRef.current.trim(),
+                token,
+              })
+            );
+          }
           setWsStatus("connected");
         }
       },
       () => setWsStatus("error")
     );
+    setWsStatus("connected");
 
     return () => {
       sub.disconnect();
       setWsStatus("idle");
     };
-  }, [token, dispatch]);
+  }, [token, userId, role, dispatch]);
 
   // ==== Initial Assignments laden (Employee) ================================
   useEffect(() => {
@@ -116,7 +147,7 @@ export function useRequests() {
     })();
   }, [token, role, userId, dispatch]);
 
-  // ==== WS: Live-Updates fr Assignments ====================================
+  // ==== WS: Live-Updates für Assignments ====================================
   useEffect(() => {
     if (!token) return;
 
@@ -184,21 +215,28 @@ export function useRequests() {
   }, [requests, userId]);
 
   // ==== Request senden (Manager → Employee) =================================
-  const sendRequest = async (employeeId: string) => {
+  const sendRequest = async (employeeId: string, message?: string) => {
     if (!isManager || !token || !userId) {
-      alert("Nur Manager können Anfragen senden.");
+      console.warn("Nur Manager koennen Anfragen senden.");
       return;
     }
 
+    // Debug-Alert + Log: was wird gesendet, an wen?
+    console.log("[Request][SEND]", {
+      destination: "/api/requests",
+      managerId: userId,
+      employeeId,
+      message,
+    });
+
     try {
       await dispatch(
-        createRequest({ employeeId, managerId: userId, token })
+        createRequest({ employeeId, managerId: userId, message, token })
       ).unwrap();
 
       refreshUser();
-      alert("Anfrage wurde gesendet.");
     } catch (err: any) {
-      alert(err.message || "Anfrage konnte nicht gesendet werden.");
+      console.warn(err.message || "Anfrage konnte nicht gesendet werden.");
     }
   };
 
@@ -215,7 +253,7 @@ export function useRequests() {
       ).unwrap();
       refreshUser();
     } catch (err: any) {
-      alert(err.message || "Request konnte nicht akzeptiert werden.");
+      console.warn(err.message || "Request konnte nicht akzeptiert werden.");
     }
   };
 
@@ -232,7 +270,7 @@ export function useRequests() {
       ).unwrap();
       refreshUser();
     } catch (err: any) {
-      alert(err.message || "Request konnte nicht abgelehnt werden.");
+      console.warn(err.message || "Request konnte nicht abgelehnt werden.");
     }
   };
 

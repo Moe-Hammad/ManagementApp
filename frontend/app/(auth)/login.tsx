@@ -1,15 +1,13 @@
 import ScreenController from "@/src/components/core/ScreenController";
 import Spinner from "@/src/components/core/Spinner";
 import { useAppDispatch } from "@/src/hooks/useRedux";
-import { setCredentials } from "@/src/redux/authSlice";
 import { fetchCurrentUser } from "@/src/redux/fetchCurrentUser";
 import { login } from "@/src/services/api";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
 import { DarkColors, LightColors } from "@/src/theme/colors";
 import { makeStyles } from "@/src/theme/styles";
-import { LoginResponse } from "@/src/types/resources";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
 export default function LoginScreen() {
@@ -21,17 +19,8 @@ export default function LoginScreen() {
   const dispatch = useAppDispatch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loginResponse, setLoginResponse] = useState<LoginResponse | null>(
-    null
-  );
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (loginResponse) {
-      setLoading(false);
-    }
-  }, [loginResponse]);
 
   async function handleLogin() {
     setError(null);
@@ -39,8 +28,7 @@ export default function LoginScreen() {
 
     try {
       const loginRes = await login(email, password);
-      dispatch(setCredentials(loginRes));
-      const action = await dispatch(fetchCurrentUser(loginRes.token));
+      const action = await dispatch(fetchCurrentUser(loginRes.accessToken));
       if (action.meta.requestStatus === "rejected") {
         setError("Konnte User nicht laden");
         return;

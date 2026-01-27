@@ -1,3 +1,6 @@
+import { Client, IMessage, StompSubscription } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+
 const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL || "";
 
 type SubscriptionCallback = (payload: any) => void;
@@ -8,27 +11,25 @@ export type Subscription = {
 };
 
 /**
- * 🔥 Globaler WebSocket STOMP-Client (1 Connection für alles!)
+ * Globaler STOMP-Client (eine Verbindung fuer alles).
+ * Verwendet @stomp/stompjs mit nativen WebSockets.
  */
 class WebSocketManager {
   private static instance: WebSocketManager;
 
-  private ws: WebSocket | null = null;
+  private client: Client | null = null;
   private token: string | null = null;
+  private connected = false;
+  private connecting = false;
 
   private subscriptions: Map<
     string,
-    { cb: SubscriptionCallback; destination: string }
+    {
+      cb: SubscriptionCallback;
+      destination: string;
+      stompSub?: StompSubscription;
+    }
   > = new Map();
-  private heartbeatInterval?: ReturnType<typeof setInterval>;
-  private reconnectTimeout?: ReturnType<typeof setTimeout>;
-
-  private connected = false;
-  private reconnectAttempts = 0;
-
-  public isConnected() {
-    return this.connected;
-  }
 
   public static getInstance() {
     if (!WebSocketManager.instance) {
@@ -37,223 +38,153 @@ class WebSocketManager {
     return WebSocketManager.instance;
   }
 
-  /**
-   * Verbinden
-   */
-  connect(token: string) {
-    this.token = token;
-
-    const wsUrl = API_BASE_URL.replace(/^http/, "ws") + "/ws";
-    this.ws = new WebSocket(wsUrl);
-
-    this.ws.onopen = () => {
-      this.connected = true;
-      this.reconnectAttempts = 0;
-
-      // CONNECT Frame senden
-      this.sendFrame("CONNECT", {
-        "accept-version": "1.2",
-        host: wsUrl,
-        Authorization: `Bearer ${token}`,
-        // Client/Server Heartbeat: alle 15 Sekunden
-        "heart-beat": "15000,15000",
-      });
-
-      // Heartbeat starten
-      this.startHeartbeat();
-
-      // Alle Subscriptions erneut anmelden
-      this.resubscribeAll();
-    };
-
-    this.ws.onclose = () => {
-      this.connected = false;
-      this.scheduleReconnect();
-    };
-
-    this.ws.onerror = () => {
-      this.connected = false;
-      this.scheduleReconnect();
-    };
-
-    this.ws.onmessage = (event) => {
-      const frame = this.parseFrame(event.data);
-
-      if (!frame) return;
-
-      if (frame.command === "MESSAGE") {
-        const subId = frame.headers.subscription;
-        const meta = this.subscriptions.get(subId);
-
-        if (meta && frame.body) {
-          try {
-            const json = JSON.parse(frame.body);
-            meta.cb(json);
-          } catch (err) {
-            console.error("WS JSON Parse Error", err);
-          }
-        }
-      }
-    };
+  public isConnected() {
+    return this.connected;
   }
 
-  /**
-   * Abonnieren eines Themas
-   */
+  connect(token: string) {
+    this.token = token;
+    // Vermeide parallele Connect-Versuche
+    if (this.connecting || this.connected || this.client?.active) return;
+
+    this.connecting = true;
+    // SockJS erwartet die HTTP/HTTPS-URL, nicht ws://
+    const sockUrl = API_BASE_URL + "/ws";
+    console.log("[STOMP] connecting", {
+      sockUrl,
+      hasToken: !!token,
+    });
+
+    this.client = new Client({
+      // SockJS-Factory nutzen; brokerURL wird dabei ignoriert
+      webSocketFactory: () => new SockJS(sockUrl),
+      connectHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
+      debug: (msg) => console.log("[STOMP]", msg),
+      reconnectDelay: 5000, // 5s Backoff
+      heartbeatIncoming: 15000,
+      heartbeatOutgoing: 15000,
+      onConnect: (frame) => {
+        console.log("[STOMP] connected", {
+          session: frame?.headers?.["session"],
+        });
+        this.connected = true;
+        this.connecting = false;
+        this.resubscribeAll();
+      },
+      onDisconnect: () => {
+        console.log("[STOMP] disconnected");
+        this.connected = false;
+        this.connecting = false;
+      },
+      onStompError: (frame) => {
+        console.warn("[STOMP] error", frame.headers["message"], frame.body);
+        this.connected = false;
+        this.connecting = false;
+      },
+      onWebSocketClose: () => {
+        console.warn("[STOMP] websocket closed");
+        this.connected = false;
+        this.connecting = false;
+      },
+      onWebSocketError: (evt) => {
+        console.warn("[STOMP] websocket error", evt);
+      },
+    });
+
+    this.client.activate();
+  }
+
+  private resubscribeAll() {
+    if (!this.client || !this.client.connected) return;
+
+    for (const [id, meta] of this.subscriptions.entries()) {
+      console.log("[STOMP] resubscribe", {
+        id,
+        destination: meta.destination,
+      });
+      const stompSub = this.client.subscribe(
+        meta.destination,
+        (msg: IMessage) => this.handleMessage(id, msg)
+      );
+      meta.stompSub = stompSub;
+    }
+  }
+
   subscribe(destination: string, cb: SubscriptionCallback): Subscription {
     const id = "sub-" + Math.random().toString(36).slice(2);
     this.subscriptions.set(id, { cb, destination });
 
-    if (this.connected) {
-      this.sendFrame("SUBSCRIBE", { id, destination });
+    if (this.client?.connected) {
+      const stompSub = this.client.subscribe(destination, (msg: IMessage) =>
+        this.handleMessage(id, msg)
+      );
+      const meta = this.subscriptions.get(id);
+      if (meta) meta.stompSub = stompSub;
+    } else if (this.token) {
+      this.connect(this.token);
     }
 
     return {
       id,
       unsubscribe: () => {
+        const meta = this.subscriptions.get(id);
+        meta?.stompSub?.unsubscribe();
         this.subscriptions.delete(id);
-        if (this.connected) {
-          this.sendFrame("UNSUBSCRIBE", { id });
-        }
       },
     };
   }
 
-  /**
-   * Nachrichten senden
-   */
   send(destination: string, body: any) {
-    if (!this.connected) return;
-    this.sendFrame("SEND", { destination }, JSON.stringify(body));
+    if (!this.client?.connected) return;
+    this.client.publish({ destination, body: JSON.stringify(body) });
   }
 
-  /**
-   * STOMP Frame senden
-   */
-  private sendFrame(
-    command: string,
-    headers: Record<string, string>,
-    body: string = ""
-  ) {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-
-    const headerString = Object.entries(headers)
-      .map(([k, v]) => `${k}:${v}`)
-      .join("\n");
-
-    const frame = `${command}\n${headerString}\n\n${body}\0`;
-
-    this.ws.send(frame);
-  }
-
-  /**
-   * Heartbeat (Ping alle 15 Sekunden)
-   */
-  private startHeartbeat() {
-    if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
-
-    this.heartbeatInterval = setInterval(() => {
-      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        // STOMP Heartbeat: einfaches LF senden (kein eigenes PING-Kommando!)
-        this.ws.send("\n");
-      }
-    }, 15000);
-  }
-
-  /**
-   * Reconnect Strategie (exponential backoff)
-   */
-  private scheduleReconnect() {
-    if (this.reconnectTimeout) return;
-
-    const delay = Math.min(1000 * 2 ** this.reconnectAttempts, 30000);
-    this.reconnectAttempts++;
-
-    this.reconnectTimeout = setTimeout(() => {
-      this.connect(this.token!);
-      this.reconnectTimeout = undefined;
-    }, delay);
-  }
-
-  /**
-   * Subscriptions nach Reconnect neu anmelden
-   */
-  private resubscribeAll() {
-    for (const [id, meta] of this.subscriptions.entries()) {
-      this.sendFrame("SUBSCRIBE", {
+  private handleMessage(id: string, msg: IMessage) {
+    const meta = this.subscriptions.get(id);
+    if (!meta) return;
+    try {
+      const json = msg.body ? JSON.parse(msg.body) : null;
+      console.log("[STOMP] message", {
         id,
         destination: meta.destination,
+        type: json?.type,
+        status: json?.payload?.status ?? json?.status,
       });
+      meta.cb(json);
+    } catch (err) {
+      console.error("[STOMP] JSON parse error", err);
     }
   }
 
-  /**
-   * Verbindung hart schließen und geplante Reconnects stoppen (z. B. Logout)
-   */
-  public disconnect() {
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = undefined;
-    }
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-      this.heartbeatInterval = undefined;
-    }
-    if (this.ws) {
-      this.ws.onclose = null;
-      this.ws.onerror = null;
-      this.ws.onmessage = null;
-      this.ws.close();
-    }
-
-    this.ws = null;
-    this.connected = false;
-    this.token = null;
+  disconnect() {
+    this.subscriptions.forEach((meta) => meta.stompSub?.unsubscribe());
     this.subscriptions.clear();
-    this.reconnectAttempts = 0;
-  }
-
-  /**
-   * STOMP Frame parser
-   */
-  private parseFrame(raw: string) {
-    if (!raw) return null;
-
-    const [head, bodyWithNull] = raw.split("\n\n");
-    const body = bodyWithNull?.replace(/\0+$/, "") ?? "";
-
-    const lines = head.split("\n").filter(Boolean);
-    const command = lines.shift() ?? "";
-
-    const headers: Record<string, string> = {};
-    lines.forEach((line) => {
-      const i = line.indexOf(":");
-      if (i !== -1) {
-        headers[line.slice(0, i)] = line.slice(i + 1);
-      }
-    });
-
-    return { command, headers, body };
+    this.connected = false;
+    this.connecting = false;
+    this.token = null;
+    this.client?.deactivate();
+    this.client = null;
   }
 }
 
-const manager = WebSocketManager.getInstance();
+const wsInstance = WebSocketManager.getInstance();
 
 const ensureConnected = (token: string) => {
-  if (!manager.isConnected()) {
-    manager.connect(token);
+  if (!wsInstance.isConnected()) {
+    wsInstance.connect(token);
   }
 };
 
 export function subscribeUserMessages(
   token: string,
-  userId: string,
   onMessage: (payload: any) => void,
   onError?: () => void
 ) {
   try {
     ensureConnected(token);
-    const sub = manager.subscribe(`/user/queue/messages`, onMessage);
+    const sub = wsInstance.subscribe(`/user/queue/messages`, onMessage);
     return {
       disconnect: () => sub.unsubscribe(),
     };
@@ -270,7 +201,15 @@ export function subscribeUserRequests(
 ) {
   try {
     ensureConnected(token);
-    const sub = manager.subscribe(`/user/queue/requests`, onMessage);
+    console.log("[WS][REQUESTS] subscribing to /user/queue/requests");
+    const sub = wsInstance.subscribe(`/user/queue/requests`, (payload) => {
+      console.log("[WS][REQUESTS] incoming", {
+        type: payload?.type,
+        status: payload?.payload?.status ?? payload?.status,
+        id: payload?.payload?.id ?? payload?.id,
+      });
+      onMessage(payload);
+    });
     return {
       disconnect: () => sub.unsubscribe(),
     };
@@ -287,7 +226,7 @@ export function subscribeUserAssignments(
 ) {
   try {
     ensureConnected(token);
-    const sub = manager.subscribe(`/user/queue/assignments`, onMessage);
+    const sub = wsInstance.subscribe(`/user/queue/assignments`, onMessage);
     return {
       disconnect: () => sub.unsubscribe(),
     };
@@ -299,5 +238,5 @@ export function subscribeUserAssignments(
 
 export const wsClient = WebSocketManager.getInstance();
 export const disconnectWebSocket = () => {
-  manager.disconnect();
+  wsInstance.disconnect();
 };

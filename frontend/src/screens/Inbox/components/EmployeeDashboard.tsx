@@ -3,6 +3,7 @@ import { fetchUserById, selectUserById } from "@/src/redux/userSlice";
 import { useThemeMode } from "@/src/theme/ThemeProvider";
 import { makeStyles } from "@/src/theme/styles";
 import { Employee } from "@/src/types/resources";
+import { useEffect } from "react";
 import { Text, View } from "react-native";
 
 type Props = {
@@ -14,12 +15,20 @@ export default function EmployeeDashboard({ employee }: Props) {
   const styles = makeStyles(isDark);
   const dispatch = useAppDispatch();
 
-  const loadManager = (id: string) => {
-    const cached = useAppSelector((s) => selectUserById(s, id));
-    if (!cached) dispatch(fetchUserById(id));
-    return cached;
-  };
+  const manager = useAppSelector((s) => selectUserById(s, employee.managerId));
+
   const availabilityText = employee.availability ? "Verfügbar" : "Beschäftigt";
+  const managerLabel = manager
+    ? `${manager.firstName} ${manager.lastName}`
+    : employee.managerId
+    ? employee.managerId
+    : "Noch kein Manager zugeordnet";
+
+  useEffect(() => {
+    if (employee.managerId && !manager) {
+      dispatch(fetchUserById(employee.managerId));
+    }
+  }, [employee.managerId, manager, dispatch]);
 
   return (
     <View style={styles.screen}>
@@ -45,17 +54,13 @@ export default function EmployeeDashboard({ employee }: Props) {
       <View style={[styles.widget, { marginTop: 16 }]}>
         <Text style={styles.widgetTitle}>Stundensatz</Text>
         <Text style={styles.widgetValue}>
-          {employee.hourlyRate ? `${employee.hourlyRate} €` : "-"}
+          {employee.hourlyRate ? `${employee.hourlyRate} EUR` : "-"}
         </Text>
       </View>
 
       <View style={[styles.widget, { marginTop: 16 }]}>
         <Text style={styles.widgetTitle}>Manager</Text>
-        <Text style={styles.text}>
-          {employee.managerId
-            ? employee.managerId
-            : "Noch kein Manager zugeordnet"}
-        </Text>
+        <Text style={styles.text}>{managerLabel}</Text>
       </View>
     </View>
   );

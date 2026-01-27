@@ -26,7 +26,8 @@ export type Manager = BaseUser & {
 export type User = Employee | Manager;
 
 export type LoginResponse = {
-  token: string;
+  accessToken: string;
+  refreshToken: string;
   id: string;
   userType: UserRole;
 };

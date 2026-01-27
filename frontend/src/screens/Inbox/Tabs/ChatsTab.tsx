@@ -19,7 +19,7 @@ export default function ChatsTab({
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-  const token = useAppSelector((s) => s.auth.token?.token);
+  const token = useAppSelector((s) => s.auth.token?.accessToken);
   const user = useAppSelector((s) => s.auth.user);
   const rooms = useAppSelector((s) => s.chat.rooms);
   const loading = useAppSelector((s) => s.chat.loadingRooms);

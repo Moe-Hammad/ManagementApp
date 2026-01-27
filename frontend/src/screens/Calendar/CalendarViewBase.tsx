@@ -1,7 +1,18 @@
-import { useMemo } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { DarkColors, LightColors } from "@/src/theme/colors";
-import { CalendarEvent, AssignmentStatus, CalendarEntryType } from "@/src/types/resources";
+import {
+  AssignmentStatus,
+  CalendarEntryType,
+  CalendarEvent,
+} from "@/src/types/resources";
+import moment from "moment";
+import { useMemo } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 
 const weekdays = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
@@ -19,19 +30,54 @@ export type CalendarViewProps = {
   styles: ReturnType<typeof import("@/src/theme/styles").makeStyles>;
 };
 
+const parseEventTime = (value: Date | string | number) => {
+  if (typeof value === "string") {
+    const hasOffset = /([zZ]|[+-]\d{2}:\d{2})$/.test(value);
+    return hasOffset ? moment(value) : moment.utc(value).local();
+  }
+  return moment(value);
+};
+
+const taskState = (ev: CalendarEvent) => {
+  const now = moment();
+  const start = parseEventTime(ev.start);
+  const end = parseEventTime(ev.end);
+  if (end.isBefore(now)) return "done" as const;
+  const isToday = now.isSame(start, "day");
+  const isInRange = now.isBetween(start, end, undefined, "[]");
+  if (isToday && isInRange) return "running" as const;
+  return "open" as const;
+};
+
 const eventColor = (
   ev: CalendarEvent,
   palette: typeof LightColors | typeof DarkColors
 ) => {
-  if (ev.assignmentStatus === AssignmentStatus.DECLINED) return "#e74c3c";
-  if (ev.assignmentStatus === AssignmentStatus.PENDING) return "#f1c40f";
+  if (ev.assignmentStatus === AssignmentStatus.DECLINED) return palette.danger; // keep decline visible
   if (ev.type === CalendarEntryType.VACATION) return "#9b59b6";
   if (ev.type === CalendarEntryType.SICK) return "#e67e22";
+  if (ev.type === CalendarEntryType.BLOCKED) return palette.secondary;
+  if (ev.type === CalendarEntryType.TASK) {
+    const state = taskState(ev);
+    if (state === "running") return "#f59e0b"; // orange like task "laufend"
+    if (state === "open") return palette.success; // green for open
+    return "#3b82f6"; // blue for done
+  }
   return palette.primary;
 };
 
-const formatTime = (d: Date) =>
-  d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+const statusColor = (status?: AssignmentStatus | null) => {
+  if (status === AssignmentStatus.ACCEPTED) return "#22c55e";
+  if (status === AssignmentStatus.DECLINED) return "#ef4444";
+  if (status === AssignmentStatus.PENDING) return "#f59e0b";
+  return "#94a3b8"; // muted
+};
+
+const formatTime = (d: Date | string) =>
+  parseEventTime(d).format("HH:mm");
+
+const dayKey = (date: Date | string | number) =>
+  parseEventTime(date).startOf("day").format("YYYY-MM-DD");
 
 export function CalendarViewBase({
   roleLabel,
@@ -47,14 +93,24 @@ export function CalendarViewBase({
   styles,
 }: CalendarViewProps) {
   const monthDays = useMemo(() => {
-    const start = new Date(monthAnchor.getFullYear(), monthAnchor.getMonth(), 1);
-    const end = new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() + 1, 0);
+    const start = new Date(
+      monthAnchor.getFullYear(),
+      monthAnchor.getMonth(),
+      1
+    );
+    const end = new Date(
+      monthAnchor.getFullYear(),
+      monthAnchor.getMonth() + 1,
+      0
+    );
     const daysInMonth = end.getDate();
     const startWeekday = (start.getDay() + 6) % 7;
     const cells: (Date | null)[] = [];
     for (let i = 0; i < startWeekday; i++) cells.push(null);
     for (let d = 1; d <= daysInMonth; d++) {
-      cells.push(new Date(monthAnchor.getFullYear(), monthAnchor.getMonth(), d));
+      cells.push(
+        new Date(monthAnchor.getFullYear(), monthAnchor.getMonth(), d)
+      );
     }
     return cells;
   }, [monthAnchor]);
@@ -62,29 +118,35 @@ export function CalendarViewBase({
   const eventsByDay = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
     events.forEach((ev) => {
-      const dateKey = new Date(ev.start).toISOString().slice(0, 10);
+      const dateKey = dayKey(ev.start);
       if (!map.has(dateKey)) map.set(dateKey, []);
       map.get(dateKey)!.push(ev);
     });
     return map;
   }, [events]);
 
-  const selectedKey = selectedDate.toISOString().slice(0, 10);
+  const selectedKey = dayKey(selectedDate);
   const dayEventsRaw = eventsByDay.get(selectedKey) || [];
 
   const dayEvents = useMemo(() => {
     const mapped = dayEventsRaw
-      .map((ev) => ({
-        ...ev,
-        startDate: new Date(ev.start),
-        endDate: new Date(ev.end),
-      }))
+      .map((ev) => {
+        const startDate = parseEventTime(ev.start).toDate();
+        const endDate = parseEventTime(ev.end).toDate();
+        return {
+          ...ev,
+          startDate,
+          endDate,
+        };
+      })
       .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
     const columns: Date[] = [];
     let maxCols = 1;
     const withCols = mapped.map((ev) => {
-      let colIndex = columns.findIndex((end) => end.getTime() <= ev.startDate.getTime());
+      let colIndex = columns.findIndex(
+        (end) => end.getTime() <= ev.startDate.getTime()
+      );
       if (colIndex === -1) {
         colIndex = columns.length;
         columns.push(ev.endDate);
@@ -97,6 +159,58 @@ export function CalendarViewBase({
     const finalMax = Math.max(...withCols.map((e) => e.maxColsSnapshot), 1);
     return withCols.map((ev) => ({ ...ev, maxCols: finalMax }));
   }, [dayEventsRaw]);
+
+  const groupedEvents = useMemo(() => {
+    type Person = {
+      employeeId: string;
+      name?: string | null;
+      status?: AssignmentStatus | null;
+    };
+    type Group = {
+      base: (typeof dayEvents)[number];
+      people: Person[];
+    };
+
+    const statusRank = (status?: AssignmentStatus | null) => {
+      if (status === AssignmentStatus.ACCEPTED) return 3;
+      if (status === AssignmentStatus.PENDING) return 2;
+      if (status === AssignmentStatus.DECLINED) return 1;
+      if (status === AssignmentStatus.EXPIRED) return 0;
+      return 0;
+    };
+
+    const mergePerson = (people: Person[], next: Person) => {
+      const existing = people.find((p) => p.employeeId === next.employeeId);
+      if (!existing) {
+        people.push(next);
+        return;
+      }
+      if (statusRank(next.status) > statusRank(existing.status)) {
+        existing.status = next.status;
+      }
+      if (!existing.name && next.name) {
+        existing.name = next.name;
+      }
+    };
+
+    const map = new Map<string, Group>();
+    dayEvents.forEach((ev) => {
+      const key = ev.taskId || ev.id;
+      const person = {
+        employeeId: ev.employeeId,
+        name: ev.employeeName,
+        status: ev.assignmentStatus,
+      };
+      if (map.has(key)) {
+        mergePerson(map.get(key)!.people, person);
+      } else {
+        map.set(key, { base: ev, people: [person] });
+      }
+    });
+    return Array.from(map.values()).sort(
+      (a, b) => a.base.startDate.getTime() - b.base.startDate.getTime()
+    );
+  }, [dayEvents]);
 
   const monthLabel = monthAnchor.toLocaleDateString(undefined, {
     month: "long",
@@ -122,7 +236,9 @@ export function CalendarViewBase({
           <Pressable onPress={onPrevMonth} style={{ padding: 6 }}>
             <Text style={{ color: palette.primary }}>{"<"}</Text>
           </Pressable>
-          <Text style={{ color: palette.text, fontWeight: "700" }}>{monthLabel}</Text>
+          <Text style={{ color: palette.text, fontWeight: "700" }}>
+            {monthLabel}
+          </Text>
           <Pressable onPress={onNextMonth} style={{ padding: 6 }}>
             <Text style={{ color: palette.primary }}>{">"}</Text>
           </Pressable>
@@ -144,9 +260,9 @@ export function CalendarViewBase({
             if (!day) {
               return <View key={idx} style={styles.calendarDayCell} />;
             }
-            const isSelected = day.toDateString() === selectedDate.toDateString();
-            const hasEvents =
-              eventsByDay.get(day.toISOString().slice(0, 10))?.length > 0;
+            const isSelected = dayKey(day) === selectedKey;
+            const eventsForDay = eventsByDay.get(dayKey(day)) ?? [];
+            const hasEvents = eventsForDay.length > 0;
             return (
               <Pressable
                 key={idx}
@@ -157,7 +273,9 @@ export function CalendarViewBase({
                   style={[
                     styles.calendarDayNumber,
                     {
-                      backgroundColor: isSelected ? palette.primary : "transparent",
+                      backgroundColor: isSelected
+                        ? palette.primary
+                        : "transparent",
                     },
                   ]}
                 >
@@ -186,14 +304,48 @@ export function CalendarViewBase({
 
       <View style={{ marginTop: 16, flex: 1 }}>
         <Text style={[styles.label, { marginBottom: 6 }]}>{dayTitle}</Text>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 8,
+          }}
+        >
+          {[
+            { label: "Offen", color: palette.success },
+            { label: "Laufend", color: "#f59e0b" },
+            { label: "Fertig", color: "#3b82f6" },
+            { label: "Abgelehnt", color: palette.danger },
+          ].map((item) => (
+            <View
+              key={item.label}
+              style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+            >
+              <View
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: item.color,
+                }}
+              />
+              <Text style={{ color: palette.text, fontSize: 12 }}>
+                {item.label}
+              </Text>
+            </View>
+          ))}
+        </View>
 
         {loading ? (
           <ActivityIndicator color={palette.primary} />
         ) : error ? (
           <Text style={styles.calendarErrorText}>{error}</Text>
-        ) : dayEvents.length === 0 ? (
-          <Text style={[styles.calendarEmptyText, { color: palette.secondary }]}>
-            Keine Eintraege.
+        ) : groupedEvents.length === 0 ? (
+          <Text
+            style={[styles.calendarEmptyText, { color: palette.secondary }]}
+          >
+            Keine Einträge.
           </Text>
         ) : (
           <ScrollView
@@ -202,43 +354,60 @@ export function CalendarViewBase({
               { borderColor: palette.border, backgroundColor: palette.card },
             ]}
           >
-            {dayEvents.map((ev) => {
-              const spacerLeft = ev.colIndex;
-              const spacerRight = Math.max(ev.maxCols - ev.colIndex - 1, 0);
+            {groupedEvents.map((group) => {
+              const ev = group.base;
               const color = eventColor(ev, palette);
               return (
-                <View key={ev.id} style={styles.calendarEventRow}>
-                  {spacerLeft > 0 && <View style={{ flex: spacerLeft }} />}
-                  <View style={{ flex: 1 }}>
-                    <View
-                      style={[
-                        styles.calendarEventCard,
-                        {
-                          borderColor: color,
-                          backgroundColor: `${color}22`,
-                        },
-                      ]}
+                <View
+                  key={ev.id}
+                  style={[styles.calendarEventRow, { flexDirection: "column" }]}
+                >
+                  <View
+                    style={[
+                      styles.calendarEventCard,
+                      {
+                        borderColor: color,
+                        backgroundColor: `${color}22`,
+                        width: "100%",
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        color: palette.text,
+                        fontWeight: "700",
+                        marginBottom: 4,
+                      }}
                     >
-                      <Text
+                      {ev.company || ev.location || "Task"}
+                    </Text>
+                    <Text style={{ color: palette.text }}>
+                      {formatTime(ev.startDate)} - {formatTime(ev.endDate)}
+                    </Text>
+                    {group.people.map((p, idx) => (
+                      <View
+                        key={p.employeeId || String(idx)}
                         style={{
-                          color: palette.text,
-                          fontWeight: "700",
-                          marginBottom: 4,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 6,
+                          marginTop: 4,
                         }}
                       >
-                        {ev.company || ev.location || "Task"}
-                      </Text>
-                      <Text style={{ color: palette.text }}>
-                        {formatTime(ev.startDate)} - {formatTime(ev.endDate)}
-                      </Text>
-                      {ev.employeeName && (
-                        <Text style={{ color: palette.secondary, marginTop: 2 }}>
-                          {ev.employeeName}
+                        <View
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: 4,
+                            backgroundColor: statusColor(p.status),
+                          }}
+                        />
+                        <Text style={{ color: palette.secondary }}>
+                          {p.name || "Unbekannt"}
                         </Text>
-                      )}
-                    </View>
+                      </View>
+                    ))}
                   </View>
-                  {spacerRight > 0 && <View style={{ flex: spacerRight }} />}
                 </View>
               );
             })}

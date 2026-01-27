@@ -25,6 +25,9 @@ export const makeStyles = (isDark: boolean) => {
       padding: 20,
       backgroundColor: C.screenbackground,
     },
+    buttonDisabled: {
+      opacity: 0.7,
+    },
     roleButton: {
       flex: 1,
       paddingVertical: 12,
@@ -32,6 +35,10 @@ export const makeStyles = (isDark: boolean) => {
       borderWidth: 1,
       marginRight: 8,
       alignItems: "center",
+    },
+
+    body: {
+      backgroundColor: C.screenbackground,
     },
 
     roleButtonActive: {
@@ -103,6 +110,389 @@ export const makeStyles = (isDark: boolean) => {
       ...shadow(C.shadow, 6, 12, 0.3),
       backdropFilter: "blur(20px)", // iOS
     },
+    taskHubSafeArea: {
+      flex: 1,
+      paddingHorizontal: 16,
+      backgroundColor: C.screenbackground,
+    },
+    taskHubNotice: {
+      color: C.secondary,
+    },
+    taskScreenContent: {
+      flex: 1,
+      gap: 16,
+      paddingTop: 8,
+    },
+
+    taskCardContainer: {
+      marginBottom: 14,
+    },
+    taskCardExpanded: {
+      borderColor: C.primary,
+    },
+    taskCardCollapsed: {
+      borderColor: C.border,
+    },
+    taskCardDone: {
+      opacity: 0.9,
+    },
+    taskCardHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    taskAccordionHeaderRight: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    taskAccordionChevron: {
+      color: C.secondary,
+      fontSize: 16,
+      fontWeight: "700",
+    },
+    taskCardTitle: {
+      fontSize: 18,
+    },
+    taskCardTitleEllipsis: {
+      flex: 1,
+      flexShrink: 1,
+      marginRight: 8,
+    },
+    taskCardStatus: {
+      fontWeight: "700",
+    },
+    taskWaitingPill: {
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: isDark ? "rgba(56,189,248,0.45)" : "rgba(56,189,248,0.55)",
+      backgroundColor: isDark ? "rgba(56,189,248,0.18)" : "rgba(56,189,248,0.14)",
+    },
+    taskWaitingText: {
+      color: "#38bdf8",
+      fontSize: 12,
+      fontWeight: "700",
+    },
+    taskCardStatusOpen: {
+      color: "#34d399",
+    },
+    taskCardStatusRunning: {
+      color: "#f59e0b",
+    },
+    taskCardStatusDone: {
+      color: "#3b82f6",
+    },
+    taskCardLocation: {
+      color: C.text,
+      marginBottom: 4,
+    },
+    taskCardMeta: {
+      color: C.secondary,
+    },
+    taskCardMetaSpacer: {
+      marginTop: 6,
+    },
+    taskAccordionBody: {
+      marginTop: 8,
+      gap: 8,
+    },
+    taskAccordionDetails: {
+      alignSelf: "flex-end",
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: C.primary,
+      backgroundColor: C.primary,
+    },
+    taskAccordionDetailsText: {
+      color: "#fff",
+      fontWeight: "700",
+    },
+    taskCardSurface: {
+      backgroundColor: C.card,
+      borderRadius: 16,
+      padding: 14,
+      borderWidth: isDark ? 0 : 1,
+      borderColor: isDark ? "transparent" : C.border,
+      ...shadow(C.shadow, 3, 10, 0.25),
+    },
+    taskCardSurfaceOpen: {
+      backgroundColor: isDark ? "rgba(52,211,153,0.16)" : "rgba(52,211,153,0.12)",
+      borderColor: isDark ? "rgba(52,211,153,0.35)" : "rgba(52,211,153,0.45)",
+      borderWidth: 1,
+    },
+    taskCardSurfaceRunning: {
+      backgroundColor: isDark ? "rgba(245,158,11,0.14)" : "rgba(245,158,11,0.12)",
+      borderColor: isDark ? "rgba(245,158,11,0.35)" : "rgba(245,158,11,0.45)",
+      borderWidth: 1,
+    },
+    taskCardSurfaceDone: {
+      backgroundColor: isDark ? "rgba(59,130,246,0.2)" : "rgba(59,130,246,0.14)",
+      borderColor: isDark ? "rgba(59,130,246,0.45)" : "rgba(59,130,246,0.5)",
+      borderWidth: 1,
+    },
+    taskAssignContainer: {
+      marginTop: 10,
+    },
+    taskAssignLabel: {
+      color: C.text,
+      fontSize: 14,
+      marginBottom: 6,
+    },
+    taskAssignScroll: {
+      maxHeight: 220,
+      marginBottom: 10,
+    },
+    taskAssignRow: {
+      borderColor: C.border,
+    },
+    taskAssignRowSelected: {
+      backgroundColor: `${C.primary}11`,
+    },
+    taskAssignRowDisabled: {
+      opacity: 0.5,
+    },
+    taskAssignSquare: {
+      borderWidth: 1,
+      borderColor: C.border,
+    },
+    taskAssignRowTextWrap: {
+      flex: 1,
+    },
+    taskAssignName: {
+      color: C.text,
+    },
+    taskAssignBusy: {
+      color: "#e67e22",
+      fontSize: 12,
+    },
+    taskLegendRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      gap: 12,
+      marginBottom: 4,
+    },
+    taskLegendItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+    },
+    taskLegendDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+    },
+    taskLegendLabel: {
+      color: C.text,
+      fontSize: 12,
+    },
+    taskStatusDotOpen: {
+      backgroundColor: "#34d399",
+    },
+    taskStatusDotRunning: {
+      backgroundColor: "#f59e0b",
+    },
+    taskStatusDotDone: {
+      backgroundColor: "#3b82f6",
+    },
+    taskStatusDotDeclined: {
+      backgroundColor: C.danger,
+    },
+    doneAssignmentsContainer: {
+      marginTop: 10,
+    },
+    doneAssignmentRow: {
+      paddingVertical: 6,
+      borderBottomWidth: 1,
+      borderBottomColor: C.border,
+    },
+    doneAssignmentName: {
+      color: C.text,
+      fontWeight: "600",
+    },
+    doneAssignmentStatus: {
+      color: C.secondary,
+      fontSize: 12,
+    },
+    statusFilterRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      gap: 8,
+    },
+    statusFilterChip: {
+      flex: 1,
+      marginHorizontal: 4,
+    },
+    employeeFilterContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 8,
+      paddingHorizontal: 8,
+    },
+    employeeFilterChip: {
+      flex: 0,
+      marginRight: 10,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      minHeight: 40,
+    },
+    dropdownWrapper: {
+      gap: 8,
+    },
+    dropdownTrigger: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: C.border,
+      backgroundColor: C.surface,
+    },
+    dropdownTriggerText: {
+      color: C.text,
+      fontWeight: "700",
+    },
+    dropdownTriggerIcon: {
+      color: C.secondary,
+      fontSize: 14,
+    },
+    dropdownMenu: {
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: C.border,
+      backgroundColor: C.surface,
+      overflow: "hidden",
+    },
+    dropdownMenuScroll: {
+      maxHeight: 220,
+    },
+    dropdownItem: {
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: C.border,
+    },
+    dropdownItemLast: {
+      borderBottomWidth: 0,
+    },
+    dropdownItemActive: {
+      backgroundColor: `${C.primary}1A`,
+    },
+    dropdownItemText: {
+      color: C.text,
+      fontWeight: "500",
+    },
+    dropdownItemTextActive: {
+      color: C.primary,
+      fontWeight: "700",
+    },
+    taskDashboardContainer: {
+      gap: 12,
+      marginBottom: 16,
+    },
+    taskKpiRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      gap: 8,
+    },
+    taskKpiCard: {
+      flex: 1,
+      borderRadius: 14,
+      paddingVertical: 12,
+      paddingHorizontal: 10,
+      backgroundColor: C.surface,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    taskKpiCardIdle: {
+      opacity: 0.9,
+    },
+    taskKpiCardActive: {
+      opacity: 1,
+      backgroundColor: isDark ? "#1f2937" : "#e5e7eb",
+    },
+    taskKpiValue: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: C.text,
+    },
+    taskKpiLabel: {
+      color: C.secondary,
+      marginTop: 2,
+      fontSize: 12,
+    },
+    taskPrimaryButton: {
+      backgroundColor: C.primary,
+      borderRadius: 12,
+      paddingVertical: 14,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    taskPrimaryButtonText: {
+      color: "#fff",
+      fontWeight: "700",
+      fontSize: 16,
+    },
+    taskListCard: {
+      borderWidth: 0,
+      backgroundColor: C.surface,
+      padding: 12,
+      marginTop: 0,
+    },
+    taskFilterSection: {
+      gap: 8,
+    },
+    taskFilterSectionSpacing: {
+      marginTop: 14,
+    },
+    taskFilterRow: {
+      flexDirection: "row",
+      gap: 12,
+    },
+    taskFilterColumn: {
+      flex: 1,
+    },
+    taskFilterTitle: {
+      color: C.text,
+      fontWeight: "700",
+      fontSize: 16,
+    },
+    taskListScroll: {
+      flex: 1,
+      marginTop: 12,
+    },
+    taskListContent: {
+      paddingBottom: 24,
+      gap: 12,
+    },
+    taskListHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 6,
+    },
+    taskListTitle: {
+      color: C.text,
+      fontWeight: "700",
+      fontSize: 18,
+    },
+    taskListAction: {
+      color: C.primary,
+    },
+    taskListEmptyText: {
+      color: C.secondary,
+    },
+    accordionHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
 
     button: {
       backgroundColor: C.primary,
@@ -162,6 +552,11 @@ export const makeStyles = (isDark: boolean) => {
       flexDirection: "row",
       justifyContent: "space-between",
       gap: 16,
+    },
+    rowBetween: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
     },
 
     themeToggleContainer: {
@@ -265,6 +660,9 @@ export const makeStyles = (isDark: boolean) => {
       marginTop: 16,
       gap: 8,
     },
+    requestsListContent: {
+      paddingBottom: 120, // space for tab bar
+    },
     requestsNote: {
       opacity: 0.7,
     },
@@ -310,9 +708,15 @@ export const makeStyles = (isDark: boolean) => {
       borderBottomWidth: 1,
       borderBottomColor: C.border,
     },
+    searchResultWrapper: {
+      marginBottom: 8,
+    },
     searchResultsContainer: {
-      maxHeight: 320,
+      maxHeight: 420,
       width: "100%",
+    },
+    searchResultsContent: {
+      paddingBottom: 8,
     },
     searchActionButton: {
       paddingHorizontal: 10,
@@ -321,6 +725,69 @@ export const makeStyles = (isDark: boolean) => {
       borderWidth: 1,
       borderColor: C.border,
       backgroundColor: C.surface,
+    },
+    // Request modal
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 16,
+    },
+    modalCard: {
+      width: "100%",
+      borderRadius: 16,
+      backgroundColor: C.surface,
+      padding: 16,
+      gap: 10,
+      ...shadow(C.shadow, 6, 12, 0.25),
+    },
+    modalTitle: {
+      color: C.text,
+      fontSize: 18,
+      fontWeight: "700",
+      marginBottom: 4,
+    },
+    modalInput: {
+      minHeight: 80,
+      textAlignVertical: "top",
+    },
+    modalActionsRow: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      gap: 10,
+    },
+    modalCancelButton: {
+      backgroundColor: C.surface,
+    },
+    modalConfirmButton: {
+      backgroundColor: C.primary,
+      borderColor: C.primary,
+    },
+    wsStatusPill: {
+      flexDirection: "row",
+      alignItems: "center",
+      alignSelf: "flex-start",
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 12,
+      backgroundColor: C.surface,
+      borderWidth: 1,
+      borderColor: C.border,
+      marginBottom: 8,
+      gap: 8,
+    },
+    wsStatusDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: "red",
+    },
+    wsStatusText: {
+      color: C.text,
+      fontSize: 12,
+      fontWeight: "600",
+      maxWidth: "80%",
     },
     chatFullScreenContainer: {
       flex: 1,
@@ -338,15 +805,18 @@ export const makeStyles = (isDark: boolean) => {
       borderBottomWidth: 1,
       borderColor: C.border,
     },
-
-    chatMessagesContainer: {
-      flex: 1,
+    chatHeaderSticky: {
+      backgroundColor: C.screenbackground,
+      zIndex: 10,
     },
+
     chatMessagesContent: {
       paddingHorizontal: 16,
       paddingTop: 12,
       paddingBottom: 12,
       flexGrow: 1,
+      flexDirection: "column",
+      justifyContent: "flex-end",
     },
     chatBody: {
       flex: 1,
@@ -386,9 +856,9 @@ export const makeStyles = (isDark: boolean) => {
 
     chatInputField: {
       flex: 1,
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      borderRadius: 25,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      borderRadius: 20,
       backgroundColor: C.card,
       borderWidth: 1,
       borderColor: C.border,
@@ -397,10 +867,10 @@ export const makeStyles = (isDark: boolean) => {
     },
 
     chatSendButton: {
-      paddingHorizontal: 16,
+      paddingHorizontal: 14,
       paddingVertical: 10,
       backgroundColor: C.primary,
-      borderRadius: 25,
+      borderRadius: 20,
     },
 
     chatSendText: {
@@ -461,6 +931,60 @@ export const makeStyles = (isDark: boolean) => {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
+    },
+    requestItemWrapper: {
+      marginBottom: 10,
+    },
+
+    // Settings / Account
+    profileHeaderRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    profileButtonRow: {
+      flexDirection: "row",
+      gap: 10,
+    },
+    profileActionButton: {
+      flex: 1,
+    },
+    profileCancelButton: {
+      backgroundColor: isDark ? "#374151" : "#e5e7eb",
+    },
+    profileCancelButtonText: {
+      color: isDark ? "#fff" : "#111827",
+    },
+    widgetSpacingXs: {
+      marginTop: 8,
+    },
+    widgetSpacingSm: {
+      marginTop: 12,
+    },
+    widgetSpacingMd: {
+      marginTop: 16,
+    },
+    widgetGap: {
+      gap: 10,
+    },
+    textMuted: {
+      color: C.text,
+      opacity: 0.7,
+    },
+    settingsMeta: {
+      color: C.text,
+      opacity: 0.6,
+    },
+    dangerWidget: {
+      backgroundColor: "#ef4444",
+      borderColor: "#ef4444",
+    },
+    dangerWidgetTitle: {
+      color: "#fff",
+    },
+    dangerWidgetText: {
+      color: "#fff",
+      opacity: 0.8,
     },
 
     requestInfo: {
@@ -607,11 +1131,17 @@ export const makeStyles = (isDark: boolean) => {
       marginTop: 10,
       gap: 8,
     },
-
+    chatListContent: {
+      paddingVertical: 4,
+    },
+    chatListItemWrapper: {
+      marginBottom: 8,
+    },
     // Chats Tab
     chatsContainer: {
       flex: 1,
       gap: 8,
+      marginTop: 16,
     },
     chatsHeaderRow: {
       flexDirection: "row",
@@ -704,6 +1234,12 @@ export const makeStyles = (isDark: boolean) => {
     // Create Task
     createHeader: {
       marginBottom: 12,
+    },
+    taskCreateContent: {
+      paddingHorizontal: 16,
+      paddingTop: 0,
+      paddingBottom: 32,
+      gap: 12,
     },
     createSection: {
       marginBottom: 12,
@@ -801,6 +1337,5 @@ export const makeStyles = (isDark: boolean) => {
       color: C.text,
       fontWeight: "700",
     },
-
   });
 };

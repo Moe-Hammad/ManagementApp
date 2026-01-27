@@ -1,14 +1,15 @@
 import { useAppDispatch, useAppSelector } from "@/src/hooks/useRedux";
-import { addMessage } from "@/src/redux/chatSlice";
-import { upsertRequest } from "@/src/redux/requestSlice";
 import { upsertAssignment } from "@/src/redux/assignmentSlice";
+import { addMessage, fetchChatRooms } from "@/src/redux/chatSlice";
+import { upsertRequest } from "@/src/redux/requestSlice";
 import {
+  disconnectWebSocket,
+  subscribeUserAssignments,
   subscribeUserMessages,
   subscribeUserRequests,
-  subscribeUserAssignments,
 } from "@/src/services/wsClient";
 import { ChatMessage } from "@/src/types/resources";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * useWebSockets
@@ -37,8 +38,23 @@ export function useWebSockets() {
   const dispatch = useAppDispatch();
 
   // ==== Auth-Daten ===========================================================
-  const token = useAppSelector((s) => s.auth.token?.token);
+  const token = useAppSelector((s) => s.auth.token?.accessToken);
   const userId = useAppSelector((s) => s.auth.user?.id);
+  const chatRooms = useAppSelector((s) => s.chat.rooms);
+  const roomsRef = useRef(chatRooms);
+  useEffect(() => {
+    roomsRef.current = chatRooms;
+  }, [chatRooms]);
+
+  useEffect(() => {
+    if (!token || !userId) {
+      // aktive Subscriptions/Manager disconnecten
+      disconnectWebSocket(); // o.ä. aus wsClient
+      setWsMessagesStatus("idle");
+      setWsRequestsStatus("idle");
+      setWsAssignmentsStatus("idle");
+    }
+  }, [token, userId]);
 
   // ==== Verbindungstatus für beide WebSockets ================================
   const [wsMessagesStatus, setWsMessagesStatus] = useState<
@@ -56,18 +72,27 @@ export function useWebSockets() {
   useEffect(() => {
     if (!token || !userId) return;
 
+    console.log("[WS][MESSAGES] subscribing", { userId });
     const ws = subscribeUserMessages(
       token,
-      userId,
       (payload) => {
         const msg = payload as ChatMessage;
-        if (msg?.chatId) dispatch(addMessage(msg));
+        if (msg?.chatId) {
+          dispatch(addMessage(msg));
+          const exists = roomsRef.current.some((r) => r.id === msg.chatId);
+          if (!exists) {
+            dispatch(fetchChatRooms({ token }));
+          }
+        }
         setWsMessagesStatus("connected");
       },
       () => setWsMessagesStatus("error")
     );
+    // Als verbunden markieren, sobald subscribed (nicht erst auf erste Nachricht warten)
+    setWsMessagesStatus("connected");
 
     return () => {
+      console.log("[WS][MESSAGES] disconnect");
       ws.disconnect();
       setWsMessagesStatus("idle");
     };
@@ -77,18 +102,22 @@ export function useWebSockets() {
   useEffect(() => {
     if (!token) return;
 
+    console.log("[WS][REQUESTS] subscribing");
     const ws = subscribeUserRequests(
       token,
       (payload) => {
         if (payload?.payload) {
+          console.log("[WS][REQUESTS] payload", payload);
           dispatch(upsertRequest(payload.payload));
         }
         setWsRequestsStatus("connected");
       },
       () => setWsRequestsStatus("error")
     );
+    setWsRequestsStatus("connected");
 
     return () => {
+      console.log("[WS][REQUESTS] disconnect");
       ws.disconnect();
       setWsRequestsStatus("idle");
     };
@@ -98,6 +127,7 @@ export function useWebSockets() {
   useEffect(() => {
     if (!token) return;
 
+    console.log("[WS][ASSIGNMENTS] subscribing");
     const ws = subscribeUserAssignments(
       token,
       (payload) => {
@@ -109,8 +139,10 @@ export function useWebSockets() {
       },
       () => setWsAssignmentsStatus("error")
     );
+    setWsAssignmentsStatus("connected");
 
     return () => {
+      console.log("[WS][ASSIGNMENTS] disconnect");
       ws.disconnect();
       setWsAssignmentsStatus("idle");
     };

@@ -2,6 +2,30 @@
 
 ## Enterprise Web-Development – Projektkonzept
 
+## Aktuelle Features (Stand jetzt)
+
+### Frontend
+- Login & Registrierung (Manager/Employee)
+- Session-Handling mit Auto-Refresh (Access/Refresh Tokens)
+- Aufgaben: Liste, Details, Erstellen, Bearbeiten, Loeschen
+- Assignments: Status annehmen/ablehnen
+- Requests: Senden, Annehmen, Ablehnen
+- Chat/Inbox: Direktchats, Nachrichten, Live-Updates
+- Kalenderansicht (Manager/Employee)
+- Profil/Account: Profil bearbeiten, Account loeschen
+- Settings: Theme-Toggle
+- WebSocket-Verbindungen mit Reconnect
+
+### Backend
+- Auth: Login (Basic), Registrierung, JWT Access Tokens
+- Refresh Tokens (Rotation + Reuse-Detection), Logout
+- User-/Profil-Endpunkte
+- Tasks & Task-Assignments (CRUD + Status)
+- Requests (Manager <-> Employee, Statuswechsel)
+- Chats & Nachrichten
+- Kalender-Endpunkte
+- WebSocket-Auth fuer STOMP
+
 ### 1. Projektidee / Motivation
 
 Mage ist eine mobile Anwendung zur Koordination von Mitarbeitereinsätzen in projektorientierten Branchen wie Filmsets, Eventplanung oder Setbau. Im Mittelpunkt stehen die effiziente Verwaltung und Zuteilung von Arbeitskräften durch Manager.
@@ -93,6 +117,12 @@ Die Anwendung folgt einem klassischen Client-Server-Modell mit klarer Trennung v
 - Ein Job kann mehrere Mitarbeitende umfassen
 - Die n:m-Beziehung wird über Assignments gelöst
 - Optional: Benachrichtigungen pro Mitarbeitenden
+
+
+### Klassendiagramm (Backend Entities)
+
+![Klassendiagramm](docs/class-diagram.svg)
+
 
 ### 6. REST-API-Spezifikation
 

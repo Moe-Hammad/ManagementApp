@@ -17,8 +17,8 @@ public class JwtTokenProvider {
     @Value("${JWT_SECRET}")
     private String secret;
 
-    @Value("${JWT_TTL}") // 24h default
-    private long  expirationMs;
+    @Value("${JWT_ACCESS_TTL}") // access token TTL
+    private long accessExpirationMs;
 
     private SecretKey key;
 
@@ -43,7 +43,7 @@ public class JwtTokenProvider {
     public String generateToken(String email, Map<String, Object> claims) {
         Date now = new Date();
 
-        Date expiryDate = new Date(now.getTime() + expirationMs);
+        Date expiryDate = new Date(now.getTime() + accessExpirationMs);
 
         return Jwts.builder()
                 .subject(email)

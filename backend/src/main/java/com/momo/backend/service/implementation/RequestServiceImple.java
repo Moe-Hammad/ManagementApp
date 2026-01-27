@@ -57,8 +57,12 @@ public class RequestServiceImple extends AbstractSecuredService implements Reque
             throw new IllegalStateException("Employee already assigned to a manager");
         }
 
-        // Prevent duplicate requests to the same employee from the same manager
-        boolean alreadyRequested = requestRepository.existsByManagerIdAndEmployeeId(managerId, employee.getId());
+        List<RequestStatus> activeStatuses = List.of(RequestStatus.PENDING, RequestStatus.APPROVED);
+        boolean alreadyRequested = requestRepository.existsByManagerIdAndEmployeeIdAndStatusIn(
+                managerId,
+                employee.getId(),
+                activeStatuses
+        );
         if (alreadyRequested) {
             throw new IllegalStateException("Request to this employee already exists.");
         }

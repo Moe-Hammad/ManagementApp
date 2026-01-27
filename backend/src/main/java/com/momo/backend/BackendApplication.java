@@ -13,12 +13,21 @@ public class BackendApplication {
 	public static void main(String[] args) {
         Dotenv dotenv = Dotenv.configure().ignoreIfMalformed().ignoreIfMissing().load();
 
-        System.setProperty("SPRING_DATASOURCE_URL", dotenv.get("SPRING_DATASOURCE_URL"));
-        System.setProperty("SPRING_DATASOURCE_USERNAME", dotenv.get("SPRING_DATASOURCE_USERNAME"));
-        System.setProperty("SPRING_DATASOURCE_PASSWORD", dotenv.get("SPRING_DATASOURCE_PASSWORD"));
-        System.setProperty("JWT_SECRET", dotenv.get("JWT_SECRET"));
-        System.setProperty("JWT_TTL", dotenv.get("JWT_TTL"));
+        setIfPresent(dotenv, "SPRING_DATASOURCE_URL");
+        setIfPresent(dotenv, "SPRING_DATASOURCE_USERNAME");
+        setIfPresent(dotenv, "SPRING_DATASOURCE_PASSWORD");
+        setIfPresent(dotenv, "JWT_SECRET");
+        setIfPresent(dotenv, "JWT_ACCESS_TTL");
+        setIfPresent(dotenv, "JWT_REFRESH_TTL");
+        setIfPresent(dotenv, "REFRESH_PEPPER");
+        setIfPresent(dotenv, "JWT_TTL");
 		SpringApplication.run(BackendApplication.class, args);
 	}
 
+    private static void setIfPresent(Dotenv dotenv, String key) {
+        String value = dotenv.get(key);
+        if (value != null && !value.isBlank()) {
+            System.setProperty(key, value);
+        }
+    }
 }
